@@ -7,9 +7,13 @@ cd "$(dirname "$0")/.."
 
 xcodegen generate --quiet
 LOG="build/xcodebuild.log"
+SIGNING=()
+# A build-only check (used by scripts/check.sh) just needs to compile; signing needs the keychain,
+# which may not be able to ask for permission in the background.
+[[ "${1:-}" == "--build" ]] && SIGNING=(CODE_SIGNING_ALLOWED=NO)
 mkdir -p build
 if ! xcodebuild -project Taellmi.xcodeproj -scheme Taellmi -configuration Debug -derivedDataPath build \
-  -skipPackagePluginValidation build >"$LOG" 2>&1; then
+  -skipPackagePluginValidation "${SIGNING[@]}" build >"$LOG" 2>&1; then
   grep -E "error:" "$LOG" | head -40
   echo "✘ build failed (full log: $LOG)"
   exit 1

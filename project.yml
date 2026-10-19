@@ -18,6 +18,9 @@ targets:
     dependencies:
       - package: TaellmiKit
         products: [AppComposition, Features]
+    configFiles:
+      Debug: Config/Signing.xcconfig
+      Release: Config/Signing.xcconfig
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.taellmi
@@ -25,8 +28,6 @@ targets:
         INFOPLIST_FILE: App/Info.plist
         GENERATE_INFOPLIST_FILE: NO
         CODE_SIGN_ENTITLEMENTS: App/taellmi.entitlements
-        CODE_SIGN_STYLE: Manual
-        CODE_SIGN_IDENTITY: "-"
         ENABLE_HARDENED_RUNTIME: YES
         SWIFT_VERSION: "6.0"
         SWIFT_STRICT_CONCURRENCY: complete

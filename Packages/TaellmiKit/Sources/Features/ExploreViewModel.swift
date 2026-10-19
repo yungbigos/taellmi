@@ -52,6 +52,12 @@ public protocol ExploreLibrary: Sendable {
 public final class ExploreViewModel {
     public var query = EntryQuery()
     public var showsTrash = false
+    public var view: ExploreViewKind = .stack
+    /// In flow: thoughts matching the search, in reading order, and the one jumped to.
+    public private(set) var flowMatches: [String] = []
+    public private(set) var currentMatch: String?
+    /// In time: the span on screen.
+    public var timeRange = TimelineRange(zoom: .week, anchor: Date())
     /// Current shortcut of every command, from config.
     public var shortcuts: [Command: Hotkey] = [:]
     public var isPaletteOpen = false
@@ -109,7 +115,15 @@ public final class ExploreViewModel {
         case .searchThoughts:
             if showsTrash { await show(trash: false) }
             searchFocusRequest += 1
-        case .showStack: await show(trash: false)
+        case .showStack: await show(view: .stack)
+        case .showFlow: await show(view: .flow)
+        case .showTime: await show(view: .time)
+        case .nextMatch: jumpMatch(by: 1)
+        case .previousMatch: jumpMatch(by: -1)
+        case .zoomInTime: timeRange.zoomIn()
+        case .zoomOutTime: timeRange.zoomOut()
+        case .showEarlier: timeRange.moveEarlier()
+        case .showLater: timeRange.moveLater()
         case .showTrash: await show(trash: true)
         case .playRecording: playbackRequest += 1
         }
@@ -192,6 +206,39 @@ public final class ExploreViewModel {
         return Array(((try? await library.search(EntryQuery(text: text))) ?? []).prefix(limit))
     }
 
+    /// Saves a thought edited in place in the flow.
+    public func saveFlowText(id: String, text: String) async {
+        do {
+            try await library.saveText(id: id, text: text)
+            if let index = entries.firstIndex(where: { $0.id == id }) { entries[index].text = text }
+        } catch {
+            errorMessage = "couldn't save the thought. your text is still here, so try again."
+        }
+    }
+
+    /// The flow's thoughts, oldest first.
+    public var flowEntries: [Entry] { entries.reversed() }
+
+    private func show(view: ExploreViewKind) async {
+        self.view = view
+        await show(trash: false)
+    }
+
+    private func jumpMatch(by step: Int) {
+        guard !flowMatches.isEmpty else { return }
+        let index = currentMatch.flatMap { flowMatches.firstIndex(of: $0) } ?? -step
+        let next = ((index + step) % flowMatches.count + flowMatches.count) % flowMatches.count
+        currentMatch = flowMatches[next]
+    }
+
+    private func updateMatches() {
+        let words = query.words
+        flowMatches =
+            words.isEmpty
+            ? [] : flowEntries.filter { entry in words.allSatisfy { entry.text.lowercased().contains($0) } }.map(\.id)
+        if currentMatch.map({ !flowMatches.contains($0) }) ?? true { currentMatch = flowMatches.first }
+    }
+
     private func show(trash: Bool) async {
         showsTrash = trash
         await select(nil)
@@ -202,8 +249,15 @@ public final class ExploreViewModel {
         do {
             if showsTrash {
                 trashedEntries = try await library.trashed()
-            } else {
+            } else if view == .stack {
                 entries = try await library.search(query)
+            } else {
+                // flow and time show everything the filters allow; in flow the search highlights instead.
+                var unfiltered = query
+                unfiltered.text = ""
+                if view == .time { unfiltered.period = .all }
+                entries = try await library.search(unfiltered)
+                updateMatches()
             }
         } catch {
             errorMessage = "couldn't load your thoughts. try again."

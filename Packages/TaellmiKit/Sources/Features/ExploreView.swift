@@ -15,13 +15,53 @@ public struct ExploreView: View {
     }
 
     public var body: some View {
-        Group {
-            if model.isComposing {
-                ComposerView(model: model)
-            } else {
-                splitView
-            }
+        content
+            .toolbar { ToolbarItem(placement: .principal) { viewPicker } }
+            .background(CommandShortcutButtons(model: model))
+            .sheet(isPresented: $model.isPaletteOpen) { CommandPaletteView(palette: palette) }
+            .onChange(of: model.searchFocusRequest) { searchFocused = true }
+    }
+
+    @ViewBuilder private var content: some View {
+        if model.isComposing {
+            ComposerView(model: model)
+        } else if model.view == .stack || model.showsTrash {
+            splitView
+        } else {
+            wideView
         }
+    }
+
+    /// flow and time use the whole width next to the sidebar.
+    private var wideView: some View {
+        NavigationSplitView {
+            sidebar
+        } detail: {
+            if model.view == .flow { FlowView(model: model) } else { TimeView(model: model) }
+        }
+        .searchable(text: $model.query.text, isPresented: $searchFocused, prompt: "search")
+        .onChange(of: model.query.text) { Task { await model.refresh() } }
+        .frame(minWidth: 900, minHeight: 560)
+    }
+
+    private var viewPicker: some View {
+        Picker("view", selection: Binding(get: { model.view }, set: { view in switchTo(view) })) {
+            Text("stack").tag(ExploreViewKind.stack)
+            Text("flow").tag(ExploreViewKind.flow)
+            Text("time").tag(ExploreViewKind.time)
+        }
+        .pickerStyle(.segmented)
+        .labelsHidden()
+    }
+
+    private func switchTo(_ view: ExploreViewKind) {
+        let command: Command =
+            switch view {
+            case .stack: .showStack
+            case .flow: .showFlow
+            case .time: .showTime
+            }
+        Task { await model.perform(command) }
     }
 
     private var splitView: some View {
@@ -37,11 +77,6 @@ public struct ExploreView: View {
             }
         }
         .frame(minWidth: 900, minHeight: 560)
-        .background(CommandShortcutButtons(model: model))
-        .sheet(isPresented: $model.isPaletteOpen) {
-            CommandPaletteView(palette: palette)
-        }
-        .onChange(of: model.searchFocusRequest) { searchFocused = true }
         .task {
             model.startObserving()
             await model.refresh()

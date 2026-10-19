@@ -10,6 +10,12 @@ extension Hotkey {
         case .escape: key = .escape
         case .enter: key = .return
         case .delete: key = .delete
+        case .left: key = .leftArrow
+        case .right: key = .rightArrow
+        case .up: key = .upArrow
+        case .down: key = .downArrow
+        case .equal: key = "="
+        case .minus: key = "-"
         case .letter(let letter): key = KeyEquivalent(letter)
         case .digit(let digit): key = KeyEquivalent(Character(String(digit)))
         case .function: return nil

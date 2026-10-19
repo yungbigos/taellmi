@@ -71,3 +71,19 @@ struct SingleKeyTests {
         #expect(throws: Hotkey.ParseError.self) { try Hotkey(parsingKey: "hyper") }
     }
 }
+
+@Suite("Arrow, = and - keys for commands")
+struct NavigationKeyTests {
+    @Test(
+        "parse, show and write back",
+        arguments: [
+            ("option+command+left", "⌥⌘←", 123), ("option+command+right", "⌥⌘→", 124),
+            ("command+equal", "⌘=", 24), ("command+minus", "⌘-", 27),
+        ])
+    func keys(text: String, label: String, code: UInt32) throws {
+        let hotkey = try Hotkey(parsing: text)
+        #expect(hotkey.displayLabel == label)
+        #expect(hotkey.keyCode == code)
+        #expect(hotkey.settingValue == text)
+    }
+}

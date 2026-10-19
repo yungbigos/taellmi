@@ -14,7 +14,7 @@ struct HotkeySettingsViewModelTests {
     struct FakeChecker: HotkeyConflictChecking {
         var taken: [String]
         func conflict(for hotkey: Hotkey) -> String? {
-            taken.contains(hotkey.settingValue) ? "macOS (z. B. Spotlight)" : nil
+            taken.contains(hotkey.settingValue) ? "a macOS shortcut (e.g. Spotlight)" : nil
         }
     }
 
@@ -23,7 +23,7 @@ struct HotkeySettingsViewModelTests {
         let model = HotkeySettingsViewModel(
             store: FakeStore("option+command+space"), checker: FakeChecker(taken: ["option+command+space"]))
         await model.load()
-        #expect(model.label == "⌥⌘ Leertaste")
+        #expect(model.label == "⌥⌘ space")
         #expect(model.warning?.contains("Spotlight") == true)
     }
 

@@ -14,7 +14,7 @@ let ui: [SwiftSetting] = strict + [.defaultIsolation(MainActor.self)]
 
 let package = Package(
     name: "TaellmiKit",
-    defaultLocalization: "de",
+    defaultLocalization: "en",
     platforms: [.macOS("26.0")],
     products: [
         .library(name: "AppComposition", targets: ["AppComposition"]),

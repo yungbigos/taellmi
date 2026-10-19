@@ -28,7 +28,7 @@ struct CompanionOrb: View {
                 canvas.stroke(path, with: .color(.white.opacity(0.35)), lineWidth: 1)
             }
         }
-        .accessibilityLabel(isListening ? "tälli hört zu" : "tälli")
+        .accessibilityLabel(isListening ? "tälli is listening" : "tälli")
     }
 
     /// A closed, wobbling outline: slow breathing waves plus faster ripples that grow with the voice.

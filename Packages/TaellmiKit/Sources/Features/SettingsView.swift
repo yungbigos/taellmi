@@ -22,9 +22,9 @@ public struct SettingsView: View {
     public var body: some View {
         TabView {
             GeneralSettingsView(hotkey: hotkey, exploreHotkey: exploreHotkey, appearance: appearance)
-                .tabItem { Label("Allgemein", systemImage: "gearshape") }
+                .tabItem { Label("general", systemImage: "gearshape") }
             VocabularySettingsView(model: vocabulary)
-                .tabItem { Label("Vokabular", systemImage: "character.book.closed") }
+                .tabItem { Label("spellings", systemImage: "character.book.closed") }
         }
         .textCase(appearance.swiftUICase)
     }
@@ -38,7 +38,7 @@ struct GeneralSettingsView: View {
     var body: some View {
         Form {
             Section {
-                LabeledContent("Tastenkürzel") {
+                LabeledContent("hotkey") {
                     HotkeyRecorder(model: hotkey)
                 }
                 if let warning = hotkey.warning {
@@ -46,12 +46,12 @@ struct GeneralSettingsView: View {
                         .foregroundStyle(.orange)
                 }
             } header: {
-                Text("tälli rufen")
+                Text("call tälli")
             } footer: {
-                Text("Mit diesem Kürzel erscheint tälli neben dem Mauszeiger und hört zu.")
+                Text("tälli appears next to your cursor and listens.")
             }
-            Section("Archiv öffnen") {
-                LabeledContent("Tastenkürzel") {
+            Section("open tällmi") {
+                LabeledContent("hotkey") {
                     HotkeyRecorder(model: exploreHotkey)
                 }
                 if let warning = exploreHotkey.warning {
@@ -59,15 +59,15 @@ struct GeneralSettingsView: View {
                         .foregroundStyle(.orange)
                 }
             }
-            Section("Schreibweise") {
+            Section("appearance") {
                 Picker(
-                    "Texte anzeigen",
+                    "show your thoughts",
                     selection: Binding(
                         get: { appearance.isLowercase },
                         set: { on in Task { await appearance.setLowercase(on) } })
                 ) {
-                    Text("Normal").tag(false)
-                    Text("alles klein").tag(true)
+                    Text("as written").tag(false)
+                    Text("all lowercase").tag(true)
                 }
                 .pickerStyle(.segmented)
             }
@@ -79,12 +79,12 @@ struct GeneralSettingsView: View {
             await exploreHotkey.load()
         }
         .alert(
-            "Kürzel ist schon belegt",
+            "this shortcut is taken",
             isPresented: Binding(
                 get: { hotkey.pendingConflict != nil }, set: { if !$0 { hotkey.discardPending() } })
         ) {
-            Button("Trotzdem verwenden") { Task { await hotkey.confirmPending() } }
-            Button("Abbrechen", role: .cancel) { hotkey.discardPending() }
+            Button("use it anyway") { Task { await hotkey.confirmPending() } }
+            Button("cancel", role: .cancel) { hotkey.discardPending() }
         } message: {
             if let pending = hotkey.pendingConflict {
                 Text(HotkeySettingsViewModel.conflictText(pending.owner))
@@ -102,7 +102,7 @@ struct HotkeyRecorder: View {
         Button {
             model.isRecording.toggle()
         } label: {
-            Text(model.isRecording ? "Kombination drücken …" : model.label)
+            Text(model.isRecording ? "press keys …" : model.label)
                 .monospacedDigit()
                 .frame(minWidth: 140)
         }

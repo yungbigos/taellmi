@@ -123,7 +123,7 @@ struct CaptureViewModelTests {
         let (model, _, _, _) = try makeModel(startError: .microphoneDenied)
         await model.toggle()
         #expect(!model.isRecording)
-        #expect(model.errorMessage?.contains("Mikrofon") == true)
+        #expect(model.errorMessage?.contains("microphone") == true)
     }
 
     @Test("recent Entries update live, including when a Transcript arrives")
@@ -144,7 +144,7 @@ struct CaptureViewModelTests {
         let pending = Entry(id: "a", createdAt: sampleDate, durationSeconds: 3, source: .voice, folder: "x")
         var done = pending
         done.text = "Ein ziemlich langer Gedanke über die Arbeit, der weit mehr als achtzig Zeichen hat, honestly."
-        #expect(CaptureViewModel.preview(of: pending) == "Wird transkribiert …")
+        #expect(CaptureViewModel.preview(of: pending) == "transcribing …")
         #expect(CaptureViewModel.preview(of: done).count <= 81)
         #expect(CaptureViewModel.preview(of: done).hasSuffix("…"))
     }

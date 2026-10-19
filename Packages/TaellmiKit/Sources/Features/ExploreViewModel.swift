@@ -89,7 +89,7 @@ public final class ExploreViewModel {
                 entries = try await library.search(query)
             }
         } catch {
-            errorMessage = "Einträge konnten nicht geladen werden."
+            errorMessage = "couldn't load your thoughts. try again."
         }
     }
 
@@ -102,7 +102,7 @@ public final class ExploreViewModel {
         do {
             setDetail(try await library.detail(id: id))
         } catch {
-            errorMessage = "Eintrag konnte nicht geöffnet werden."
+            errorMessage = "couldn't open the thought. try again."
         }
     }
 
@@ -115,7 +115,7 @@ public final class ExploreViewModel {
             try await library.saveText(id: id, text: text)
             savedText = text
         } catch {
-            errorMessage = "Änderungen konnten nicht gespeichert werden."
+            errorMessage = "couldn't save the thought. your text is still here, so try again."
         }
     }
 
@@ -127,7 +127,7 @@ public final class ExploreViewModel {
             setDetail(nil)
             await refresh()
         } catch {
-            errorMessage = "Eintrag konnte nicht gelöscht werden."
+            errorMessage = "couldn't move the thought to trash. try again."
         }
     }
 

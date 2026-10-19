@@ -20,7 +20,7 @@ public struct ExploreView: View {
             if let detail = model.detail {
                 EntryDetailView(model: model, detail: detail)
             } else {
-                ContentUnavailableView("Kein Eintrag gewählt", systemImage: "text.alignleft")
+                ContentUnavailableView("no thought selected", systemImage: "text.alignleft")
             }
         }
         .frame(minWidth: 900, minHeight: 560)
@@ -32,7 +32,7 @@ public struct ExploreView: View {
 
     private var sidebar: some View {
         List {
-            Section("Zeitraum") {
+            Section("time") {
                 ForEach(EntryQuery.Period.allCases, id: \.self) { period in
                     sidebarRow(
                         Self.label(for: period), icon: "calendar",
@@ -43,19 +43,19 @@ public struct ExploreView: View {
                     }
                 }
             }
-            Section("Quelle") {
-                sidebarRow("Alle", icon: "tray.full", selected: model.query.sources == nil) {
+            Section("source") {
+                sidebarRow("all", icon: "tray.full", selected: model.query.sources == nil) {
                     model.query.sources = nil
                 }
-                sidebarRow("Gesprochen", icon: "waveform", selected: model.query.sources == [.voice]) {
+                sidebarRow("spoken", icon: "waveform", selected: model.query.sources == [.voice]) {
                     model.query.sources = [.voice]
                 }
-                sidebarRow("Getippt", icon: "keyboard", selected: model.query.sources == [.typed]) {
+                sidebarRow("typed", icon: "keyboard", selected: model.query.sources == [.typed]) {
                     model.query.sources = [.typed]
                 }
             }
             Section {
-                sidebarRow("Papierkorb", icon: "trash", selected: model.showsTrash) { model.showsTrash = true }
+                sidebarRow("trash", icon: "trash", selected: model.showsTrash) { model.showsTrash = true }
             }
         }
         .listStyle(.sidebar)
@@ -86,19 +86,19 @@ public struct ExploreView: View {
                     Text(entry.createdAt, format: .dateTime.weekday().day().month().hour().minute())
                         .font(.caption).foregroundStyle(.secondary)
                 }
-                Text(entry.text.isEmpty ? "Wird transkribiert …" : entry.text)
+                Text(entry.text.isEmpty ? "transcribing …" : entry.text)
                     .lineLimit(2)
                     .foregroundStyle(entry.text.isEmpty ? .secondary : .primary)
             }
             .padding(.vertical, 2)
             .tag(entry.id)
         }
-        .searchable(text: $model.query.text, prompt: "Suchen")
+        .searchable(text: $model.query.text, prompt: "search")
         .onChange(of: model.query.text) { Task { await model.refresh() } }
         .overlay {
             if model.entries.isEmpty {
                 ContentUnavailableView(
-                    model.query.text.isEmpty ? "Noch keine Einträge" : "Nichts gefunden", systemImage: "magnifyingglass"
+                    model.query.text.isEmpty ? "no thoughts yet." : "nothing found.", systemImage: "magnifyingglass"
                 )
             }
         }
@@ -114,23 +114,23 @@ public struct ExploreView: View {
                     Text(item.entry.text).lineLimit(2)
                 }
                 Spacer()
-                Button("Wiederherstellen") { Task { await model.restore(item) } }
-                Button("Löschen", role: .destructive) { Task { await model.deleteForever(item) } }
-                    .help("Legt den Eintrag in den Papierkorb von macOS.")
+                Button("restore") { Task { await model.restore(item) } }
+                Button("delete for good", role: .destructive) { Task { await model.deleteForever(item) } }
+                    .help("moves the thought to the macOS Trash.")
             }
         }
         .overlay {
-            if model.trashedEntries.isEmpty { ContentUnavailableView("Papierkorb ist leer", systemImage: "trash") }
+            if model.trashedEntries.isEmpty { ContentUnavailableView("trash is empty.", systemImage: "trash") }
         }
     }
 
     static func label(for period: EntryQuery.Period) -> String {
         switch period {
-        case .all: "Alle"
-        case .today: "Heute"
-        case .week: "Letzte 7 Tage"
-        case .month: "Letzte 30 Tage"
-        case .year: "Letztes Jahr"
+        case .all: "all"
+        case .today: "today"
+        case .week: "last 7 days"
+        case .month: "last 30 days"
+        case .year: "last year"
         }
     }
 }
@@ -153,10 +153,10 @@ struct EntryDetailView: View {
                         undoManager?.registerUndo(withTarget: model) { model in
                             Task { await model.undoTrash() }
                         }
-                        undoManager?.setActionName("Eintrag löschen")
+                        undoManager?.setActionName("delete thought")
                     }
                 } label: {
-                    Label("Löschen", systemImage: "trash")
+                    Label("delete thought", systemImage: "trash")
                 }
                 .keyboardShortcut(.delete, modifiers: .command)
             }
@@ -166,7 +166,7 @@ struct EntryDetailView: View {
                 .padding(8)
                 .background(.background.secondary, in: RoundedRectangle(cornerRadius: 8))
             if !detail.corrections.isEmpty {
-                Text("Vokabular: " + detail.corrections.map { "\($0.from) → \($0.to)" }.joined(separator: ", "))
+                Text("spellings: " + detail.corrections.map { "\($0.from) → \($0.to)" }.joined(separator: ", "))
                     .font(.caption).foregroundStyle(.secondary)
             }
             if detail.entry.source == .voice {
@@ -185,14 +185,14 @@ struct RecordingSection: View {
     @State private var isExpanded = false
 
     var body: some View {
-        DisclosureGroup("Aufnahme", isExpanded: $isExpanded) {
+        DisclosureGroup("recording", isExpanded: $isExpanded) {
             if let url = detail.recordingURL {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
                         Button {
                             togglePlayback(url: url)
                         } label: {
-                            Label("Abspielen / Pause", systemImage: "playpause.fill")
+                            Label("play / pause", systemImage: "playpause.fill")
                         }
                         if let duration = detail.entry.durationSeconds {
                             Text(Duration.seconds(duration), format: .time(pattern: .minuteSecond))
@@ -221,7 +221,7 @@ struct RecordingSection: View {
                     .frame(maxHeight: 160)
                 }
             } else {
-                Text("Aufnahme gelöscht").foregroundStyle(.secondary)
+                Text("recording deleted.").foregroundStyle(.secondary)
             }
         }
         .onChange(of: detail.entry.id) {

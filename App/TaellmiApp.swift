@@ -14,7 +14,7 @@ struct TaellmiApp: App {
                     hotkeyLabel: controller.hotkeyLabel, hotkeyWarning: controller.hotkeyWarning,
                     onOpenArchive: { controller.openExplore() })
             } else {
-                Text(controller.startupError ?? "Starte …").padding()
+                Text(controller.startupError ?? "starting …").padding()
             }
         } label: {
             Image(systemName: controller.isRecording ? "record.circle.fill" : "waveform")
@@ -30,7 +30,7 @@ struct TaellmiApp: App {
                     hotkey: hotkey, exploreHotkey: exploreHotkey, appearance: environment.appearanceModel,
                     vocabulary: environment.vocabularyModel)
             } else {
-                Text(controller.startupError ?? "Starte …").padding()
+                Text(controller.startupError ?? "starting …").padding()
             }
         }
     }

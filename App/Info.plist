@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>de</string>
+	<string>en</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -25,8 +25,8 @@
 	<key>LSUIElement</key>
 	<true/>
 	<key>NSContactsUsageDescription</key>
-	<string>tällmi liest Namen aus deinen Kontakten, damit sie in Einträgen richtig geschrieben werden. Die Kontakte bleiben auf diesem Mac.</string>
+	<string>tällmi reads names from your contacts so they are spelled right in your thoughts. contacts stay on this mac.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>tällmi nimmt auf, was du sagst, und transkribiert es ausschließlich auf diesem Mac.</string>
+	<string>tällmi listens to what you say and transcribes it on this mac only.</string>
 </dict>
 </plist>

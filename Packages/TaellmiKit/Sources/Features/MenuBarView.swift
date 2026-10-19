@@ -24,26 +24,26 @@ public struct MenuBarView: View {
         VStack(alignment: .leading, spacing: 12) {
             recordButton
             if let hotkeyWarning {
-                Label(hotkeyWarning + " Ändern unter Einstellungen.", systemImage: "exclamationmark.triangle.fill")
+                Label(hotkeyWarning + " change it in settings.", systemImage: "exclamationmark.triangle.fill")
                     .font(.caption)
                     .foregroundStyle(.orange)
             }
             if model.isRecording {
-                Text(model.livePreviewText.isEmpty ? "Ich höre zu …" : model.livePreviewText)
+                Text(model.livePreviewText.isEmpty ? "listening …" : model.livePreviewText)
                     .font(.callout)
                     .foregroundStyle(model.livePreviewText.isEmpty ? .secondary : .primary)
                     .frame(maxWidth: .infinity, minHeight: 60, alignment: .topLeading)
                     .padding(8)
                     .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
                     .animation(.easeOut(duration: 0.15), value: model.livePreviewText)
-                    .accessibilityLabel("Live-Vorschau")
+                    .accessibilityLabel("live transcript")
             }
             if let error = model.errorMessage {
                 Text(error).font(.callout).foregroundStyle(.red)
             }
             Divider()
             if model.recentEntries.isEmpty {
-                Text("Noch keine Einträge.").foregroundStyle(.secondary)
+                Text("no thoughts yet.").foregroundStyle(.secondary)
             } else {
                 ForEach(model.recentEntries) { entry in
                     VStack(alignment: .leading, spacing: 2) {
@@ -55,12 +55,12 @@ public struct MenuBarView: View {
             }
             Divider()
             HStack {
-                Button("Archiv öffnen", action: onOpenArchive)
+                Button("open tällmi", action: onOpenArchive)
                 Spacer()
-                SettingsLink { Text("Einstellungen …") }
+                SettingsLink { Text("settings …") }
                     // A menu-bar-only app must bring itself to the front, or the window opens behind others.
                     .simultaneousGesture(TapGesture().onEnded { NSApplication.shared.activate() })
-                Button("Beenden") { NSApplication.shared.terminate(nil) }
+                Button("quit") { NSApplication.shared.terminate(nil) }
             }
             .buttonStyle(.borderless)
         }
@@ -79,11 +79,11 @@ public struct MenuBarView: View {
                     .foregroundStyle(model.isRecording ? .red : .accentColor)
                 VStack(alignment: .leading) {
                     if let started = model.recordingStartedAt {
-                        Text("Aufnahme läuft")
+                        Text("listening")
                         Text(timerInterval: started...Date.distantFuture, countsDown: false)
                             .monospacedDigit().foregroundStyle(.secondary)
                     } else {
-                        Text(model.isSaving ? "Speichere …" : "Aufnahme starten")
+                        Text(model.isSaving ? "saving …" : "new thought")
                         Text(hotkeyLabel).font(.caption).foregroundStyle(.secondary)
                     }
                 }
@@ -93,6 +93,6 @@ public struct MenuBarView: View {
         }
         .buttonStyle(.plain)
         .disabled(model.isSaving)
-        .accessibilityLabel(model.isRecording ? "Aufnahme beenden" : "Aufnahme starten")
+        .accessibilityLabel(model.isRecording ? "save thought" : "new thought")
     }
 }

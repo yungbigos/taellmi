@@ -41,7 +41,7 @@ public final class AppController {
             try await environment.start()
         } catch {
             logger.error("Start failed: \(String(describing: error))")
-            startupError = "tällmi konnte nicht starten. Details stehen im Systemprotokoll."
+            startupError = "tällmi couldn't start. details are in the system log."
             return
         }
         logger.notice("macOS reports \(SystemHotkeyChecker.systemShortcuts().count) system shortcuts")
@@ -69,7 +69,7 @@ public final class AppController {
 
     private func registerExploreHotkey(_ hotkey: Hotkey) {
         exploreWarning = checker.conflict(for: hotkey).map {
-            "Archiv-Kürzel: " + HotkeySettingsViewModel.conflictText($0)
+            "open tällmi: " + HotkeySettingsViewModel.conflictText($0)
         }
         updateWarning()
         guard let explore else { return }
@@ -90,7 +90,7 @@ public final class AppController {
         hotkeys.register(hotkey, id: Self.captureHotkeyID) { Task { await companion.toggle() } }
     }
 
-    /// "⌥⌘ Leertaste"-style label for the menu.
+    /// "⌥⌘ space"-style label for the menu.
     public nonisolated static func label(for hotkey: Hotkey) -> String {
         hotkey.displayLabel
     }

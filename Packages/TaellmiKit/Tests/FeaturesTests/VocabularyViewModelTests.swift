@@ -57,6 +57,6 @@ struct VocabularyViewModelTests {
         await model.load()
         await model.setUsesContacts(true)
         #expect(model.usesContacts == false)
-        #expect(model.message?.contains("Kontakte") == true)
+        #expect(model.message?.contains("contacts") == true)
     }
 }

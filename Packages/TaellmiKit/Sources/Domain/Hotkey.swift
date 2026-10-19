@@ -84,7 +84,7 @@ public struct Hotkey: Sendable, Equatable {
         return (parts + [keyName]).joined(separator: "+")
     }
 
-    /// "⌃⌥⌘T", "⌥⌘ Leertaste".
+    /// "⌃⌥⌘T", "⌥⌘ space".
     public var displayLabel: String {
         var symbols = ""
         if modifiers.contains(.control) { symbols += "⌃" }
@@ -92,7 +92,7 @@ public struct Hotkey: Sendable, Equatable {
         if modifiers.contains(.shift) { symbols += "⇧" }
         if modifiers.contains(.command) { symbols += "⌘" }
         switch key {
-        case .space: return symbols + " Leertaste"
+        case .space: return symbols + " space"
         case .escape: return symbols + "Esc"
         case .enter: return symbols + "↩"
         case .letter(let letter): return symbols + String(letter).uppercased()

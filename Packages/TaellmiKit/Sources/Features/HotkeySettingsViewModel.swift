@@ -31,7 +31,7 @@ public final class HotkeySettingsViewModel {
 
     public func load() async {
         guard let text = try? await store.current(), let hotkey = try? Hotkey(parsing: text) else {
-            warning = "Das gespeicherte Tastenkürzel ist ungültig. Bitte neu festlegen."
+            warning = "the saved shortcut is invalid. set a new one."
             return
         }
         label = hotkey.displayLabel
@@ -66,11 +66,11 @@ public final class HotkeySettingsViewModel {
             warning = nil
             apply(hotkey)
         } catch {
-            warning = "Tastenkürzel konnte nicht gespeichert werden."
+            warning = "couldn't save the shortcut. try again."
         }
     }
 
     public nonisolated static func conflictText(_ owner: String) -> String {
-        "Diese Kombination nutzt bereits \(owner). Beide reagieren dann gleichzeitig."
+        "\(owner) already uses this shortcut. both will react."
     }
 }

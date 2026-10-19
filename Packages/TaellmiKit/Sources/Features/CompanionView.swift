@@ -25,19 +25,19 @@ struct CompanionView: View {
         VStack(alignment: .leading, spacing: 6) {
             if showsSaved {
                 Button(action: onOpenSaved) {
-                    Label("Gespeichert – öffnen", systemImage: "checkmark.circle.fill")
+                    Label("saved.", systemImage: "checkmark.circle.fill")
                         .foregroundStyle(.green)
                 }
                 .buttonStyle(.plain)
             } else if let error = model.errorMessage {
                 Text(error).foregroundStyle(.red)
             } else {
-                Text(model.livePreviewText.isEmpty ? "Ich höre zu …" : model.livePreviewText)
+                Text(model.livePreviewText.isEmpty ? "listening …" : model.livePreviewText)
                     .foregroundStyle(model.livePreviewText.isEmpty ? .secondary : .primary)
                     .lineLimit(4)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .animation(.easeOut(duration: 0.15), value: model.livePreviewText)
-                TextField("… oder tippen", text: $model.typedText)
+                TextField("or type …", text: $model.typedText)
                     .textFieldStyle(.plain)
                     .font(.callout)
                     .focused($typingFocused)

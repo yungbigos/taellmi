@@ -201,7 +201,7 @@ public final class CompanionController {
         panel.contentView = NSHostingView(
             rootView: CompanionView(
                 model: model, showsSaved: showsSaved, focusRequest: focusRequest,
-                hint: "\(settings.finishKey.displayLabel) fertig · \(settings.cancelKey.displayLabel) verwerfen",
+                hint: "\(settings.finishKey.displayLabel) save · \(settings.cancelKey.displayLabel) discard",
                 onSubmitTyped: { [weak self] in Task { await self?.submitTyped() } },
                 onOpenSaved: { [weak self] in self?.openSavedEntry() }
             )

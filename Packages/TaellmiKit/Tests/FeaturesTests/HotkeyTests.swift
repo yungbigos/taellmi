@@ -45,7 +45,7 @@ struct HotkeyRoundTripTests {
     @Test("shows a readable label")
     func label() throws {
         #expect(try Hotkey(parsing: "control+option+command+t").displayLabel == "⌃⌥⌘T")
-        #expect(try Hotkey(parsing: "option+command+space").displayLabel == "⌥⌘ Leertaste")
+        #expect(try Hotkey(parsing: "option+command+space").displayLabel == "⌥⌘ space")
     }
 }
 

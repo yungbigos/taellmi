@@ -30,7 +30,7 @@ public struct SystemHotkeyChecker: HotkeyConflictChecking {
             shortcut.isEnabled && shortcut.keyCode == Int(hotkey.keyCode)
                 && shortcut.modifiers & Self.modifierMask == Int(hotkey.carbonModifiers)
         }
-        return clash ? "ein Kurzbefehl von macOS (z. B. Spotlight oder die Finder-Suche)" : nil
+        return clash ? "a macOS shortcut (e.g. Spotlight or Finder search)" : nil
     }
 
     public static func systemShortcuts() -> [SystemShortcut] {

@@ -12,13 +12,13 @@ public struct VocabularySettingsView: View {
         Form {
             Section {
                 HStack {
-                    TextField("Name hinzufügen, z. B. Marleen", text: $model.newTerm)
+                    TextField("add a name, e.g. Marleen", text: $model.newTerm)
                         .onSubmit { Task { await model.addNewTerm() } }
-                    Button("Hinzufügen") { Task { await model.addNewTerm() } }
+                    Button("add") { Task { await model.addNewTerm() } }
                         .disabled(model.newTerm.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
                 if model.terms.isEmpty {
-                    Text("Noch keine Namen.").foregroundStyle(.secondary)
+                    Text("no names yet.").foregroundStyle(.secondary)
                 }
                 ForEach(model.terms, id: \.self) { term in
                     HStack {
@@ -30,24 +30,24 @@ public struct VocabularySettingsView: View {
                             Image(systemName: "minus.circle")
                         }
                         .buttonStyle(.borderless)
-                        .accessibilityLabel("\(term) entfernen")
+                        .accessibilityLabel("remove \(term)")
                     }
                 }
             } header: {
-                Text("Vokabular")
+                Text("spellings")
             } footer: {
                 Text(
-                    "Wenn ein neuer Eintrag ähnlich klingt, übernimmt tällmi deine Schreibweise. Jede Korrektur wird im Eintrag vermerkt."
+                    "when a new thought sounds like one of these names, tällmi uses your spelling. each correction is noted on the thought."
                 )
             }
             Section {
                 Toggle(
-                    "Namen aus meinen Kontakten verwenden",
+                    "use names from my contacts",
                     isOn: Binding(
                         get: { model.usesContacts },
                         set: { on in Task { await model.setUsesContacts(on) } }))
             } footer: {
-                Text("Die Kontakte werden nur auf diesem Mac gelesen und nirgends gespeichert.")
+                Text("contacts are read on this mac only and never stored.")
             }
             if let message = model.message {
                 Text(message).foregroundStyle(.red)

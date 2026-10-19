@@ -77,7 +77,7 @@ public final class CaptureViewModel {
             lastSavedAt = Date()
         } catch {
             logger.error("Could not save typed entry: \(String(describing: error))")
-            errorMessage = "Notiz konnte nicht gespeichert werden."
+            errorMessage = "couldn't save the thought. your text is still here, so try again."
         }
     }
 
@@ -94,7 +94,7 @@ public final class CaptureViewModel {
     /// The short line shown for an Entry in the menu.
     public nonisolated static func preview(of entry: Entry, maxLength: Int = 80) -> String {
         let text = entry.text.replacingOccurrences(of: "\n", with: " ").trimmingCharacters(in: .whitespaces)
-        guard !text.isEmpty else { return "Wird transkribiert …" }
+        guard !text.isEmpty else { return "transcribing …" }
         guard text.count > maxLength else { return text }
         return text.prefix(maxLength).trimmingCharacters(in: .whitespaces) + "…"
     }
@@ -106,10 +106,10 @@ public final class CaptureViewModel {
             recordingStartedAt = Date()
             await startPreview()
         } catch CaptureError.microphoneDenied {
-            errorMessage = "Kein Zugriff aufs Mikrofon. Erlaube tällmi den Zugriff in den Systemeinstellungen."
+            errorMessage = "i can't hear you. allow the microphone in System Settings."
         } catch {
             logger.error("Could not start recording: \(String(describing: error))")
-            errorMessage = "Aufnahme konnte nicht starten."
+            errorMessage = "couldn't start recording. try again."
         }
     }
 
@@ -161,7 +161,7 @@ public final class CaptureViewModel {
             recordingStartedAt = nil
             stopPreview()
             logger.error("Could not save recording: \(String(describing: error))")
-            errorMessage = "Aufnahme konnte nicht gespeichert werden."
+            errorMessage = "couldn't save the recording. try again."
         }
     }
 }

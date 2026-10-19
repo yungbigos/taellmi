@@ -29,7 +29,7 @@ public final class VocabularyViewModel {
             terms = try await settings.terms()
             usesContacts = try await settings.usesContacts()
         } catch {
-            message = "Vokabular konnte nicht geladen werden."
+            message = "couldn't load your spellings. try again."
         }
     }
 
@@ -41,7 +41,7 @@ public final class VocabularyViewModel {
             newTerm = ""
             terms = try await settings.terms()
         } catch {
-            message = "„\(term)“ konnte nicht gespeichert werden."
+            message = "couldn't save \"\(term)\". try again."
         }
     }
 
@@ -50,7 +50,7 @@ public final class VocabularyViewModel {
             try await settings.remove(term)
             terms = try await settings.terms()
         } catch {
-            message = "„\(term)“ konnte nicht entfernt werden."
+            message = "couldn't remove \"\(term)\". try again."
         }
     }
 
@@ -59,10 +59,10 @@ public final class VocabularyViewModel {
         do {
             usesContacts = try await settings.setUsesContacts(on)
             if on, !usesContacts {
-                message = "Kein Zugriff auf Kontakte. Erlaube ihn in den Systemeinstellungen unter Datenschutz."
+                message = "no access to contacts. allow it in System Settings → Privacy & Security."
             }
         } catch {
-            message = "Einstellung konnte nicht gespeichert werden."
+            message = "couldn't save the setting. try again."
         }
     }
 }

@@ -19,7 +19,6 @@ public enum SettingKeys {
     public static let textCase = "appearance.text_case"
     public static let exploreHotkey = "explore.hotkey"
     public static let exploreAutosaveDelaySeconds = "explore.autosave_delay_s"
-    public static let exploreComposerFullScreen = "explore.composer_fullscreen"
     public static let companionCursorOffset = "companion.cursor_offset"
     public static let companionSavedDisplaySeconds = "companion.saved_display_s"
     public static let companionFollowsCursor = "companion.follows_cursor"
@@ -32,7 +31,7 @@ public enum SettingKeys {
         [
             hotkey, sampleRate, idleUnloadSeconds, maxJobAttempts, segmentMaxPauseSeconds, retryBackoffSeconds,
             waitForModelSeconds, maintenanceIntervalSeconds, vocabularyMinSimilarityNames, vocabularyMinSimilarityOther,
-            vocabularyUseContacts, textCase, exploreHotkey, exploreAutosaveDelaySeconds, exploreComposerFullScreen,
+            vocabularyUseContacts, textCase, exploreHotkey, exploreAutosaveDelaySeconds,
             companionCursorOffset,
             companionSavedDisplaySeconds, companionFollowsCursor, companionFinishKey, companionCancelKey,
             companionFollowSmoothing,

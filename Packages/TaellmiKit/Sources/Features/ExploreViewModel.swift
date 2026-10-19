@@ -63,8 +63,6 @@ public final class ExploreViewModel {
     public var composerText = "" {
         didSet { scheduleComposerAutosave() }
     }
-    /// Whether the composer puts the window into macOS full screen (from config).
-    public var composerUsesFullScreen = true
     @ObservationIgnored private var composedID: String?
     @ObservationIgnored private var composedSavedText = ""
     @ObservationIgnored private var composerAutosaveTask: Task<Void, Never>?

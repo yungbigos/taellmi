@@ -1,21 +1,35 @@
 import SwiftUI
 
-/// tälli for now: an organic shape that breathes slowly and swells with your voice.
-/// A placeholder until the real avatar; respects Reduce Motion.
-struct CompanionOrb: View {
-    var level: Float
-    var isListening: Bool
+/// What tälli is doing right now. Every place that shows tälli passes one of these.
+public enum TalliMood: Sendable, Equatable {
+    /// Calm, breathing slowly.
+    case idle
+    /// Listening; swells with the voice level (0…1).
+    case listening(level: Float)
+    /// Just saved something.
+    case saved
+}
+
+/// tälli, the one and only drawing of the character. Every screen uses this view, so a new look
+/// (skin, character) is a change in this file only.
+///
+/// For now an organic shape that breathes slowly and swells with your voice; respects Reduce Motion.
+public struct TalliView: View {
+    var mood: TalliMood
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    var body: some View {
+    public init(mood: TalliMood) {
+        self.mood = mood
+    }
+
+    public var body: some View {
         TimelineView(.animation(paused: reduceMotion)) { context in
             Canvas { canvas, size in
                 let time = context.date.timeIntervalSinceReferenceDate
                 let center = CGPoint(x: size.width / 2, y: size.height / 2)
-                let voice = isListening ? CGFloat(level) : 0
+                let voice = CGFloat(level)
                 let base = min(size.width, size.height) * (0.30 + 0.10 * voice)
-                let path = Self.blob(
-                    center: center, radius: base, time: reduceMotion ? 0 : time, energy: voice)
+                let path = Self.blob(center: center, radius: base, time: reduceMotion ? 0 : time, energy: voice)
                 let gradient = Gradient(colors: [
                     Color(red: 0.98, green: 0.62, blue: 0.42), Color(red: 0.86, green: 0.36, blue: 0.62),
                     Color(red: 0.42, green: 0.40, blue: 0.92),
@@ -28,7 +42,20 @@ struct CompanionOrb: View {
                 canvas.stroke(path, with: .color(.white.opacity(0.35)), lineWidth: 1)
             }
         }
-        .accessibilityLabel(isListening ? "tälli is listening" : "tälli")
+        .accessibilityLabel(accessibilityText)
+    }
+
+    private var level: Float {
+        if case .listening(let level) = mood { return level }
+        return 0
+    }
+
+    private var accessibilityText: String {
+        switch mood {
+        case .idle: "tälli"
+        case .listening: "tälli is listening"
+        case .saved: "tälli, saved"
+        }
     }
 
     /// A closed, wobbling outline: slow breathing waves plus faster ripples that grow with the voice.

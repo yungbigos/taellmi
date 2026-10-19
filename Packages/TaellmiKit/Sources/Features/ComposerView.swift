@@ -1,13 +1,16 @@
-import AppKit
 import SwiftUI
 
-/// The full-window composer: only your text. Saves itself as you write; ⌘↩ or esc closes it.
+/// The composer fills the tällmi window (the window itself is not resized): tälli in the middle,
+/// then only your text. Saves itself as you write; ⌘↩ or esc closes it.
 struct ComposerView: View {
     @Bindable var model: ExploreViewModel
     @FocusState private var focused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
+            TalliView(mood: .idle)
+                .frame(width: 72, height: 72)
+                .padding(.top, 40)
             TextEditor(text: $model.composerText)
                 .font(.title3)
                 .lineSpacing(6)
@@ -15,7 +18,7 @@ struct ComposerView: View {
                 .focused($focused)
                 .frame(maxWidth: 720)
                 .padding(.horizontal, 40)
-                .padding(.top, 60)
+                .padding(.top, 24)
                 .onKeyPress(.escape) {
                     finish()
                     return .handled
@@ -36,26 +39,5 @@ struct ComposerView: View {
 
     private func finish() {
         Task { await model.finishComposing() }
-    }
-}
-
-/// Puts the window into macOS full screen while composing, and back out afterwards.
-struct ComposerFullScreen: ViewModifier {
-    var isComposing: Bool
-    var enabled: Bool
-    @State private var enteredFullScreen = false
-
-    func body(content: Content) -> some View {
-        content.onChange(of: isComposing) { _, composing in
-            guard enabled, let window = NSApplication.shared.keyWindow else { return }
-            let isFullScreen = window.styleMask.contains(.fullScreen)
-            if composing, !isFullScreen {
-                enteredFullScreen = true
-                window.toggleFullScreen(nil)
-            } else if !composing, enteredFullScreen, isFullScreen {
-                enteredFullScreen = false
-                window.toggleFullScreen(nil)
-            }
-        }
     }
 }

@@ -10,7 +10,6 @@
   {"key": "companion.follows_cursor", "type": "bool", "value": true, "seed_version": 1},
   {"key": "companion.saved_display_s", "type": "number", "value": 1.4, "seed_version": 1},
   {"key": "explore.autosave_delay_s", "type": "number", "value": 0.8, "seed_version": 1},
-  {"key": "explore.composer_fullscreen", "type": "bool", "value": true, "seed_version": 1},
   {"key": "explore.hotkey", "type": "string", "value": "control+option+a", "seed_version": 1},
   {"key": "models.idle_unload_s", "type": "number", "value": 60, "seed_version": 1},
   {"key": "pipeline.max_attempts", "type": "number", "value": 3, "seed_version": 1},

@@ -13,7 +13,7 @@ struct CompanionView: View {
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
-            CompanionOrb(level: model.level, isListening: model.isRecording)
+            TalliView(mood: showsSaved ? .saved : model.isRecording ? .listening(level: model.level) : .idle)
                 .frame(width: 64, height: 64)
             bubble
         }

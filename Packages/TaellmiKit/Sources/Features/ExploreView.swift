@@ -22,7 +22,6 @@ public struct ExploreView: View {
                 splitView
             }
         }
-        .modifier(ComposerFullScreen(isComposing: model.isComposing, enabled: model.composerUsesFullScreen))
     }
 
     private var splitView: some View {

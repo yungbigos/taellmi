@@ -32,7 +32,7 @@ tällmi is a local-only, privacy-first macOS voice journal. You talk into it in 
 scripts/check.sh               # the gate: format lint → build → fast tests (run before saying "done")
 scripts/check.sh --fix         # same, but auto-format first
 scripts/test-integration.sh    # real models on audio fixtures (slow, needs downloaded models)
-scripts/run-app.sh             # generate the Xcode project, build, and launch the app (--build: build only)
+scripts/run-app.sh             # build, install to ~/Applications/taellmi.app, launch (--build: build only)
 scripts/download-model.sh <id> # the one user-started network step: fetch a seed model, verify SHA-256
 ```
 

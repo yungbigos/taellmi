@@ -69,7 +69,7 @@ public struct EntryIndex: Sendable {
     /// Re-reads every Entry folder and makes the index match the Archive exactly.
     @discardableResult
     public func rebuild(from files: EntryFileStore) throws -> RebuildReport {
-        var loaded: [(entry: Entry, transcript: Transcript?)] = []
+        var loaded: [EntryFileStore.LoadedEntry] = []
         var invalid: [String] = []
         for folder in try files.allEntryFolders() {
             do {

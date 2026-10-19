@@ -48,6 +48,8 @@ let package = Package(
         ),
         .target(name: "Audio", dependencies: ["Domain"], swiftSettings: strict),
         .target(name: "Features", dependencies: ["Domain"], swiftSettings: ui),
+        /// Apple system frameworks used as data sources (NaturalLanguage, Contacts).
+        .target(name: "SystemServices", dependencies: ["Domain"], swiftSettings: strict),
 
         // MARK: Engines (the only targets that import ML SDKs)
         .target(
@@ -61,7 +63,8 @@ let package = Package(
         .target(
             name: "AppComposition",
             dependencies: [
-                "Domain", "Persistence", "Config", "Pipeline", "Audio", "Features", "FluidAudioEngine",
+                "Domain", "Persistence", "Config", "Pipeline", "Audio", "Features", "SystemServices",
+                "FluidAudioEngine",
             ],
             swiftSettings: ui
         ),
@@ -102,8 +105,10 @@ let package = Package(
             name: "FeaturesTests", dependencies: ["Features", "TestSupport"], swiftSettings: ui),
 
         .testTarget(
-            name: "AppCompositionTests", dependencies: ["AppComposition", "Domain", "Persistence", "TestSupport"],
+            name: "AppCompositionTests",
+            dependencies: ["AppComposition", "Config", "Domain", "Persistence", "TestSupport"],
             swiftSettings: ui),
+        .testTarget(name: "SystemServicesTests", dependencies: ["SystemServices", "Domain"], swiftSettings: strict),
         .testTarget(
             name: "FluidAudioEngineTests", dependencies: ["FluidAudioEngine", "Domain"], swiftSettings: strict),
 

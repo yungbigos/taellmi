@@ -97,6 +97,19 @@ Decisions are locked (see section 3); we fix model choices later if real use sho
   - the live preview (SpeechTranscriber)
   - typed Entries in the UI
 
+### Vocabulary (built 2026-10-19)
+- **Your own spelling for names in new voice Entries** (Marlene → Marleen).
+  - Matching uses the Kölner Phonetik sound code.
+  - Guards stop false corrections: Apple's NaturalLanguage tags names and word classes, so verbs and function words are never touched, and ordinary nouns need high spelling similarity. If two Vocabulary terms sound alike, nothing is replaced.
+  - Corrections are recorded in `entry.md` (`vocabulary_corrections`). The Transcript stays verbatim.
+- **Where the names come from:**
+  - your own list in `curation.json`
+  - optionally, macOS Contacts (opt-in in Settings)
+  - later, person Concepts
+- **Still open:**
+  - pass the Vocabulary as contextual strings to the live preview (Phase 1)
+  - FluidAudio CTC vocabulary boosting (English-trained; needs a German test)
+
 ### Phase 1 — Capture and archive (MVP you can use daily)
 - Menu-bar app with a global hotkey: press → record → press again → done. Optional push-to-talk.
 - Live transcript preview while you talk (SpeechTranscriber, set to de-DE, so English words may look odd in the preview only); the final transcript from Parakeet v3 (automatic language detection, handles German with English mixed in) replaces it in the background.

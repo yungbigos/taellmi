@@ -11,6 +11,16 @@ public struct EntryFileStore: Sendable {
         case invalidEntryFile(folder: String, reason: String)
     }
 
+    /// An Entry as read back from the Archive.
+    public struct LoadedEntry: Sendable, Equatable {
+        public var entry: Entry
+        public var transcript: Transcript?
+        /// Vocabulary corrections the app made when it first wrote the Text.
+        public var corrections: [VocabularyCorrection]
+    }
+
+    static let correctionsKey = "vocabulary_corrections"
+
     static let documentName = "entry.md"
     static let recordingName = "recording.m4a"
     static let transcriptName = "transcript.json"
@@ -44,9 +54,13 @@ public struct EntryFileStore: Sendable {
         return entry
     }
 
-    /// Stores the Transcript. Only the very first Transcript of an Entry becomes its Text;
-    /// everything else in `entry.md` (including edits on disk) is left as it is.
-    public func saveTranscript(_ transcript: Transcript, for entry: Entry) throws -> Entry {
+    /// Stores the Transcript. Only the very first Transcript of an Entry becomes its Text (as `firstText`
+    /// if given, e.g. after Vocabulary correction); everything else in `entry.md`, including edits made on
+    /// disk, is left as it is.
+    public func saveTranscript(
+        _ transcript: Transcript, for entry: Entry, firstText: String? = nil,
+        corrections: [VocabularyCorrection] = []
+    ) throws -> Entry {
         let transcriptPath = "\(entry.folder)/\(Self.transcriptName)"
         let isFirstTranscript = !storage.exists(transcriptPath)
         let encoder = JSONEncoder()
@@ -55,17 +69,24 @@ public struct EntryFileStore: Sendable {
 
         var current = try loadEntry(folder: entry.folder).entry
         if isFirstTranscript, current.text.isEmpty {
-            current.text = transcript.text
-            try saveText(current)
+            current.text = firstText ?? transcript.text
+            try saveText(current, corrections: corrections)
         }
         return current
     }
 
     /// Writes the Entry's metadata and Text to `entry.md`, keeping front-matter keys the app doesn't know.
     public func saveText(_ entry: Entry) throws {
+        try saveText(entry, corrections: [])
+    }
+
+    private func saveText(_ entry: Entry, corrections: [VocabularyCorrection]) throws {
         let path = "\(entry.folder)/\(Self.documentName)"
         var metadata: [String: JSONValue] = [:]
         if storage.exists(path), let existing = try? document(at: path) { metadata = existing.metadata }
+        if !corrections.isEmpty {
+            metadata[Self.correctionsKey] = .array(corrections.map { .string("\($0.from) → \($0.to)") })
+        }
         metadata["id"] = .string(entry.id)
         metadata["created"] = .string(
             entry.createdAt.formatted(Date.ISO8601FormatStyle(timeZone: calendar.timeZone)))
@@ -82,7 +103,7 @@ public struct EntryFileStore: Sendable {
     }
 
     /// Reads an Entry and its Transcript (if still kept) back from the Archive.
-    public func loadEntry(folder: String) throws -> (entry: Entry, transcript: Transcript?) {
+    public func loadEntry(folder: String) throws -> LoadedEntry {
         let document = try document(at: "\(folder)/\(Self.documentName)")
         let meta = document.metadata
         guard let id = meta["id"]?.stringValue,
@@ -103,7 +124,14 @@ public struct EntryFileStore: Sendable {
             id: id, createdAt: created, durationSeconds: meta["duration_s"]?.doubleValue,
             source: EntrySource(rawValue: source), title: meta["title"]?.stringValue, folder: folder, text: text,
             transcriptModelID: transcript?.modelID)
-        return (entry, transcript)
+        var corrections: [VocabularyCorrection] = []
+        if case .array(let items)? = meta[Self.correctionsKey] {
+            corrections = items.compactMap { item in
+                let parts = item.stringValue?.components(separatedBy: " → ") ?? []
+                return parts.count == 2 ? VocabularyCorrection(from: parts[0], to: parts[1]) : nil
+            }
+        }
+        return LoadedEntry(entry: entry, transcript: transcript, corrections: corrections)
     }
 
     /// A readable URL of the Entry's recording, for speech-to-text.

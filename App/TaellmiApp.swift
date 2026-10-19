@@ -18,5 +18,13 @@ struct TaellmiApp: App {
                 .accessibilityLabel("tällmi")
         }
         .menuBarExtraStyle(.window)
+
+        Settings {
+            if let environment = controller.environment {
+                VocabularySettingsView(model: environment.vocabularyModel)
+            } else {
+                Text(controller.startupError ?? "Starte …").padding()
+            }
+        }
     }
 }

@@ -13,10 +13,14 @@ public enum SettingKeys {
     public static let retryBackoffSeconds = "pipeline.retry_backoff_s"
     public static let waitForModelSeconds = "pipeline.wait_for_model_s"
     public static let maintenanceIntervalSeconds = "app.maintenance_interval_s"
+    public static let vocabularyMinSimilarityNames = "vocabulary.min_similarity_names"
+    public static let vocabularyMinSimilarityOther = "vocabulary.min_similarity_other"
+    public static let vocabularyUseContacts = "vocabulary.use_contacts"
 
     public static let all = [
         hotkey, sampleRate, idleUnloadSeconds, maxJobAttempts, segmentMaxPauseSeconds, retryBackoffSeconds,
-        waitForModelSeconds, maintenanceIntervalSeconds,
+        waitForModelSeconds, maintenanceIntervalSeconds, vocabularyMinSimilarityNames,
+        vocabularyMinSimilarityOther, vocabularyUseContacts,
     ]
 }
 
@@ -46,6 +50,11 @@ public struct SettingsStore: Sendable {
             throw SettingsError.wrongType(key: key, expected: "number")
         }
         return number
+    }
+
+    public func bool(_ key: String) throws -> Bool {
+        guard let bool = try value(key).boolValue else { throw SettingsError.wrongType(key: key, expected: "bool") }
+        return bool
     }
 
     public func string(_ key: String) throws -> String {

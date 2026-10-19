@@ -76,3 +76,48 @@ public actor FakeJournal: Journal {
         for continuation in continuations { continuation.yield(entries) }
     }
 }
+
+/// Treats capitalised words as content words, the listed ones as names, everything else as function words.
+public struct FakeWordClassifier: WordClassifier {
+    public var names: Set<String>
+
+    public init(names: Set<String> = []) {
+        self.names = names
+    }
+
+    public func classify(_ text: String) -> [ClassifiedWord] {
+        var words: [ClassifiedWord] = []
+        var index = text.startIndex
+        while index < text.endIndex {
+            guard text[index].isLetter else {
+                index = text.index(after: index)
+                continue
+            }
+            let start = index
+            while index < text.endIndex, text[index].isLetter { index = text.index(after: index) }
+            let word = String(text[start..<index])
+            words.append(
+                ClassifiedWord(
+                    range: start..<index, isPersonalName: names.contains(word),
+                    isContentWord: word.first?.isUppercase == true))
+        }
+        return words
+    }
+}
+
+/// A Vocabulary source with fixed terms, or one that fails.
+public struct FakeVocabularySource: VocabularySource {
+    public struct Failure: Error {}
+    public var words: [String]
+    public var fails: Bool
+
+    public init(_ words: [String], fails: Bool = false) {
+        self.words = words
+        self.fails = fails
+    }
+
+    public func terms() async throws -> [VocabularyTerm] {
+        if fails { throw Failure() }
+        return words.map(VocabularyTerm.init(text:))
+    }
+}

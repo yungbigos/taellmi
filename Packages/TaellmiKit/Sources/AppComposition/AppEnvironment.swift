@@ -7,6 +7,7 @@ import Foundation
 import IOKit.ps
 import Persistence
 import Pipeline
+import SystemServices
 import os
 
 /// The composition root: the only place that knows every concrete implementation.
@@ -18,6 +19,7 @@ public final class AppEnvironment {
 
     public let journal: any Journal
     public let captureModel: CaptureViewModel
+    public let vocabularyModel: VocabularyViewModel
     public let settings: SettingsStore
     /// The configured global hotkey; read once at start.
     public private(set) var hotkey: Hotkey?
@@ -73,13 +75,23 @@ public final class AppEnvironment {
             conditions: { RuntimeConditions(onBattery: PowerSource.isOnBattery) })
         runner = PipelineRunner(
             jobs: JobQueue(database: database), files: files, index: index, resolver: resolver, engines: engines,
-            settings: settings, pipeline: PipelineConfig(database: database))
+            settings: settings, pipeline: PipelineConfig(database: database),
+            vocabulary: [
+                CurationStore(storage: PlainFolderStorage(root: paths.archive)),
+                SettingGatedSource(
+                    settings: settings, key: SettingKeys.vocabularyUseContacts, source: ContactsVocabularySource()),
+            ],
+            classifier: NaturalLanguageClassifier())
         let kick = PipelineKick(runner: runner)
         pipelineKick = kick
         journal = LiveJournal(
             files: files, index: index, runner: runner, archiveFolder: paths.archive,
             kickPipeline: { kick.kick() })
         captureModel = CaptureViewModel(recorder: recorder, journal: journal)
+        vocabularyModel = VocabularyViewModel(
+            settings: LiveVocabularySettings(
+                curation: CurationStore(storage: PlainFolderStorage(root: paths.archive)), settings: settings,
+                editor: ConfigEditor(database: database)))
     }
 
     /// Brings config and index up to date and resumes unfinished work, all off the main actor.
@@ -149,6 +161,18 @@ nonisolated final class PipelineKick: Sendable {
 
     func waitUntilIdle() async {
         await current.withLock { $0 }?.value
+    }
+}
+
+/// A Vocabulary source that only contributes while a bool setting is on (e.g. the contacts opt-in).
+nonisolated struct SettingGatedSource: VocabularySource {
+    let settings: SettingsStore
+    let key: String
+    let source: any VocabularySource
+
+    func terms() async throws -> [VocabularyTerm] {
+        guard try settings.bool(key) else { return [] }
+        return try await source.terms()
     }
 }
 

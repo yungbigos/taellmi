@@ -33,6 +33,9 @@ public struct MenuBarView: View {
             HStack {
                 Button("Archiv im Finder zeigen") { NSWorkspace.shared.open(model.archiveFolder) }
                 Spacer()
+                SettingsLink { Text("Einstellungen …") }
+                    // A menu-bar-only app must bring itself to the front, or the window opens behind others.
+                    .simultaneousGesture(TapGesture().onEnded { NSApplication.shared.activate() })
                 Button("Beenden") { NSApplication.shared.terminate(nil) }
             }
             .buttonStyle(.borderless)

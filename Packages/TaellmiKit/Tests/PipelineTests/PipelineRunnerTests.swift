@@ -22,7 +22,10 @@ struct PipelineRunnerTests {
         let clock = ManualDate()
         let model: ModelConfig
 
-        init(fake: FakeTranscriber = FakeTranscriber()) throws {
+        init(
+            fake: FakeTranscriber = FakeTranscriber(), vocabulary: [any VocabularySource] = [],
+            names: Set<String> = []
+        ) throws {
             database = try makeDatabase()
             archive = try TemporaryDirectory()
             models = try TemporaryDirectory()
@@ -41,6 +44,7 @@ struct PipelineRunnerTests {
             runner = PipelineRunner(
                 jobs: jobs, files: files, index: index, resolver: resolver, engines: engines,
                 settings: SettingsStore(database: database), pipeline: PipelineConfig(database: database),
+                vocabulary: vocabulary, classifier: FakeWordClassifier(names: names),
                 now: { [clock] in clock.now() })
         }
 
@@ -124,6 +128,41 @@ struct PipelineRunnerTests {
         await harness.runner.runPending()
 
         #expect(try harness.jobs.jobs(entryID: entry.id).map(\.state) == [.done])
+    }
+
+    static let marleneResult = RawTranscription(
+        text: "Heute mit Marlene telefoniert.",
+        tokens: [TimedToken(text: "▁Heute", start: 0, end: 0.4), TimedToken(text: ".", start: 1.9, end: 2)],
+        durationSeconds: 2)
+
+    @Test("a new Text is corrected towards the Vocabulary, the correction is recorded, the Transcript stays verbatim")
+    func correctsTowardsVocabulary() async throws {
+        let harness = try Harness(
+            fake: FakeTranscriber(result: Self.marleneResult), vocabulary: [FakeVocabularySource(["Marleen"])],
+            names: ["Marlene"])
+        let entry = try harness.addEntry()
+        try await harness.runner.enqueue(entry)
+
+        await harness.runner.runPending()
+
+        let loaded = try harness.files.loadEntry(folder: entry.folder)
+        #expect(loaded.entry.text == "Heute mit Marleen telefoniert.")
+        #expect(loaded.transcript?.text == "Heute mit Marlene telefoniert.")
+        #expect(loaded.corrections == [VocabularyCorrection(from: "Marlene", to: "Marleen")])
+    }
+
+    @Test("terms from all sources are combined, and a failing source does not block transcription")
+    func combinesSourcesAndToleratesFailure() async throws {
+        let harness = try Harness(
+            fake: FakeTranscriber(result: Self.marleneResult),
+            vocabulary: [FakeVocabularySource([], fails: true), FakeVocabularySource(["Marleen"])],
+            names: ["Marlene"])
+        let entry = try harness.addEntry()
+        try await harness.runner.enqueue(entry)
+
+        await harness.runner.runPending()
+
+        #expect(try harness.files.loadEntry(folder: entry.folder).entry.text == "Heute mit Marleen telefoniert.")
     }
 
     @Test("a failed attempt waits for the backoff before it is retried")

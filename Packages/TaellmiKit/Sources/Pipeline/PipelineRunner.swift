@@ -14,14 +14,19 @@ public actor PipelineRunner {
     private let engines: any TranscriberProvider
     private let settings: SettingsStore
     private let pipeline: PipelineConfig
+    private let vocabulary: [any VocabularySource]
+    private let classifier: any WordClassifier
     private let now: @Sendable () -> Date
     private var isRunning = false
 
     public init(
         jobs: JobQueue, files: EntryFileStore, index: EntryIndex, resolver: ModelResolver,
         engines: any TranscriberProvider, settings: SettingsStore, pipeline: PipelineConfig,
+        vocabulary: [any VocabularySource], classifier: any WordClassifier,
         now: @escaping @Sendable () -> Date = Date.init
     ) {
+        self.vocabulary = vocabulary
+        self.classifier = classifier
         self.now = now
         self.jobs = jobs
         self.files = files
@@ -97,8 +102,26 @@ public actor PipelineRunner {
         let transcript = Transcript(
             text: raw.text, segments: SegmentBuilder(maxPause: maxPause).segments(from: raw.tokens),
             modelID: model.id, durationSeconds: raw.durationSeconds)
-        let updated = try files.saveTranscript(transcript, for: entry)
+        let corrected = try await correctTowardsVocabulary(transcript.text)
+        let updated = try files.saveTranscript(
+            transcript, for: entry, firstText: corrected.text, corrections: corrected.corrections)
         try index.upsert(updated, transcript: transcript)
+    }
+
+    /// Corrects names in a new Text. A failing Vocabulary source is skipped, never fatal.
+    private func correctTowardsVocabulary(_ text: String) async throws -> VocabularyCorrector.Result {
+        var terms: [VocabularyTerm] = []
+        for source in vocabulary {
+            do {
+                terms += try await source.terms()
+            } catch {
+                logger.error("A Vocabulary source failed: \(String(describing: error))")
+            }
+        }
+        let corrector = VocabularyCorrector(
+            terms: terms, minSimilarityForNames: try settings.number(SettingKeys.vocabularyMinSimilarityNames),
+            minSimilarityOtherWords: try settings.number(SettingKeys.vocabularyMinSimilarityOther))
+        return corrector.correct(text, using: classifier)
     }
 }
 

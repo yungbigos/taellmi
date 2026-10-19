@@ -24,6 +24,8 @@
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>LSUIElement</key>
 	<true/>
+	<key>NSContactsUsageDescription</key>
+	<string>tällmi liest Namen aus deinen Kontakten, damit sie in Einträgen richtig geschrieben werden. Die Kontakte bleiben auf diesem Mac.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>tällmi nimmt auf, was du sagst, und transkribiert es ausschließlich auf diesem Mac.</string>
 </dict>

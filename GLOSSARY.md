@@ -63,8 +63,12 @@ A connection between two things that you made by hand. Links are permanent. When
 _Avoid_: Relation, edge (in conversation)
 
 **Curation**:
-Everything you decide by hand that shapes the Archive's meaning: Links; merging, renaming and hiding Concepts; edited Atoms; and weights that give certain Concepts or Atoms more or less focus. Curation is never recomputed; recomputation respects it.
+Everything you decide by hand that shapes the Archive's meaning: Links; merging, renaming and hiding Concepts; edited Atoms; your Vocabulary; and weights that give certain Concepts or Atoms more or less focus. Curation is never recomputed; recomputation respects it.
 _Avoid_: Manual edits, overrides, annotations
+
+**Vocabulary**:
+The words the app should spell exactly your way, mostly names (e.g. "Marleen"). It comes from your own list (part of Curation) and, if you opt in, your contacts. The Text of a new voice Entry is corrected towards it, and each correction is recorded on the Entry.
+_Avoid_: Dictionary, custom words, glossary
 
 **Cluster**:
 A group of Concepts or Fragments found automatically because they belong together.

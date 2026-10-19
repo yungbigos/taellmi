@@ -47,6 +47,18 @@ scripts/download-model.sh <id> # the one user-started network step: fetch a seed
 - Tests: Swift Testing (`@Test`, `#expect`, `#require`, parameterized `arguments:`). Use XCTest only for UI tests.
 - Slow tests live in `*IntegrationTests` targets, which the fast gate skips.
 
+## Where work is tracked
+
+- **Actionable work** (features, bugs, research, ideas) lives in **GitHub Issues** at `yungbigos/taellmi` (private).
+  - Type labels: `feature`, `bug`, `idea`, `research`.
+  - Area labels: `capture`, `explore`, `mcp`, `visuals`, `foundation`.
+  - Use `gh issue list -R yungbigos/taellmi`.
+  - Close issues from commits with `Closes #n`.
+  - New requests from the owner become issues.
+- **`docs/plan.md`** is the vision and roadmap, not a to-do list.
+- **`docs/decisions/`** holds the decisions.
+- **Commits and PRs** carry no Claude attribution: no `Co-Authored-By`, no "Generated with" lines.
+
 ## How to work
 
 - Small, verifiable steps: failing test → minimal code → `scripts/check.sh` → refactor.

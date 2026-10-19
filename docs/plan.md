@@ -1,5 +1,7 @@
 # tällmi — plan
 
+> Vision and roadmap. Actionable items are tracked as GitHub Issues in `yungbigos/taellmi` (see AGENTS.md).
+
 A Mac app you talk into. It transcribes on the device (German and English), keeps every entry in a personal archive, indexes it for keyword and meaning search, and lets you ask a local LLM questions about your own thoughts. Nothing leaves the machine.
 
 Target machine: M4 Pro, 24 GB RAM, macOS 26.5.
@@ -142,9 +144,18 @@ Decisions are locked (see section 3); we fix model choices later if real use sho
   - It replaces the placeholder orb as a config-selectable skin.
 - **A visual, game-like rendering of the thoughts:** Concepts, Fragments and clusters as an explorable world (RealityKit). This connects to the "mind palace" idea in section 5a.
 
-### Explore window (requested 2026-10-19)
-- **A real app window** for sifting through Entries: list, read, edit the Text, search.
-- It is also where asking questions and the visualizations (Concepts, clusters, mind palace) will live.
+### Explore window (requested 2026-10-19, next)
+- **Decided for v1:**
+  - **Opening it:** "Archiv öffnen" in the menu bar, its own configurable shortcut (default ⌃⌥A after a clash check), or by clicking an Entry in tälli's confirmation. While it is open, tällmi shows in the Dock and in ⌘Tab.
+  - **Functional base:** a list of Entries, filters (time, Source), full-text search, and the Text editable directly with autosave.
+    - Search is instant and finds word parts and umlauts.
+    - Search by meaning comes with embeddings.
+  - **Deleting** moves an Entry to the app's Trash, with ⌘Z. A "Papierkorb" view in the sidebar restores or deletes for good.
+  - **The "alles klein" style is not applied in Explore** (for now).
+- **Design direction: unconventional, to be explored with several prototypes.** These ideas are recorded so they are not lost, not a commitment for v1:
+  - **A game-like walk-through:** walking a character through a room. Possibly a gimmick, but worth exploring as a general design concept.
+  - **Words in 3D space** that you navigate to.
+  - **Clusters as a 3D hive, not a 2D mind map you zoom into ("boring").** You walk through your connected ideas, Atoms and Fragments.
 
 ### MCP server (requested 2026-10-19, to be designed early)
 - **Goal:** local LLMs and agents (LM Studio, Ollama clients, Claude Desktop, …) can talk to tällmi through the Model Context Protocol: search and read Entries, list Concepts, and possibly add Entries.

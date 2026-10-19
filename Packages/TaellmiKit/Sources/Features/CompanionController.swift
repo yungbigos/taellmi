@@ -9,8 +9,16 @@ public struct CompanionSettings: Sendable {
     public var followsCursor: Bool
     /// Share of the remaining way tälli covers per frame when following (0…1).
     public var followSmoothing: Double
+    /// Keys claimed only while tälli is open.
+    public var finishKey: Hotkey
+    public var cancelKey: Hotkey
 
-    public init(cursorOffset: Double, savedDisplaySeconds: Double, followsCursor: Bool, followSmoothing: Double) {
+    public init(
+        cursorOffset: Double, savedDisplaySeconds: Double, followsCursor: Bool, followSmoothing: Double,
+        finishKey: Hotkey, cancelKey: Hotkey
+    ) {
+        self.finishKey = finishKey
+        self.cancelKey = cancelKey
         self.cursorOffset = cursorOffset
         self.savedDisplaySeconds = savedDisplaySeconds
         self.followsCursor = followsCursor
@@ -48,7 +56,8 @@ public final class CompanionController {
     private var showsSaved = false
     private var hideTask: Task<Void, Never>?
     private var followTask: Task<Void, Never>?
-    private static let escapeHotkeyID: UInt32 = 2
+    private static let cancelHotkeyID: UInt32 = 2
+    private static let finishHotkeyID: UInt32 = 3
 
     public init(
         model: CaptureViewModel, appearance: AppearanceViewModel, settings: CompanionSettings,
@@ -66,12 +75,21 @@ public final class CompanionController {
         if model.isRecording {
             await model.toggle()
             if model.errorMessage == nil { await confirmSavedAndHide() } else { render() }
-        } else if panel.isVisible, !model.typedText.isEmpty {
+        } else if panel.isVisible, !model.typedText.trimmingCharacters(in: .whitespaces).isEmpty {
             await submitTyped()
         } else {
             showAtCursor()
             await model.toggle()
             if !model.isRecording { render() }
+        }
+    }
+
+    /// Enter: save the recording or the typed text and disappear.
+    public func finish() async {
+        if model.isRecording || !model.typedText.trimmingCharacters(in: .whitespaces).isEmpty {
+            await toggle()
+        } else {
+            hide()
         }
     }
 
@@ -99,8 +117,11 @@ public final class CompanionController {
             $0.duration = 0.18
             panel.animator().alphaValue = 1
         }
-        hotkeys.register(.escape, id: Self.escapeHotkeyID) { [weak self] in
+        hotkeys.register(settings.cancelKey, id: Self.cancelHotkeyID) { [weak self] in
             Task { await self?.cancel() }
+        }
+        hotkeys.register(settings.finishKey, id: Self.finishHotkeyID) { [weak self] in
+            Task { await self?.finish() }
         }
     }
 
@@ -143,7 +164,8 @@ public final class CompanionController {
     private func hide() {
         followTask?.cancel()
         followTask = nil
-        hotkeys.unregister(id: Self.escapeHotkeyID)
+        hotkeys.unregister(id: Self.cancelHotkeyID)
+        hotkeys.unregister(id: Self.finishHotkeyID)
         showsSaved = false
         NSAnimationContext.runAnimationGroup { [panel] context in
             context.duration = 0.18
@@ -155,7 +177,10 @@ public final class CompanionController {
 
     private func render() {
         panel.contentView = NSHostingView(
-            rootView: CompanionView(model: model, showsSaved: showsSaved) { [weak self] in
+            rootView: CompanionView(
+                model: model, showsSaved: showsSaved,
+                hint: "\(settings.finishKey.displayLabel) fertig · \(settings.cancelKey.displayLabel) verwerfen"
+            ) { [weak self] in
                 Task { await self?.submitTyped() }
             }
             .textCase(appearance.swiftUICase))

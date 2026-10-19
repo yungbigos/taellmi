@@ -4,6 +4,7 @@ import SwiftUI
 struct CompanionView: View {
     @Bindable var model: CaptureViewModel
     var showsSaved: Bool
+    var hint: String
     var onSubmitTyped: () -> Void
 
     var body: some View {
@@ -29,13 +30,13 @@ struct CompanionView: View {
                     .lineLimit(4)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .animation(.easeOut(duration: 0.15), value: model.livePreviewText)
-                TextField("… oder tippen, Enter speichert", text: $model.typedText)
+                TextField("… oder tippen", text: $model.typedText)
                     .textFieldStyle(.plain)
                     .font(.callout)
                     .onSubmit(onSubmitTyped)
             }
             Spacer(minLength: 0)
-            Text("Kürzel nochmal: fertig · Esc: verwerfen")
+            Text(hint)
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
         }

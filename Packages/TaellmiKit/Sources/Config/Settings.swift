@@ -20,6 +20,8 @@ public enum SettingKeys {
     public static let companionCursorOffset = "companion.cursor_offset"
     public static let companionSavedDisplaySeconds = "companion.saved_display_s"
     public static let companionFollowsCursor = "companion.follows_cursor"
+    public static let companionFinishKey = "companion.finish_key"
+    public static let companionCancelKey = "companion.cancel_key"
     public static let companionFollowSmoothing = "companion.follow_smoothing"
 
     public static let all = [

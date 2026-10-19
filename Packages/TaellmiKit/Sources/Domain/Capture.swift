@@ -19,6 +19,8 @@ public protocol AudioRecording: Sendable {
     func stop() async throws -> Recording
     /// Current input level in 0...1, for UI feedback.
     func level() async -> Float
+    /// Audio of the running recording as it arrives. Finishes when the recording stops.
+    func liveAudio() async -> AsyncStream<AudioSamples>
 }
 
 /// What the UI needs from the journal. Implemented in the composition root.
@@ -36,4 +38,37 @@ public enum CaptureError: Error, Equatable {
     case microphoneDenied
     case notRecording
     case alreadyRecording
+}
+
+/// A chunk of mono audio while recording, for live preview. Plain floats keep Domain free of AVFoundation.
+public struct AudioSamples: Sendable, Equatable {
+    public var samples: [Float]
+    public var sampleRate: Double
+
+    public init(samples: [Float], sampleRate: Double) {
+        self.samples = samples
+        self.sampleRate = sampleRate
+    }
+}
+
+/// What the live preview shows while you talk. Throwaway: the final Text comes from the real Transcript.
+public struct LivePreview: Sendable, Equatable {
+    /// Text the recogniser will not change any more.
+    public var finalized: String
+    /// The recogniser's current guess for the last few words.
+    public var volatile: String
+
+    public init(finalized: String = "", volatile: String = "") {
+        self.finalized = finalized
+        self.volatile = volatile
+    }
+
+    public var text: String {
+        [finalized, volatile].filter { !$0.isEmpty }.joined(separator: " ")
+    }
+}
+
+/// Turns live audio into a running preview. Implemented by a live-transcription engine.
+public protocol LivePreviewing: Sendable {
+    func preview(_ audio: AsyncStream<AudioSamples>) async throws -> AsyncThrowingStream<LivePreview, any Error>
 }

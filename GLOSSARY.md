@@ -88,6 +88,10 @@ _Avoid_: Record mode, input
 The mode for viewing, searching and asking questions about the Archive: Concepts, Fragments, clusters and visualizations.
 _Avoid_: Browse, library view
 
+**Companion**:
+The small animated presence that appears next to the cursor for Capture, called **tälli** in the app. It appears when you call it (hotkey or click). It never appears unasked, unless you turned on invitations at times you set.
+_Avoid_: Assistant, advisor, avatar, Clippy (in code and docs; "tälli" is the name users see)
+
 ## Models and config
 
 **Role**:

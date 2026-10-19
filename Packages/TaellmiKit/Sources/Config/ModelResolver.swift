@@ -17,6 +17,11 @@ public struct ResolutionError: Error, Equatable, CustomStringConvertible {
     /// Why each candidate model was skipped, by model id.
     public var rejected: [String: String]
 
+    public init(role: ModelRole, rejected: [String: String]) {
+        self.role = role
+        self.rejected = rejected
+    }
+
     public var description: String {
         let reasons = rejected.sorted { $0.key < $1.key }.map { "\($0.key): \($0.value)" }
         return "No usable model for \(role.rawValue). "

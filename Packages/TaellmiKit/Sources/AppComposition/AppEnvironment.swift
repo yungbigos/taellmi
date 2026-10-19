@@ -7,6 +7,7 @@ import Foundation
 import IOKit.ps
 import Persistence
 import Pipeline
+import SpeechAnalyzerEngine
 import SystemServices
 import os
 
@@ -15,6 +16,10 @@ public final class AppEnvironment {
     /// Engines this build can run, by the engine key used in `model` config rows.
     public static let liveEngines: [String: TranscriberFactory] = [
         ParakeetTranscriber.engineKey: ParakeetTranscriber.factory
+    ]
+    /// Live-preview engines, by engine key.
+    public static let livePreviewEngines: [String: LivePreviewFactory] = [
+        AppleSpeechLivePreview.engineKey: AppleSpeechLivePreview.factory
     ]
 
     public let journal: any Journal
@@ -44,20 +49,22 @@ public final class AppEnvironment {
             return (paths, database, try SettingsStore(database: database).number(SettingKeys.sampleRate))
         }.value
         return try AppEnvironment(
-            paths: paths, database: database, engines: liveEngines,
+            paths: paths, database: database, engines: liveEngines, livePreviews: livePreviewEngines,
             recorder: MicrophoneRecorder(scratchFolder: paths.scratch, sampleRate: sampleRate))
     }
 
     public convenience init(
-        paths: AppPaths, engines: [String: TranscriberFactory], recorder: any AudioRecording
+        paths: AppPaths, engines: [String: TranscriberFactory], livePreviews: [String: LivePreviewFactory] = [:],
+        recorder: any AudioRecording
     ) throws {
         try self.init(
-            paths: paths, database: AppDatabase.open(at: paths.database), engines: engines, recorder: recorder)
+            paths: paths, database: AppDatabase.open(at: paths.database), engines: engines,
+            livePreviews: livePreviews, recorder: recorder)
     }
 
     init(
         paths: AppPaths, database: AppDatabase, engines factories: [String: TranscriberFactory],
-        recorder: any AudioRecording
+        livePreviews: [String: LivePreviewFactory], recorder: any AudioRecording
     ) throws {
         self.paths = paths
         self.database = database
@@ -66,12 +73,18 @@ public final class AppEnvironment {
         index = EntryIndex(database: database)
         let installation = ModelInstallation(root: paths.models)
         let settings = settings
+        let vocabularySources: [any VocabularySource] = [
+            CurationStore(storage: PlainFolderStorage(root: paths.archive)),
+            SettingGatedSource(
+                settings: settings, key: SettingKeys.vocabularyUseContacts, source: ContactsVocabularySource()),
+        ]
         engines = EngineCache(
             factories: factories, installation: installation, clock: ContinuousClock(),
             // If the setting cannot be read, unload right away: the resource-safe choice.
             idleUnload: { (try? settings.number(SettingKeys.idleUnloadSeconds)).map { .seconds($0) } ?? .zero })
         let resolver = ModelResolver(
-            database: database, registeredEngines: Set(factories.keys), installation: installation,
+            database: database, registeredEngines: Set(factories.keys).union(livePreviews.keys),
+            installation: installation,
             conditions: { RuntimeConditions(onBattery: PowerSource.isOnBattery) })
         runner = PipelineRunner(
             jobs: JobQueue(database: database), files: files, index: index, resolver: resolver, engines: engines,
@@ -87,7 +100,9 @@ public final class AppEnvironment {
         journal = LiveJournal(
             files: files, index: index, runner: runner, archiveFolder: paths.archive,
             kickPipeline: { kick.kick() })
-        captureModel = CaptureViewModel(recorder: recorder, journal: journal)
+        captureModel = CaptureViewModel(
+            recorder: recorder, journal: journal,
+            preview: LivePreviewService(resolver: resolver, factories: livePreviews, vocabulary: vocabularySources))
         vocabularyModel = VocabularyViewModel(
             settings: LiveVocabularySettings(
                 curation: CurationStore(storage: PlainFolderStorage(root: paths.archive)), settings: settings,

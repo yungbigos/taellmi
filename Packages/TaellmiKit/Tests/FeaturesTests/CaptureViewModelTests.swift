@@ -46,6 +46,32 @@ struct CaptureViewModelTests {
         #expect(model.errorMessage == nil)
     }
 
+    @Test("while recording, the live preview shows what is heard; after stopping it is cleared")
+    func livePreview() async throws {
+        let temp = try TemporaryDirectory()
+        let chunk = AudioSamples(samples: [0, 0.1], sampleRate: 16_000)
+        let model = CaptureViewModel(
+            recorder: FakeRecorder(folder: temp.url, liveChunks: [chunk, chunk]), journal: FakeJournal(),
+            preview: FakeLivePreview())
+        await model.toggle()
+        try await waitUntil { model.livePreviewText == "Gehört: 2 …" }
+        await model.toggle()
+        #expect(model.livePreviewText.isEmpty)
+    }
+
+    @Test("a live preview that fails does not stop the recording")
+    func failingPreview() async throws {
+        let temp = try TemporaryDirectory()
+        let journal = FakeJournal()
+        let model = CaptureViewModel(
+            recorder: FakeRecorder(folder: temp.url), journal: journal, preview: FakeLivePreview(fails: true))
+        await model.toggle()
+        #expect(model.isRecording)
+        await model.toggle()
+        #expect(await journal.added.count == 1)
+        #expect(model.errorMessage == nil)
+    }
+
     @Test("a denied microphone shows an explanation instead of recording")
     func microphoneDenied() async throws {
         let (model, _, _, _) = try makeModel(startError: .microphoneDenied)

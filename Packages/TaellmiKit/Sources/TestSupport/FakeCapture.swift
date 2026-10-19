@@ -7,8 +7,11 @@ public actor FakeRecorder: AudioRecording {
     private let folder: URL
     private let startError: CaptureError?
     private var startedAt: Date?
+    private var live: AsyncStream<AudioSamples>.Continuation?
+    private let liveChunks: [AudioSamples]
 
-    public init(folder: URL, startError: CaptureError? = nil) {
+    public init(folder: URL, startError: CaptureError? = nil, liveChunks: [AudioSamples] = []) {
+        self.liveChunks = liveChunks
         self.folder = folder
         self.startError = startError
     }
@@ -23,12 +26,21 @@ public actor FakeRecorder: AudioRecording {
     public func stop() async throws -> Recording {
         guard isRecording, let startedAt else { throw CaptureError.notRecording }
         isRecording = false
+        live?.finish()
+        live = nil
         let file = folder.appendingPathComponent("\(UUID().uuidString).m4a")
         try Data("fake audio".utf8).write(to: file)
         return Recording(file: file, durationSeconds: 4.2, startedAt: startedAt)
     }
 
     public func level() async -> Float { isRecording ? 0.5 : 0 }
+
+    public func liveAudio() async -> AsyncStream<AudioSamples> {
+        let (stream, continuation) = AsyncStream.makeStream(of: AudioSamples.self)
+        for chunk in liveChunks { continuation.yield(chunk) }
+        if isRecording { live = continuation } else { continuation.finish() }
+        return stream
+    }
 }
 
 /// An in-memory Journal.
@@ -119,5 +131,30 @@ public struct FakeVocabularySource: VocabularySource {
     public func terms() async throws -> [VocabularyTerm] {
         if fails { throw Failure() }
         return words.map(VocabularyTerm.init(text:))
+    }
+}
+
+/// A live preview that reports how many audio chunks it has heard, or fails.
+public struct FakeLivePreview: LivePreviewing {
+    public struct Failure: Error {}
+    public var fails: Bool
+
+    public init(fails: Bool = false) {
+        self.fails = fails
+    }
+
+    public func preview(_ audio: AsyncStream<AudioSamples>) async throws -> AsyncThrowingStream<LivePreview, any Error>
+    {
+        if fails { throw Failure() }
+        return AsyncThrowingStream { continuation in
+            Task {
+                var count = 0
+                for await _ in audio {
+                    count += 1
+                    continuation.yield(LivePreview(finalized: "Gehört: \(count)", volatile: "…"))
+                }
+                continuation.finish()
+            }
+        }
     }
 }

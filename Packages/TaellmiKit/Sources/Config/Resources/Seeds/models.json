@@ -122,5 +122,25 @@
     "license": "CC-BY-4.0",
     "enabled": true,
     "seed_version": 1
+  },
+  {
+    "id": "apple-speech-de",
+    "name": "Apple SpeechTranscriber (Deutsch, live preview)",
+    "engine": "apple_speech",
+    "provider_id": "apple_system",
+    "source_ref": null,
+    "revision": null,
+    "files": [],
+    "params": {
+      "locale": "de-DE"
+    },
+    "capabilities": [
+      "live_transcription",
+      "lang:de"
+    ],
+    "est_memory_mb": null,
+    "license": "Apple system",
+    "enabled": true,
+    "seed_version": 1
   }
 ]

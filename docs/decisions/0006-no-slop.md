@@ -14,7 +14,12 @@
 - Advice.
 - Mood diagnoses.
 - "You seem to…".
-- Nudging notifications.
+- Nudging notifications. The one exception is opt-in **invitations** by the Companion:
+  - off by default
+  - shown only at times you set
+  - only fixed texts from config that you can edit (e.g. "Möchtest du etwas festhalten?")
+  - never generated content, never references to your Entries
+  - (amended 2026-10-19)
 - Feedback while capturing, unless you explicitly ask for it.
 
 ## When you ask a question

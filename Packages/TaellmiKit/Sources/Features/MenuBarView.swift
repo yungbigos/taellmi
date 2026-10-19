@@ -14,6 +14,16 @@ public struct MenuBarView: View {
     public var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             recordButton
+            if model.isRecording {
+                Text(model.livePreviewText.isEmpty ? "Ich höre zu …" : model.livePreviewText)
+                    .font(.callout)
+                    .foregroundStyle(model.livePreviewText.isEmpty ? .secondary : .primary)
+                    .frame(maxWidth: .infinity, minHeight: 60, alignment: .topLeading)
+                    .padding(8)
+                    .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
+                    .animation(.easeOut(duration: 0.15), value: model.livePreviewText)
+                    .accessibilityLabel("Live-Vorschau")
+            }
             if let error = model.errorMessage {
                 Text(error).font(.callout).foregroundStyle(.red)
             }

@@ -11,17 +11,22 @@ public final class CaptureViewModel {
     public private(set) var isSaving = false
     public private(set) var errorMessage: String?
     public private(set) var recentEntries: [Entry] = []
+    /// What the live preview hears while recording. Throwaway; the Entry's Text comes from the real Transcript.
+    public private(set) var livePreviewText = ""
 
     @ObservationIgnored private let recorder: any AudioRecording
     @ObservationIgnored private let journal: any Journal
+    @ObservationIgnored private let preview: (any LivePreviewing)?
+    @ObservationIgnored private var previewTask: Task<Void, Never>?
     @ObservationIgnored private var observation: Task<Void, Never>?
     /// True while a start or stop is in flight, so a quick second press is ignored.
     @ObservationIgnored private var isBusy = false
     @ObservationIgnored private let logger = Logger(subsystem: "app.taellmi", category: "capture")
 
-    public init(recorder: any AudioRecording, journal: any Journal) {
+    public init(recorder: any AudioRecording, journal: any Journal, preview: (any LivePreviewing)? = nil) {
         self.recorder = recorder
         self.journal = journal
+        self.preview = preview
     }
 
     public var archiveFolder: URL { journal.archiveFolder }
@@ -62,12 +67,35 @@ public final class CaptureViewModel {
             try await recorder.start()
             isRecording = true
             recordingStartedAt = Date()
+            await startPreview()
         } catch CaptureError.microphoneDenied {
             errorMessage = "Kein Zugriff aufs Mikrofon. Erlaube tällmi den Zugriff in den Systemeinstellungen."
         } catch {
             logger.error("Could not start recording: \(String(describing: error))")
             errorMessage = "Aufnahme konnte nicht starten."
         }
+    }
+
+    /// Starts the live preview if one is configured. A failing preview never affects the recording.
+    private func startPreview() async {
+        guard let preview else { return }
+        let audio = await recorder.liveAudio()
+        let logger = logger
+        previewTask = Task { [weak self] in
+            do {
+                for try await update in try await preview.preview(audio) {
+                    self?.livePreviewText = update.text
+                }
+            } catch {
+                logger.error("Live preview unavailable: \(String(describing: error))")
+            }
+        }
+    }
+
+    private func stopPreview() {
+        previewTask?.cancel()
+        previewTask = nil
+        livePreviewText = ""
     }
 
     private func stopAndSave() async {
@@ -77,10 +105,12 @@ public final class CaptureViewModel {
             let recording = try await recorder.stop()
             isRecording = false
             recordingStartedAt = nil
+            stopPreview()
             _ = try await journal.addVoiceEntry(recording)
         } catch {
             isRecording = false
             recordingStartedAt = nil
+            stopPreview()
             logger.error("Could not save recording: \(String(describing: error))")
             errorMessage = "Aufnahme konnte nicht gespeichert werden."
         }

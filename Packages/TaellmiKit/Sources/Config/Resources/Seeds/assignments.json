@@ -7,5 +7,14 @@
     "conditions": {},
     "enabled": true,
     "seed_version": 1
+  },
+  {
+    "id": "live-transcription-1",
+    "role": "live_transcription",
+    "priority": 1,
+    "model_id": "apple-speech-de",
+    "conditions": {},
+    "enabled": true,
+    "seed_version": 1
   }
 ]

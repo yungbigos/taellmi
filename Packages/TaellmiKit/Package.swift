@@ -59,12 +59,16 @@ let package = Package(
             swiftSettings: strict
         ),
 
+        .target(
+            name: "SpeechAnalyzerEngine", dependencies: ["Domain"], path: "Sources/Engines/SpeechAnalyzerEngine",
+            swiftSettings: strict),
+
         // MARK: Composition root
         .target(
             name: "AppComposition",
             dependencies: [
                 "Domain", "Persistence", "Config", "Pipeline", "Audio", "Features", "SystemServices",
-                "FluidAudioEngine",
+                "FluidAudioEngine", "SpeechAnalyzerEngine",
             ],
             swiftSettings: ui
         ),
@@ -108,11 +112,16 @@ let package = Package(
             name: "AppCompositionTests",
             dependencies: ["AppComposition", "Config", "Domain", "Persistence", "TestSupport"],
             swiftSettings: ui),
+        .testTarget(
+            name: "SpeechAnalyzerEngineTests", dependencies: ["SpeechAnalyzerEngine", "Domain"], swiftSettings: strict),
         .testTarget(name: "SystemServicesTests", dependencies: ["SystemServices", "Domain"], swiftSettings: strict),
         .testTarget(
             name: "FluidAudioEngineTests", dependencies: ["FluidAudioEngine", "Domain"], swiftSettings: strict),
 
         // MARK: Integration tests (real models; skipped by scripts/check.sh)
+        .testTarget(
+            name: "SpeechAnalyzerEngineIntegrationTests", dependencies: ["SpeechAnalyzerEngine", "Domain"],
+            resources: [.copy("Fixtures")], swiftSettings: strict),
         .testTarget(
             name: "FluidAudioEngineIntegrationTests",
             dependencies: ["FluidAudioEngine", "Domain"],

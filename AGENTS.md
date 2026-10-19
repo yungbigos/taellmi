@@ -17,7 +17,7 @@ tällmi is a local-only, privacy-first macOS voice journal. You talk into it in 
 
 ## Non-negotiables
 
-1. **No network.** The app has no network-client entitlement. Never add analytics, crash reporting or any SDK that phones home. Model downloads happen only in a user-started download step and are checked against SHA-256 hashes.
+1. **No outgoing network.** The app has no network-client entitlement. The only exception is the opt-in local MCP server, which accepts connections on 127.0.0.1 ([ADR 0007](docs/decisions/0007-local-mcp-server.md)). Never add analytics, crash reporting or any SDK that phones home. Model downloads happen only in a user-started download step and are checked against SHA-256 hashes.
 2. **Config first.** Never hard-code a model name, model path, prompt text or tunable number in Swift. Add or change a row in the seed JSON (`Packages/TaellmiKit/Sources/Config/Resources/Seeds/`) and read it through the config layer. Code knows engines, never specific models.
 3. **Test first.** Every behaviour change starts with a failing test (Swift Testing). Bugs get a reproducing test before the fix. Never delete or weaken a test to make the build green; fix the code or ask.
 4. **The user's Text is sacred.** Only the user changes an Entry's Text after it is first written. Transcripts and Recordings are disposable under the Retention policy ([ADR 0004](docs/decisions/0004-entries-as-files.md)). Derived data records the `model_id` and `prompt_id@version` that produced it.

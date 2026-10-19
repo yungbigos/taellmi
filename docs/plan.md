@@ -110,6 +110,41 @@ Decisions are locked (see section 3); we fix model choices later if real use sho
   - pass the Vocabulary as contextual strings to the live preview (Phase 1)
   - FluidAudio CTC vocabulary boosting (English-trained; needs a German test)
 
+### Companion "tälli": capture from anywhere (requested 2026-10-19, next)
+- **Decided:**
+  - technical term **Companion**, user-facing name **tälli**
+  - hotkey → tälli fades in next to the cursor, already recording, reacting to your voice, with the live text in a bubble
+  - hotkey again → "gespeichert" → it fades out; Esc cancels
+  - typing instead of talking makes a typed Entry
+  - the look starts as an abstract organic shape (Metal); the exact avatar and animations come later
+  - appearing unasked ("invitations") is a setting, off by default:
+    - only at times you set
+    - only fixed, editable texts from config
+    - never generated content (ADR 0006)
+  - the menu bar icon stays as a fallback (settings, quit) and can be hidden in Settings
+- **A small animated companion appears next to the mouse cursor** when you press the hotkey. It lives anywhere on screen, not in the crowded menu bar.
+- It shows that it is listening (reacting to your voice), the live preview text, and a short confirmation when the Entry is saved. Then it disappears.
+- **Later:** playful physics, e.g. reacting to the Mac's motion or orientation.
+- The menu bar stays only as a fallback.
+
+### Explore window (requested 2026-10-19)
+- **A real app window** for sifting through Entries: list, read, edit the Text, search.
+- It is also where asking questions and the visualizations (Concepts, clusters, mind palace) will live.
+
+### MCP server (requested 2026-10-19, to be designed early)
+- **Goal:** local LLMs and agents (LM Studio, Ollama clients, Claude Desktop, …) can talk to tällmi through the Model Context Protocol: search and read Entries, list Concepts, and possibly add Entries.
+- **Config first:** the exposed tools, their descriptions, what each may read or write, per-client permissions and limits are all rows in config (seeded, user-editable, saved in `config.json`). Code only implements the tool *mechanisms* (search, read Entry, list Concepts, …), the same split as engines and models.
+- **Decided:**
+  - read-only tools first, with a "create Entry" tool that exists in config but is off by default
+  - every client is a config row with its own key and granted tools, and everything not granted is denied
+  - the first connection asks you in the app
+  - Recordings are never exposed
+  - Entries written via MCP get Source `mcp:<client>`
+- **Transport (decided, [ADR 0007](decisions/0007-local-mcp-server.md)):** Streamable HTTP inside the app on `127.0.0.1`, off by default, with a bearer token per client in the Keychain.
+  - First target is LM Studio, then Cherry Studio.
+  - A stdio relay helper for Claude Desktop, Jan and goose comes later.
+  - Research: [research/2026-10-mcp.md](research/2026-10-mcp.md).
+
 ### Phase 1 — Capture and archive (MVP you can use daily)
 - Menu-bar app with a global hotkey: press → record → press again → done. Optional push-to-talk.
 - Live transcript preview while you talk (SpeechTranscriber, set to de-DE, so English words may look odd in the preview only); the final transcript from Parakeet v3 (automatic language detection, handles German with English mixed in) replaces it in the background.

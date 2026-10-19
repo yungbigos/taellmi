@@ -60,7 +60,6 @@ public final class AppController {
             settings: environment.companionSettings(), hotkeys: hotkeys
         ) { entryID in explore.show(selecting: entryID) }
         self.companion = companion
-        environment.exploreModel.onNewThought = { Task { await companion.toggle() } }
         let settings = environment.settings
         commandShortcutSettings = Commands.all.map { command in
             let checker = CombinedConflictChecker([

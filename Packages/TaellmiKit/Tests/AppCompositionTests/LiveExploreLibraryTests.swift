@@ -58,4 +58,14 @@ struct LiveExploreLibraryTests {
         #expect(try await library.trashed().isEmpty)
         withExtendedLifetime(temp) {}
     }
+
+    @Test("a thought written in the composer becomes a typed Entry on disk and in the index")
+    func createThought() async throws {
+        let (library, files, _, temp) = try setUp()
+        let created = try await library.createThought(text: "Ganz in Ruhe geschrieben.")
+        #expect(created.source == .typed)
+        #expect(try files.loadEntry(folder: created.folder).entry.text == "Ganz in Ruhe geschrieben.")
+        #expect(try await library.search(EntryQuery(text: "ruhe")).map(\.id) == [created.id])
+        withExtendedLifetime(temp) {}
+    }
 }

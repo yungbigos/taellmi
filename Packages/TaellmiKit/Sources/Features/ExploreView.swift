@@ -15,6 +15,17 @@ public struct ExploreView: View {
     }
 
     public var body: some View {
+        Group {
+            if model.isComposing {
+                ComposerView(model: model)
+            } else {
+                splitView
+            }
+        }
+        .modifier(ComposerFullScreen(isComposing: model.isComposing, enabled: model.composerUsesFullScreen))
+    }
+
+    private var splitView: some View {
         NavigationSplitView {
             sidebar
         } content: {

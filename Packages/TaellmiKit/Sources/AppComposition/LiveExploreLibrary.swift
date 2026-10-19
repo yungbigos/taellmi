@@ -24,6 +24,12 @@ nonisolated struct LiveExploreLibrary: ExploreLibrary {
             recordingURL: files.hasRecording(loaded.entry) ? try files.recordingURL(for: loaded.entry) : nil)
     }
 
+    func createThought(text: String) async throws -> Entry {
+        let entry = try files.createTypedEntry(text: text, createdAt: Date())
+        try index.upsert(entry, transcript: nil)
+        return entry
+    }
+
     func saveText(id: String, text: String) async throws {
         guard let indexed = try index.entry(id: id) else { throw CocoaError(.fileNoSuchFile) }
         let loaded = try files.loadEntry(folder: indexed.folder)

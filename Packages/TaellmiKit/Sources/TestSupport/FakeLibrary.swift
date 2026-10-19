@@ -29,6 +29,15 @@ public actor FakeLibrary: ExploreLibrary {
         return EntryDetail(entry: entry, segments: [], corrections: [], recordingURL: nil)
     }
 
+    public func createThought(text: String) async throws -> Entry {
+        let entry = Entry(
+            id: "new-\(entries.count + trash.count + 1)", createdAt: Date(), durationSeconds: nil, source: .typed,
+            folder: "entries/new-\(entries.count + trash.count + 1)", text: text)
+        entries.append(entry)
+        publish()
+        return entry
+    }
+
     public func saveText(id: String, text: String) async throws {
         savedTexts[id] = text
         if let index = entries.firstIndex(where: { $0.id == id }) { entries[index].text = text }

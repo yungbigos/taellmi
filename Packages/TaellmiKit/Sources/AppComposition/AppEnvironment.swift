@@ -129,6 +129,7 @@ public final class AppEnvironment {
         hotkey = (try? settings.string(SettingKeys.hotkey)).flatMap { try? Hotkey(parsing: $0) }
         await appearanceModel.load()
         exploreModel.shortcuts = commandShortcuts()
+        exploreModel.composerUsesFullScreen = (try? settings.bool(SettingKeys.exploreComposerFullScreen)) ?? false
         captureModel.startObservingEntries()
         pipelineKick.kick()
         try startMaintenance()

@@ -66,21 +66,17 @@ struct CommandPaletteTests {
 
 @Suite("Running commands in Explore")
 struct ExploreCommandTests {
-    @Test("new thought hands over to tälli; delete thought trashes the open one")
+    @Test("delete thought trashes the open one")
     func perform() async {
         let library = FakeLibrary(entries: [
             Entry(id: "a", createdAt: sampleDate, durationSeconds: nil, source: .typed, folder: "entries/a", text: "x")
         ])
         let explore = ExploreViewModel(library: library, autosaveDelay: .zero)
-        var newThoughtCalls = 0
-        explore.onNewThought = { newThoughtCalls += 1 }
         await explore.refresh()
         await explore.select("a")
 
-        await explore.perform(.newThought)
         await explore.perform(.deleteThought)
 
-        #expect(newThoughtCalls == 1)
         #expect(explore.entries.isEmpty)
     }
 

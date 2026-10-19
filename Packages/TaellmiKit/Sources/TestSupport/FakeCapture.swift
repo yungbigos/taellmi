@@ -4,6 +4,7 @@ import Foundation
 /// A recorder that pretends to record and hands back a file in a temporary folder.
 public actor FakeRecorder: AudioRecording {
     public private(set) var isRecording = false
+    public private(set) var cancelled = 0
     private let folder: URL
     private let startError: CaptureError?
     private var startedAt: Date?
@@ -33,6 +34,14 @@ public actor FakeRecorder: AudioRecording {
         return Recording(file: file, durationSeconds: 4.2, startedAt: startedAt)
     }
 
+    public func cancel() async {
+        guard isRecording else { return }
+        isRecording = false
+        cancelled += 1
+        live?.finish()
+        live = nil
+    }
+
     public func level() async -> Float { isRecording ? 0.5 : 0 }
 
     public func liveAudio() async -> AsyncStream<AudioSamples> {
@@ -46,6 +55,7 @@ public actor FakeRecorder: AudioRecording {
 /// An in-memory Journal.
 public actor FakeJournal: Journal {
     public private(set) var added: [Recording] = []
+    public private(set) var typed: [String] = []
     private var entries: [Entry] = []
     private var continuations: [AsyncStream<[Entry]>.Continuation] = []
     public nonisolated let archiveFolder = URL(fileURLWithPath: "/tmp/taellmi-fake-archive")
@@ -59,6 +69,16 @@ public actor FakeJournal: Journal {
         let entry = Entry(
             id: "entry-\(added.count)", createdAt: recording.startedAt, durationSeconds: recording.durationSeconds,
             source: .voice, folder: "entries/\(added.count)")
+        entries.insert(entry, at: 0)
+        publish()
+        return entry
+    }
+
+    public func addTypedEntry(_ text: String) async throws -> Entry {
+        typed.append(text)
+        let entry = Entry(
+            id: "typed-\(typed.count)", createdAt: sampleDate, durationSeconds: nil, source: .typed,
+            folder: "entries/t\(typed.count)", text: text)
         entries.insert(entry, at: 0)
         publish()
         return entry

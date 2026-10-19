@@ -19,6 +19,12 @@ struct LiveJournal: Journal {
         return entry
     }
 
+    func addTypedEntry(_ text: String) async throws -> Entry {
+        let entry = try files.createTypedEntry(text: text, createdAt: Date())
+        try index.upsert(entry, transcript: nil)
+        return entry
+    }
+
     func recentEntries(limit: Int) async throws -> [Entry] {
         try index.recent(limit: limit)
     }

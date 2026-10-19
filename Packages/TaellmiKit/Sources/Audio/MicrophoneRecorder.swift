@@ -36,6 +36,14 @@ public actor MicrophoneRecorder: AudioRecording {
         return Recording(file: session.file, durationSeconds: duration, startedAt: startedAt)
     }
 
+    public func cancel() async {
+        guard let session else { return }
+        _ = session.stop()
+        try? FileManager.default.removeItem(at: session.file)
+        self.session = nil
+        startedAt = nil
+    }
+
     public func level() async -> Float {
         session?.level ?? 0
     }

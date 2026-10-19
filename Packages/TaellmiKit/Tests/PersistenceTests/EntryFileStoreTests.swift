@@ -171,4 +171,17 @@ struct EntryFileStoreTests {
         }
         #expect(try store.allEntryFolders().isEmpty)
     }
+
+    @Test("a typed Entry has its Text right away, no recording, and Source typed")
+    func typedEntry() throws {
+        let temp = try TemporaryDirectory()
+        let store = makeStore(temp)
+        let entry = try store.createTypedEntry(
+            text: "Kurz notiert: Marleen anrufen.", createdAt: sampleDate, suffix: "t1p3")
+        #expect(entry.source == .typed)
+        #expect(entry.folder == "entries/2026/10/20261019-203412-t1p3")
+        let loaded = try store.loadEntry(folder: entry.folder)
+        #expect(loaded.entry.text == "Kurz notiert: Marleen anrufen.")
+        #expect(!store.hasRecording(entry))
+    }
 }

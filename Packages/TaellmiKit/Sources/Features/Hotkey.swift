@@ -5,8 +5,12 @@ import Foundation
 nonisolated public struct Hotkey: Sendable, Equatable {
     public enum Key: Sendable, Equatable {
         case space
+        case escape
         case letter(Character)
     }
+
+    /// Esc without modifiers: registered only while tälli is recording, to cancel.
+    public static let escape = Hotkey(key: .escape, modifiers: [])
 
     public struct Modifiers: OptionSet, Sendable, Equatable {
         public let rawValue: Int
@@ -55,6 +59,7 @@ nonisolated public struct Hotkey: Sendable, Equatable {
     var keyCode: UInt32 {
         switch key {
         case .space: UInt32(kVK_Space)
+        case .escape: UInt32(kVK_Escape)
         case .letter(let character): UInt32(Self.letterCodes[character] ?? kVK_Space)
         }
     }

@@ -72,6 +72,52 @@ struct CaptureViewModelTests {
         #expect(model.errorMessage == nil)
     }
 
+    @Test("Esc cancels: the recording is thrown away and no Entry is made")
+    func cancel() async throws {
+        let (model, recorder, journal, temp) = try makeModel()
+        defer { withExtendedLifetime(temp) {} }
+        await model.toggle()
+        await model.cancel()
+        #expect(!model.isRecording)
+        #expect(await recorder.isRecording == false)
+        #expect(await recorder.cancelled == 1)
+        #expect(await journal.added.isEmpty)
+    }
+
+    @Test("typing instead of talking saves a typed Entry and ends a running recording without saving it")
+    func typedEntry() async throws {
+        let (model, recorder, journal, temp) = try makeModel()
+        defer { withExtendedLifetime(temp) {} }
+        await model.toggle()
+        model.typedText = "  Marleen anrufen.  "
+        await model.submitTyped()
+        #expect(!model.isRecording)
+        #expect(await recorder.cancelled == 1)
+        #expect(await journal.typed == ["Marleen anrufen."])
+        #expect(await journal.added.isEmpty)
+        #expect(model.typedText.isEmpty)
+        #expect(model.lastSavedAt != nil)
+    }
+
+    @Test("blank typed text saves nothing")
+    func blankTyped() async throws {
+        let (model, _, journal, temp) = try makeModel()
+        defer { withExtendedLifetime(temp) {} }
+        model.typedText = "   "
+        await model.submitTyped()
+        #expect(await journal.typed.isEmpty)
+    }
+
+    @Test("saving a recording marks when it was saved, for the short confirmation")
+    func savedMarker() async throws {
+        let (model, _, _, temp) = try makeModel()
+        defer { withExtendedLifetime(temp) {} }
+        #expect(model.lastSavedAt == nil)
+        await model.toggle()
+        await model.toggle()
+        #expect(model.lastSavedAt != nil)
+    }
+
     @Test("a denied microphone shows an explanation instead of recording")
     func microphoneDenied() async throws {
         let (model, _, _, _) = try makeModel(startError: .microphoneDenied)

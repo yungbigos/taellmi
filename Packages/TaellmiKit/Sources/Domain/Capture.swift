@@ -17,6 +17,8 @@ public struct Recording: Sendable, Equatable {
 public protocol AudioRecording: Sendable {
     func start() async throws
     func stop() async throws -> Recording
+    /// Stops and throws the recording away.
+    func cancel() async
     /// Current input level in 0...1, for UI feedback.
     func level() async -> Float
     /// Audio of the running recording as it arrives. Finishes when the recording stops.
@@ -27,6 +29,8 @@ public protocol AudioRecording: Sendable {
 public protocol Journal: Sendable {
     /// Stores the recording as a new entry and queues it for processing.
     func addVoiceEntry(_ recording: Recording) async throws -> Entry
+    /// Stores a written note as a new typed Entry.
+    func addTypedEntry(_ text: String) async throws -> Entry
     func recentEntries(limit: Int) async throws -> [Entry]
     /// Emits the newest Entries now and again whenever they change (e.g. when a Transcript arrives).
     func recentEntryUpdates(limit: Int) -> AsyncStream<[Entry]>

@@ -10,6 +10,7 @@ public final class AppController {
     public private(set) var startupError: String?
 
     @ObservationIgnored private let hotkeys = GlobalHotkeyMonitor()
+    @ObservationIgnored private var companion: CompanionController?
     @ObservationIgnored private let logger = Logger(subsystem: "app.taellmi", category: "app")
 
     public init() {
@@ -33,8 +34,10 @@ public final class AppController {
         }
         if let hotkey = environment.hotkey {
             hotkeyLabel = Self.label(for: hotkey)
-            let model = environment.captureModel
-            hotkeys.register(hotkey) { Task { await model.toggle() } }
+            let companion = CompanionController(
+                model: environment.captureModel, settings: environment.companionSettings(), hotkeys: hotkeys)
+            self.companion = companion
+            hotkeys.register(hotkey) { Task { await companion.toggle() } }
         }
     }
 
@@ -47,6 +50,7 @@ public final class AppController {
         if hotkey.modifiers.contains(.command) { symbols += "⌘" }
         switch hotkey.key {
         case .space: return symbols + " Leertaste"
+        case .escape: return symbols + "Esc"
         case .letter(let character): return symbols + String(character).uppercased()
         }
     }

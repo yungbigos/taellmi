@@ -2,6 +2,8 @@
   {"key": "app.maintenance_interval_s", "type": "number", "value": 30, "seed_version": 1},
   {"key": "capture.hotkey", "type": "string", "value": "option+command+space", "seed_version": 1},
   {"key": "capture.sample_rate", "type": "number", "value": 48000, "seed_version": 1},
+  {"key": "companion.cursor_offset", "type": "number", "value": 18, "seed_version": 1},
+  {"key": "companion.saved_display_s", "type": "number", "value": 1.4, "seed_version": 1},
   {"key": "models.idle_unload_s", "type": "number", "value": 60, "seed_version": 1},
   {"key": "pipeline.max_attempts", "type": "number", "value": 3, "seed_version": 1},
   {"key": "pipeline.retry_backoff_s", "type": "number", "value": 30, "seed_version": 1},

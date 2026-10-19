@@ -35,13 +35,7 @@ public struct EntryFileStore: Sendable {
 
     /// Moves the recording into a new Entry folder and writes its `entry.md`.
     public func createVoiceEntry(_ recording: Recording, suffix: String = Self.randomSuffix()) throws -> Entry {
-        let createdAt = Date(timeIntervalSince1970: recording.startedAt.timeIntervalSince1970.rounded(.down))
-        let parts = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: createdAt)
-        let id = String(
-            format: "%04d%02d%02d-%02d%02d%02d-%@", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0,
-            parts.hour ?? 0, parts.minute ?? 0, parts.second ?? 0, suffix)
-        let folder = String(format: "entries/%04d/%02d/%@", parts.year ?? 0, parts.month ?? 0, id)
-
+        let (id, folder, createdAt) = identity(for: recording.startedAt, suffix: suffix)
         let entry = Entry(
             id: id, createdAt: createdAt, durationSeconds: recording.durationSeconds, source: .voice, folder: folder)
         try saveText(entry)
@@ -52,6 +46,26 @@ public struct EntryFileStore: Sendable {
             throw error
         }
         return entry
+    }
+
+    /// Writes a new typed Entry: its Text is there from the start, and there is no recording.
+    public func createTypedEntry(text: String, createdAt: Date, suffix: String = Self.randomSuffix()) throws -> Entry {
+        let (id, folder, created) = identity(for: createdAt, suffix: suffix)
+        let entry = Entry(
+            id: id, createdAt: created, durationSeconds: nil, source: .typed, folder: folder, text: text)
+        try saveText(entry)
+        return entry
+    }
+
+    /// Id, folder and second-precise creation time for a new Entry.
+    private func identity(for date: Date, suffix: String) -> (id: String, folder: String, createdAt: Date) {
+        let createdAt = Date(timeIntervalSince1970: date.timeIntervalSince1970.rounded(.down))
+        let parts = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: createdAt)
+        let id = String(
+            format: "%04d%02d%02d-%02d%02d%02d-%@", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0,
+            parts.hour ?? 0, parts.minute ?? 0, parts.second ?? 0, suffix)
+        let folder = String(format: "entries/%04d/%02d/%@", parts.year ?? 0, parts.month ?? 0, id)
+        return (id, folder, createdAt)
     }
 
     /// Stores the Transcript. Only the very first Transcript of an Entry becomes its Text (as `firstText`

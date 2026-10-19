@@ -120,6 +120,13 @@ public final class AppEnvironment {
         watchMemoryPressure()
     }
 
+    /// tälli's settings from config.
+    public func companionSettings() -> CompanionSettings {
+        CompanionSettings(
+            cursorOffset: (try? settings.number(SettingKeys.companionCursorOffset)) ?? 0,
+            savedDisplaySeconds: (try? settings.number(SettingKeys.companionSavedDisplaySeconds)) ?? 0)
+    }
+
     /// Waits until the pipeline has nothing left to do. Used by tests.
     func waitForPipeline() async {
         await pipelineKick.waitUntilIdle()

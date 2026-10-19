@@ -13,11 +13,18 @@ public final class CaptureViewModel {
     public private(set) var recentEntries: [Entry] = []
     /// What the live preview hears while recording. Throwaway; the Entry's Text comes from the real Transcript.
     public private(set) var livePreviewText = ""
+    /// Microphone level 0…1 while recording, for tälli's animation.
+    public private(set) var level: Float = 0
+    /// When the last Entry was saved, so tälli can confirm briefly.
+    public private(set) var lastSavedAt: Date?
+    /// Text typed into tälli instead of talking.
+    public var typedText = ""
 
     @ObservationIgnored private let recorder: any AudioRecording
     @ObservationIgnored private let journal: any Journal
     @ObservationIgnored private let preview: (any LivePreviewing)?
     @ObservationIgnored private var previewTask: Task<Void, Never>?
+    @ObservationIgnored private var levelTask: Task<Void, Never>?
     @ObservationIgnored private var observation: Task<Void, Never>?
     /// True while a start or stop is in flight, so a quick second press is ignored.
     @ObservationIgnored private var isBusy = false
@@ -41,6 +48,34 @@ public final class CaptureViewModel {
             await stopAndSave()
         } else {
             await start()
+        }
+    }
+
+    /// Esc: stops and throws the recording away.
+    public func cancel() async {
+        guard isRecording, !isBusy else { return }
+        isBusy = true
+        defer { isBusy = false }
+        await recorder.cancel()
+        isRecording = false
+        recordingStartedAt = nil
+        stopPreview()
+    }
+
+    /// Saves what was typed as a typed Entry. A running recording is thrown away, since you chose to write.
+    public func submitTyped() async {
+        let text = typedText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !text.isEmpty, !isBusy else { return }
+        if isRecording { await cancel() }
+        isBusy = true
+        defer { isBusy = false }
+        do {
+            _ = try await journal.addTypedEntry(text)
+            typedText = ""
+            lastSavedAt = Date()
+        } catch {
+            logger.error("Could not save typed entry: \(String(describing: error))")
+            errorMessage = "Notiz konnte nicht gespeichert werden."
         }
     }
 
@@ -76,8 +111,16 @@ public final class CaptureViewModel {
         }
     }
 
-    /// Starts the live preview if one is configured. A failing preview never affects the recording.
+    /// Starts the live preview if one is configured, and level metering. Neither can affect the recording.
     private func startPreview() async {
+        let recorder = recorder
+        levelTask = Task { [weak self] in
+            while !Task.isCancelled {
+                let level = await recorder.level()
+                self?.level = level
+                try? await Task.sleep(for: .milliseconds(50))
+            }
+        }
         guard let preview else { return }
         let audio = await recorder.liveAudio()
         let logger = logger
@@ -96,6 +139,9 @@ public final class CaptureViewModel {
         previewTask?.cancel()
         previewTask = nil
         livePreviewText = ""
+        levelTask?.cancel()
+        levelTask = nil
+        level = 0
     }
 
     private func stopAndSave() async {
@@ -107,6 +153,7 @@ public final class CaptureViewModel {
             recordingStartedAt = nil
             stopPreview()
             _ = try await journal.addVoiceEntry(recording)
+            lastSavedAt = Date()
         } catch {
             isRecording = false
             recordingStartedAt = nil

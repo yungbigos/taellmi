@@ -6,10 +6,15 @@ import SwiftUI
 public struct CompanionSettings: Sendable {
     public var cursorOffset: Double
     public var savedDisplaySeconds: Double
+    public var followsCursor: Bool
+    /// Share of the remaining way tälli covers per frame when following (0…1).
+    public var followSmoothing: Double
 
-    public init(cursorOffset: Double, savedDisplaySeconds: Double) {
+    public init(cursorOffset: Double, savedDisplaySeconds: Double, followsCursor: Bool, followSmoothing: Double) {
         self.cursorOffset = cursorOffset
         self.savedDisplaySeconds = savedDisplaySeconds
+        self.followsCursor = followsCursor
+        self.followSmoothing = followSmoothing
     }
 }
 
@@ -42,6 +47,7 @@ public final class CompanionController {
     private let panel = CompanionPanel()
     private var showsSaved = false
     private var hideTask: Task<Void, Never>?
+    private var followTask: Task<Void, Never>?
     private static let escapeHotkeyID: UInt32 = 2
 
     public init(
@@ -85,12 +91,8 @@ public final class CompanionController {
         hideTask?.cancel()
         showsSaved = false
         render()
-        let cursor = NSEvent.mouseLocation
-        let screen = NSScreen.screens.first { $0.frame.contains(cursor) } ?? NSScreen.main
-        let frame = CompanionPlacement.frame(
-            cursor: cursor, size: CompanionPanel.size, screen: screen?.visibleFrame ?? .zero,
-            offset: settings.cursorOffset)
-        panel.setFrame(frame, display: true)
+        panel.setFrame(targetFrame(), display: true)
+        startFollowing()
         panel.alphaValue = 0
         panel.orderFrontRegardless()
         NSAnimationContext.runAnimationGroup {
@@ -112,7 +114,35 @@ public final class CompanionController {
         }
     }
 
+    /// Where tälli wants to be right now: beside the cursor, on the screen the cursor is on.
+    private func targetFrame() -> CGRect {
+        let cursor = NSEvent.mouseLocation
+        let screen = NSScreen.screens.first { $0.frame.contains(cursor) } ?? NSScreen.main
+        return CompanionPlacement.frame(
+            cursor: cursor, size: CompanionPanel.size, screen: screen?.visibleFrame ?? .zero,
+            offset: settings.cursorOffset)
+    }
+
+    /// Glides after the cursor about 60 times a second while visible. Reading the cursor position
+    /// needs no extra permission.
+    private func startFollowing() {
+        followTask?.cancel()
+        guard settings.followsCursor else { return }
+        followTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .milliseconds(16))
+                guard let self else { return }
+                let current = panel.frame.origin
+                let next = CompanionFollow.step(
+                    from: current, to: targetFrame().origin, smoothing: settings.followSmoothing)
+                if next != current { panel.setFrameOrigin(next) }
+            }
+        }
+    }
+
     private func hide() {
+        followTask?.cancel()
+        followTask = nil
         hotkeys.unregister(id: Self.escapeHotkeyID)
         showsSaved = false
         NSAnimationContext.runAnimationGroup { [panel] context in

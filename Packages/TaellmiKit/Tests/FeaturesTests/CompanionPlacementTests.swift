@@ -27,3 +27,25 @@ struct CompanionPlacementTests {
         #expect(frame.maxX <= 1380)
     }
 }
+
+@Suite("tälli gliding after the cursor")
+struct CompanionFollowTests {
+    @Test("each frame moves a fraction of the way towards the target")
+    func movesFraction() {
+        let next = CompanionFollow.step(from: CGPoint(x: 0, y: 0), to: CGPoint(x: 100, y: 40), smoothing: 0.25)
+        #expect(next == CGPoint(x: 25, y: 10))
+    }
+
+    @Test("snaps onto the target when it is less than a pixel away, so it comes to rest")
+    func snaps() {
+        let target = CGPoint(x: 100, y: 100)
+        #expect(CompanionFollow.step(from: CGPoint(x: 99.6, y: 100.3), to: target, smoothing: 0.25) == target)
+    }
+
+    @Test("smoothing 1 jumps straight to the target; 0 is treated as 'no following'")
+    func extremes() {
+        let target = CGPoint(x: 50, y: 60)
+        #expect(CompanionFollow.step(from: .zero, to: target, smoothing: 1) == target)
+        #expect(CompanionFollow.step(from: .zero, to: target, smoothing: 0) == .zero)
+    }
+}

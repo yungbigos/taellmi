@@ -13,3 +13,14 @@ public enum CompanionPlacement {
         return CGRect(origin: CGPoint(x: x, y: y), size: size)
     }
 }
+
+/// tälli glides after the cursor: every frame it covers a fraction (`smoothing`, 0…1) of the remaining way.
+public enum CompanionFollow {
+    public nonisolated static func step(from current: CGPoint, to target: CGPoint, smoothing: CGFloat) -> CGPoint {
+        let dx = target.x - current.x
+        let dy = target.y - current.y
+        if abs(dx) < 1, abs(dy) < 1 { return target }
+        let fraction = min(max(smoothing, 0), 1)
+        return CGPoint(x: current.x + dx * fraction, y: current.y + dy * fraction)
+    }
+}

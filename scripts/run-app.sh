@@ -13,7 +13,7 @@ SIGNING=()
 [[ "${1:-}" == "--build" ]] && SIGNING=(CODE_SIGNING_ALLOWED=NO)
 mkdir -p build
 if ! xcodebuild -project Taellmi.xcodeproj -scheme Taellmi -configuration Debug -derivedDataPath build \
-  -skipPackagePluginValidation "${SIGNING[@]}" build >"$LOG" 2>&1; then
+  -skipPackagePluginValidation ${SIGNING[@]+"${SIGNING[@]}"} build >"$LOG" 2>&1; then
   grep -E "error:" "$LOG" | head -40
   echo "✘ build failed (full log: $LOG)"
   exit 1

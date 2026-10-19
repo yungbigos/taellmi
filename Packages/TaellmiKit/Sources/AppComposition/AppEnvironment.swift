@@ -130,7 +130,9 @@ public final class AppEnvironment {
     public func companionSettings() -> CompanionSettings {
         CompanionSettings(
             cursorOffset: (try? settings.number(SettingKeys.companionCursorOffset)) ?? 0,
-            savedDisplaySeconds: (try? settings.number(SettingKeys.companionSavedDisplaySeconds)) ?? 0)
+            savedDisplaySeconds: (try? settings.number(SettingKeys.companionSavedDisplaySeconds)) ?? 0,
+            followsCursor: (try? settings.bool(SettingKeys.companionFollowsCursor)) ?? false,
+            followSmoothing: (try? settings.number(SettingKeys.companionFollowSmoothing)) ?? 1)
     }
 
     /// Waits until the pipeline has nothing left to do. Used by tests.

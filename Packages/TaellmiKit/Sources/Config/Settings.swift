@@ -19,6 +19,8 @@ public enum SettingKeys {
     public static let textCase = "appearance.text_case"
     public static let companionCursorOffset = "companion.cursor_offset"
     public static let companionSavedDisplaySeconds = "companion.saved_display_s"
+    public static let companionFollowsCursor = "companion.follows_cursor"
+    public static let companionFollowSmoothing = "companion.follow_smoothing"
 
     public static let all = [
         hotkey, sampleRate, idleUnloadSeconds, maxJobAttempts, segmentMaxPauseSeconds, retryBackoffSeconds,

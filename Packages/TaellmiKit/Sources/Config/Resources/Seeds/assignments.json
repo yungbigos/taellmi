@@ -1,0 +1,11 @@
+[
+  {
+    "id": "transcription-1",
+    "role": "transcription",
+    "priority": 1,
+    "model_id": "parakeet-tdt-0.6b-v3",
+    "conditions": {},
+    "enabled": true,
+    "seed_version": 1
+  }
+]

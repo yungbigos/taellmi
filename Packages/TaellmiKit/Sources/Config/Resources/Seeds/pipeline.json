@@ -1,0 +1,11 @@
+[
+  {
+    "id": "transcribe",
+    "step": "transcribe",
+    "ordinal": 1,
+    "role": "transcription",
+    "conditions": {},
+    "enabled": true,
+    "seed_version": 1
+  }
+]

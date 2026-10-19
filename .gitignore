@@ -1,0 +1,20 @@
+# Xcode / build
+*.xcodeproj/
+*.xcworkspace/
+DerivedData/
+.build/
+.swiftpm/
+build/
+*.xcresult
+
+# Local, personal
+CLAUDE.local.md
+.claude/settings.local.json
+.DS_Store
+
+# Never commit models or personal recordings
+models/
+samples/
+*.m4a
+*.wav
+!Packages/TaellmiKit/Tests/**/Fixtures/*.m4a

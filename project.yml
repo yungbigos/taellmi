@@ -1,0 +1,36 @@
+# XcodeGen spec for the thin app shell. Generate with `xcodegen generate` (scripts/run-app.sh does it).
+# The .xcodeproj is generated and gitignored; never edit it by hand.
+name: Taellmi
+options:
+  bundleIdPrefix: app
+  deploymentTarget:
+    macOS: "26.0"
+  createIntermediateGroups: true
+packages:
+  TaellmiKit:
+    path: Packages/TaellmiKit
+targets:
+  Taellmi:
+    type: application
+    platform: macOS
+    sources:
+      - path: App
+    dependencies:
+      - package: TaellmiKit
+        products: [AppComposition, Features]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.taellmi
+        PRODUCT_NAME: taellmi
+        INFOPLIST_FILE: App/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_ENTITLEMENTS: App/taellmi.entitlements
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: "-"
+        ENABLE_HARDENED_RUNTIME: YES
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
+        SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"

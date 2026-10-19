@@ -54,6 +54,7 @@ public final class CompanionController {
     private let hotkeys: GlobalHotkeyMonitor
     private let panel = CompanionPanel()
     private var showsSaved = false
+    private var showsDiscarded = false
     private var hideTask: Task<Void, Never>?
     private var followTask: Task<Void, Never>?
     /// The app you were in when tälli appeared; it gets the keyboard back when tälli hides.
@@ -79,8 +80,15 @@ public final class CompanionController {
     /// The capture hotkey: show and start listening, or finish and save.
     public func toggle() async {
         if model.isRecording {
+            let discardedBefore = model.lastDiscardedAt
             await model.toggle()
-            if model.errorMessage == nil { await confirmSavedAndHide() } else { render() }
+            if model.lastDiscardedAt != discardedBefore {
+                await confirmAndHide(discarded: true)
+            } else if model.errorMessage == nil {
+                await confirmSavedAndHide()
+            } else {
+                render()
+            }
         } else if panel.isVisible, !model.typedText.trimmingCharacters(in: .whitespaces).isEmpty {
             await submitTyped()
         } else {
@@ -121,6 +129,7 @@ public final class CompanionController {
     private func showAtCursor() {
         hideTask?.cancel()
         showsSaved = false
+        showsDiscarded = false
         render()
         panel.setFrame(targetFrame(), display: true)
         startFollowing()
@@ -146,7 +155,13 @@ public final class CompanionController {
     }
 
     private func confirmSavedAndHide() async {
-        showsSaved = true
+        await confirmAndHide(discarded: false)
+    }
+
+    /// Shows "saved." or "discarded." briefly, then fades out.
+    private func confirmAndHide(discarded: Bool) async {
+        showsSaved = !discarded
+        showsDiscarded = discarded
         render()
         hideTask = Task { [weak self, settings] in
             try? await Task.sleep(for: .seconds(settings.savedDisplaySeconds))
@@ -189,6 +204,7 @@ public final class CompanionController {
         hotkeys.unregister(id: Self.cancelHotkeyID)
         hotkeys.unregister(id: Self.finishHotkeyID)
         showsSaved = false
+        showsDiscarded = false
         NSAnimationContext.runAnimationGroup { [panel] context in
             context.duration = 0.18
             panel.animator().alphaValue = 0
@@ -200,7 +216,7 @@ public final class CompanionController {
     private func render() {
         panel.contentView = NSHostingView(
             rootView: CompanionView(
-                model: model, showsSaved: showsSaved, focusRequest: focusRequest,
+                model: model, showsSaved: showsSaved, showsDiscarded: showsDiscarded, focusRequest: focusRequest,
                 hint: "\(settings.finishKey.displayLabel) save · \(settings.cancelKey.displayLabel) discard",
                 onSubmitTyped: { [weak self] in Task { await self?.submitTyped() } },
                 onOpenSaved: { [weak self] in self?.openSavedEntry() }

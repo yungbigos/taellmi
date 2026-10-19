@@ -169,6 +169,11 @@ public struct EntryFileStore: Sendable {
         return try loadEntry(folder: original).entry
     }
 
+    /// Removes an Entry that holds nothing worth keeping (e.g. a recording with no words in it).
+    public func discard(_ entry: Entry) throws {
+        try storage.remove(entry.folder)
+    }
+
     /// Deletes a trashed Entry from tällmi by handing it to the macOS Trash.
     public func deleteFromTrash(trashedFolder: String) throws {
         try storage.moveToSystemTrash(trashedFolder)

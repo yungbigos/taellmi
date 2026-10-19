@@ -98,6 +98,14 @@ public actor PipelineRunner {
             throw error
         }
 
+        if raw.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, entry.text.isEmpty,
+            try settings.bool(SettingKeys.discardSilentRecordings)
+        {
+            // No words heard and nothing typed: there is nothing to keep.
+            try files.discard(entry)
+            try index.remove(id: entry.id)
+            return
+        }
         let maxPause = try settings.number(SettingKeys.segmentMaxPauseSeconds)
         let transcript = Transcript(
             text: raw.text, segments: SegmentBuilder(maxPause: maxPause).segments(from: raw.tokens),

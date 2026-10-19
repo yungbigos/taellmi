@@ -7,6 +7,8 @@ import Persistence
 public enum SettingKeys {
     public static let hotkey = "capture.hotkey"
     public static let sampleRate = "capture.sample_rate"
+    public static let minimumRecordingSeconds = "capture.min_recording_s"
+    public static let discardSilentRecordings = "capture.discard_silent_recordings"
     public static let idleUnloadSeconds = "models.idle_unload_s"
     public static let maxJobAttempts = "pipeline.max_attempts"
     public static let segmentMaxPauseSeconds = "transcription.segment_max_pause_s"
@@ -29,7 +31,8 @@ public enum SettingKeys {
     /// Every setting the code reads; the seed tests check each has a default.
     public static let all =
         [
-            hotkey, sampleRate, idleUnloadSeconds, maxJobAttempts, segmentMaxPauseSeconds, retryBackoffSeconds,
+            hotkey, sampleRate, minimumRecordingSeconds, discardSilentRecordings, idleUnloadSeconds, maxJobAttempts,
+            segmentMaxPauseSeconds, retryBackoffSeconds,
             waitForModelSeconds, maintenanceIntervalSeconds, vocabularyMinSimilarityNames, vocabularyMinSimilarityOther,
             vocabularyUseContacts, textCase, exploreHotkey, exploreAutosaveDelaySeconds,
             companionCursorOffset,

@@ -4,6 +4,7 @@ import SwiftUI
 struct CompanionView: View {
     @Bindable var model: CaptureViewModel
     var showsSaved: Bool
+    var showsDiscarded: Bool
     /// Changes when the panel has become key and the input field should take focus.
     var focusRequest: Int
     var hint: String
@@ -29,6 +30,8 @@ struct CompanionView: View {
                         .foregroundStyle(.green)
                 }
                 .buttonStyle(.plain)
+            } else if showsDiscarded {
+                Text("discarded.").foregroundStyle(.secondary)
             } else if let error = model.errorMessage {
                 Text(error).foregroundStyle(.red)
             } else {

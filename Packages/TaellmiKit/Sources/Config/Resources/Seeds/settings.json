@@ -1,7 +1,9 @@
 [
   {"key": "app.maintenance_interval_s", "type": "number", "value": 30, "seed_version": 1},
   {"key": "appearance.text_case", "type": "string", "value": "normal", "seed_version": 1},
+  {"key": "capture.discard_silent_recordings", "type": "bool", "value": true, "seed_version": 1},
   {"key": "capture.hotkey", "type": "string", "value": "control+option+t", "seed_version": 2},
+  {"key": "capture.min_recording_s", "type": "number", "value": 0.7, "seed_version": 1},
   {"key": "capture.sample_rate", "type": "number", "value": 48000, "seed_version": 1},
   {"key": "companion.cancel_key", "type": "string", "value": "escape", "seed_version": 1},
   {"key": "companion.cursor_offset", "type": "number", "value": 18, "seed_version": 1},

@@ -165,6 +165,20 @@ struct PipelineRunnerTests {
         #expect(try harness.files.loadEntry(folder: entry.folder).entry.text == "Heute mit Marleen telefoniert.")
     }
 
+    @Test("a recording in which no words were heard is discarded completely")
+    func discardsSilence() async throws {
+        let silence = RawTranscription(text: "  ", tokens: [], durationSeconds: 3)
+        let harness = try Harness(fake: FakeTranscriber(result: silence))
+        let entry = try harness.addEntry()
+        try await harness.runner.enqueue(entry)
+
+        await harness.runner.runPending()
+
+        #expect(try harness.files.allEntryFolders().isEmpty)
+        #expect(try harness.files.trashedFolders().isEmpty, "nothing to keep, so not even the Trash")
+        #expect(try harness.index.entry(id: entry.id) == nil)
+    }
+
     @Test("a failed attempt waits for the backoff before it is retried")
     func backsOff() async throws {
         let harness = try Harness(fake: FakeTranscriber(failTimes: 1))

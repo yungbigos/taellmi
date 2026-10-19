@@ -53,4 +53,64 @@ struct ComposerTests {
         #expect(try await library.search(EntryQuery()).isEmpty)
         #expect(!model.isComposing)
     }
+
+}
+
+@Suite("The composer listens like tälli")
+struct ListeningComposerTests {
+    private func makeModel() throws -> (
+        ExploreViewModel, CaptureViewModel, FakeRecorder, FakeJournal, TemporaryDirectory
+    ) {
+        let temp = try TemporaryDirectory()
+        let recorder = FakeRecorder(folder: temp.url)
+        let journal = FakeJournal()
+        let capture = CaptureViewModel(recorder: recorder, journal: journal)
+        let explore = ExploreViewModel(library: FakeLibrary(entries: []), autosaveDelay: .zero, capture: capture)
+        return (explore, capture, recorder, journal, temp)
+    }
+
+    @Test("opening the composer starts listening")
+    func listensOnOpen() async throws {
+        let (explore, capture, recorder, _, temp) = try makeModel()
+        defer { withExtendedLifetime(temp) {} }
+        await explore.perform(.newThought)
+        #expect(capture.isRecording)
+        #expect(await recorder.isRecording)
+    }
+
+    @Test("starting to type stops listening and throws the recording away")
+    func typingTakesOver() async throws {
+        let (explore, capture, recorder, journal, temp) = try makeModel()
+        defer { withExtendedLifetime(temp) {} }
+        await explore.perform(.newThought)
+        explore.composerText = "Lieber schreiben."
+        await explore.typingStarted()
+        #expect(!capture.isRecording)
+        #expect(await recorder.cancelled == 1)
+        await explore.finishComposing()
+        #expect(await journal.added.isEmpty)
+    }
+
+    @Test("⌘↩ while listening saves a spoken thought and closes the composer")
+    func saveSpoken() async throws {
+        let (explore, capture, _, journal, temp) = try makeModel()
+        defer { withExtendedLifetime(temp) {} }
+        await explore.perform(.newThought)
+        await explore.finishComposing()
+        #expect(await journal.added.count == 1)
+        #expect(!capture.isRecording)
+        #expect(!explore.isComposing)
+    }
+
+    @Test("esc while listening discards the recording and closes the composer")
+    func escDiscards() async throws {
+        let (explore, capture, recorder, journal, temp) = try makeModel()
+        defer { withExtendedLifetime(temp) {} }
+        await explore.perform(.newThought)
+        await explore.closeComposer()
+        #expect(await journal.added.isEmpty)
+        #expect(await recorder.cancelled == 1)
+        #expect(!capture.isRecording)
+        #expect(!explore.isComposing)
+    }
 }

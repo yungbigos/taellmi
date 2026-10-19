@@ -106,7 +106,8 @@ public final class AppEnvironment {
             kickPipeline: { kick.kick() })
         captureModel = CaptureViewModel(
             recorder: recorder, journal: journal,
-            preview: LivePreviewService(resolver: resolver, factories: livePreviews, vocabulary: vocabularySources))
+            preview: LivePreviewService(resolver: resolver, factories: livePreviews, vocabulary: vocabularySources),
+            minimumDuration: (try? settings.number(SettingKeys.minimumRecordingSeconds)) ?? 0)
         appearanceModel = AppearanceViewModel(
             store: LiveAppearanceStore(settings: settings, editor: ConfigEditor(database: database)))
         hotkeyStore = LiveHotkeyStore(
@@ -115,7 +116,8 @@ public final class AppEnvironment {
             settings: settings, editor: ConfigEditor(database: database), key: SettingKeys.exploreHotkey)
         exploreModel = ExploreViewModel(
             library: LiveExploreLibrary(files: files, index: index),
-            autosaveDelay: .seconds((try? settings.number(SettingKeys.exploreAutosaveDelaySeconds)) ?? 0))
+            autosaveDelay: .seconds((try? settings.number(SettingKeys.exploreAutosaveDelaySeconds)) ?? 0),
+            capture: captureModel)
         vocabularyModel = VocabularyViewModel(
             settings: LiveVocabularySettings(
                 curation: CurationStore(storage: PlainFolderStorage(root: paths.archive)), settings: settings,

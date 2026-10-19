@@ -76,6 +76,8 @@ public final class ExploreViewModel {
     }
 
     @ObservationIgnored private let library: any ExploreLibrary
+    /// tälli's capture, so the composer can listen like tälli at the cursor.
+    public let capture: CaptureViewModel?
     @ObservationIgnored private let autosaveDelay: Duration
     @ObservationIgnored private var autosaveTask: Task<Void, Never>?
     @ObservationIgnored private var savedText = ""
@@ -83,7 +85,8 @@ public final class ExploreViewModel {
     @ObservationIgnored private var observation: Task<Void, Never>?
 
     /// - Parameter autosaveDelay: pause after the last keystroke before saving (from config).
-    public init(library: any ExploreLibrary, autosaveDelay: Duration) {
+    public init(library: any ExploreLibrary, autosaveDelay: Duration, capture: CaptureViewModel? = nil) {
+        self.capture = capture
         self.library = library
         self.autosaveDelay = autosaveDelay
     }
@@ -119,6 +122,19 @@ public final class ExploreViewModel {
         composedSavedText = ""
         composerText = ""
         isComposing = true
+        if let capture, !capture.isRecording { await capture.toggle() }
+    }
+
+    /// You started typing: writing takes over, so the recording is thrown away (as with tälli).
+    public func typingStarted() async {
+        guard let capture, capture.isRecording, !composerText.isEmpty else { return }
+        await capture.cancel()
+    }
+
+    /// Esc: throws a running recording away, keeps anything typed, and closes the composer.
+    public func closeComposer() async {
+        if let capture, capture.isRecording { await capture.cancel() }
+        await finishComposing()
     }
 
     /// Saves the composer's text: the first save creates the thought, later saves update it.
@@ -138,8 +154,18 @@ public final class ExploreViewModel {
         }
     }
 
-    /// ⌘↩ or esc: saves, closes the composer and opens the new thought (nothing is created if it is empty).
+    /// ⌘↩: saves what you said (a spoken thought) or wrote (a typed thought), closes the composer and opens
+    /// the new thought. Nothing is created if nothing was said or written.
     public func finishComposing() async {
+        if let capture, capture.isRecording {
+            let savedBefore = capture.lastSavedAt
+            await capture.toggle()
+            isComposing = false
+            showsTrash = false
+            await refresh()
+            if capture.lastSavedAt != savedBefore, let id = capture.lastSavedEntryID { await select(id) }
+            return
+        }
         await saveComposerIfNeeded()
         isComposing = false
         let id = composedID

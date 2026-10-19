@@ -118,6 +118,20 @@ struct CaptureViewModelTests {
         #expect(model.lastSavedAt != nil)
     }
 
+    @Test("a recording shorter than the minimum is discarded, not saved")
+    func tooShort() async throws {
+        let temp = try TemporaryDirectory()
+        let journal = FakeJournal()
+        let recorder = FakeRecorder(folder: temp.url)  // records 4.2 s
+        let model = CaptureViewModel(recorder: recorder, journal: journal, minimumDuration: 5)
+        await model.toggle()
+        await model.toggle()
+        #expect(await journal.added.isEmpty)
+        #expect(model.lastDiscardedAt != nil)
+        #expect(model.lastSavedAt == nil)
+        #expect(try FileManager.default.contentsOfDirectory(atPath: temp.url.path).isEmpty, "the audio is deleted")
+    }
+
     @Test("a denied microphone shows an explanation instead of recording")
     func microphoneDenied() async throws {
         let (model, _, _, _) = try makeModel(startError: .microphoneDenied)

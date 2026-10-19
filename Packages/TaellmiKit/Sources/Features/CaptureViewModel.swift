@@ -17,6 +17,8 @@ public final class CaptureViewModel {
     public private(set) var level: Float = 0
     /// When the last Entry was saved, so tälli can confirm briefly.
     public private(set) var lastSavedAt: Date?
+    /// When the last recording was thrown away (too short), so tälli can say "discarded.".
+    public private(set) var lastDiscardedAt: Date?
     /// The Entry saved last, so tälli's confirmation can open it.
     public private(set) var lastSavedEntryID: String?
     /// Text typed into tälli instead of talking.
@@ -25,6 +27,8 @@ public final class CaptureViewModel {
     @ObservationIgnored private let recorder: any AudioRecording
     @ObservationIgnored private let journal: any Journal
     @ObservationIgnored private let preview: (any LivePreviewing)?
+    /// Recordings shorter than this many seconds are discarded instead of saved (from config).
+    @ObservationIgnored private let minimumDuration: Double
     @ObservationIgnored private var previewTask: Task<Void, Never>?
     @ObservationIgnored private var levelTask: Task<Void, Never>?
     @ObservationIgnored private var observation: Task<Void, Never>?
@@ -32,7 +36,11 @@ public final class CaptureViewModel {
     @ObservationIgnored private var isBusy = false
     @ObservationIgnored private let logger = Logger(subsystem: "app.taellmi", category: "capture")
 
-    public init(recorder: any AudioRecording, journal: any Journal, preview: (any LivePreviewing)? = nil) {
+    public init(
+        recorder: any AudioRecording, journal: any Journal, preview: (any LivePreviewing)? = nil,
+        minimumDuration: Double = 0
+    ) {
+        self.minimumDuration = minimumDuration
         self.recorder = recorder
         self.journal = journal
         self.preview = preview
@@ -154,6 +162,11 @@ public final class CaptureViewModel {
             isRecording = false
             recordingStartedAt = nil
             stopPreview()
+            guard recording.durationSeconds >= minimumDuration else {
+                try? FileManager.default.removeItem(at: recording.file)
+                lastDiscardedAt = Date()
+                return
+            }
             lastSavedEntryID = try await journal.addVoiceEntry(recording).id
             lastSavedAt = Date()
         } catch {

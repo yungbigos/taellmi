@@ -127,6 +127,13 @@ Decisions are locked (see section 3); we fix model choices later if real use sho
 - **Later:** playful physics, e.g. reacting to the Mac's motion or orientation.
 - The menu bar stays only as a fallback.
 
+### Character and game-like visuals (requested 2026-10-19, later)
+- **A cute, custom character for tälli.**
+  - First research open-source 3D asset libraries and licences.
+  - Then adapt a base model until it is truly ours (own look, own animations).
+  - It replaces the placeholder orb as a config-selectable skin.
+- **A visual, game-like rendering of the thoughts:** Concepts, Fragments and clusters as an explorable world (RealityKit). This connects to the "mind palace" idea in section 5a.
+
 ### Explore window (requested 2026-10-19)
 - **A real app window** for sifting through Entries: list, read, edit the Text, search.
 - It is also where asking questions and the visualizations (Concepts, clusters, mind palace) will live.

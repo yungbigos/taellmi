@@ -106,7 +106,7 @@ let package = Package(
             swiftSettings: strict
         ),
         .testTarget(
-            name: "FeaturesTests", dependencies: ["Features", "TestSupport"], swiftSettings: ui),
+            name: "FeaturesTests", dependencies: ["Features", "Domain", "TestSupport"], swiftSettings: ui),
 
         .testTarget(
             name: "AppCompositionTests",
@@ -114,7 +114,8 @@ let package = Package(
             swiftSettings: ui),
         .testTarget(
             name: "SpeechAnalyzerEngineTests", dependencies: ["SpeechAnalyzerEngine", "Domain"], swiftSettings: strict),
-        .testTarget(name: "SystemServicesTests", dependencies: ["SystemServices", "Domain"], swiftSettings: strict),
+        .testTarget(
+            name: "SystemServicesTests", dependencies: ["SystemServices", "Domain"], swiftSettings: strict),
         .testTarget(
             name: "FluidAudioEngineTests", dependencies: ["FluidAudioEngine", "Domain"], swiftSettings: strict),
 

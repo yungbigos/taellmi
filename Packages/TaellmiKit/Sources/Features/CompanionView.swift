@@ -35,7 +35,7 @@ struct CompanionView: View {
                     .onSubmit(onSubmitTyped)
             }
             Spacer(minLength: 0)
-            Text("⌥⌘ Leertaste: fertig · Esc: verwerfen")
+            Text("Kürzel nochmal: fertig · Esc: verwerfen")
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
         }

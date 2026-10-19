@@ -4,16 +4,27 @@ import SwiftUI
 /// The menu-bar window: one big record button, recent Entries, and a way into the Archive.
 public struct MenuBarView: View {
     @Bindable var model: CaptureViewModel
+    var appearance: AppearanceViewModel
     let hotkeyLabel: String
+    let hotkeyWarning: String?
 
-    public init(model: CaptureViewModel, hotkeyLabel: String) {
+    public init(
+        model: CaptureViewModel, appearance: AppearanceViewModel, hotkeyLabel: String, hotkeyWarning: String?
+    ) {
         self.model = model
+        self.appearance = appearance
         self.hotkeyLabel = hotkeyLabel
+        self.hotkeyWarning = hotkeyWarning
     }
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             recordButton
+            if let hotkeyWarning {
+                Label(hotkeyWarning + " Ändern unter Einstellungen.", systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
             if model.isRecording {
                 Text(model.livePreviewText.isEmpty ? "Ich höre zu …" : model.livePreviewText)
                     .font(.callout)
@@ -52,6 +63,7 @@ public struct MenuBarView: View {
         }
         .padding(16)
         .frame(width: 340)
+        .textCase(appearance.swiftUICase)
     }
 
     private var recordButton: some View {

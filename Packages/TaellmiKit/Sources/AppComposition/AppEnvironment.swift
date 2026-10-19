@@ -25,6 +25,8 @@ public final class AppEnvironment {
     public let journal: any Journal
     public let captureModel: CaptureViewModel
     public let vocabularyModel: VocabularyViewModel
+    public let appearanceModel: AppearanceViewModel
+    public let hotkeyStore: any HotkeyStore
     public let settings: SettingsStore
     /// The configured global hotkey; read once at start.
     public private(set) var hotkey: Hotkey?
@@ -103,6 +105,9 @@ public final class AppEnvironment {
         captureModel = CaptureViewModel(
             recorder: recorder, journal: journal,
             preview: LivePreviewService(resolver: resolver, factories: livePreviews, vocabulary: vocabularySources))
+        appearanceModel = AppearanceViewModel(
+            store: LiveAppearanceStore(settings: settings, editor: ConfigEditor(database: database)))
+        hotkeyStore = LiveHotkeyStore(settings: settings, editor: ConfigEditor(database: database))
         vocabularyModel = VocabularyViewModel(
             settings: LiveVocabularySettings(
                 curation: CurationStore(storage: PlainFolderStorage(root: paths.archive)), settings: settings,
@@ -114,6 +119,7 @@ public final class AppEnvironment {
         let work = StartupWork(paths: paths, database: database, files: files, index: index, runner: runner)
         try await Task.detached(priority: .utility) { try await work.run() }.value
         hotkey = (try? settings.string(SettingKeys.hotkey)).flatMap { try? Hotkey(parsing: $0) }
+        await appearanceModel.load()
         captureModel.startObservingEntries()
         pipelineKick.kick()
         try startMaintenance()

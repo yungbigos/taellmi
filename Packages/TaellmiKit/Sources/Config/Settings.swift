@@ -16,6 +16,7 @@ public enum SettingKeys {
     public static let vocabularyMinSimilarityNames = "vocabulary.min_similarity_names"
     public static let vocabularyMinSimilarityOther = "vocabulary.min_similarity_other"
     public static let vocabularyUseContacts = "vocabulary.use_contacts"
+    public static let textCase = "appearance.text_case"
     public static let companionCursorOffset = "companion.cursor_offset"
     public static let companionSavedDisplaySeconds = "companion.saved_display_s"
 
@@ -23,6 +24,7 @@ public enum SettingKeys {
         hotkey, sampleRate, idleUnloadSeconds, maxJobAttempts, segmentMaxPauseSeconds, retryBackoffSeconds,
         waitForModelSeconds, maintenanceIntervalSeconds, vocabularyMinSimilarityNames,
         vocabularyMinSimilarityOther, vocabularyUseContacts, companionCursorOffset, companionSavedDisplaySeconds,
+        textCase,
     ]
 }
 

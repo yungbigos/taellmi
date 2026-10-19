@@ -1,4 +1,5 @@
 import AppKit
+import Domain
 import SwiftUI
 
 /// tälli's settings, read from config by the composition root.
@@ -35,6 +36,7 @@ final class CompanionPanel: NSPanel {
 /// Shows tälli next to the cursor for Capture and hides it again.
 public final class CompanionController {
     private let model: CaptureViewModel
+    private let appearance: AppearanceViewModel
     private let settings: CompanionSettings
     private let hotkeys: GlobalHotkeyMonitor
     private let panel = CompanionPanel()
@@ -42,8 +44,12 @@ public final class CompanionController {
     private var hideTask: Task<Void, Never>?
     private static let escapeHotkeyID: UInt32 = 2
 
-    public init(model: CaptureViewModel, settings: CompanionSettings, hotkeys: GlobalHotkeyMonitor) {
+    public init(
+        model: CaptureViewModel, appearance: AppearanceViewModel, settings: CompanionSettings,
+        hotkeys: GlobalHotkeyMonitor
+    ) {
         self.model = model
+        self.appearance = appearance
         self.settings = settings
         self.hotkeys = hotkeys
         render()
@@ -121,6 +127,7 @@ public final class CompanionController {
         panel.contentView = NSHostingView(
             rootView: CompanionView(model: model, showsSaved: showsSaved) { [weak self] in
                 Task { await self?.submitTyped() }
-            })
+            }
+            .textCase(appearance.swiftUICase))
     }
 }

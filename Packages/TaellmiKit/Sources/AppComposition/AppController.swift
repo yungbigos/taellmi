@@ -1,6 +1,8 @@
+import Domain
 import Features
 import Foundation
 import Observation
+import SystemServices
 import os
 
 /// Owns the running app: builds the environment, starts it, and wires the global hotkey.
@@ -11,6 +13,10 @@ public final class AppController {
 
     @ObservationIgnored private let hotkeys = GlobalHotkeyMonitor()
     @ObservationIgnored private var companion: CompanionController?
+    /// Set when the configured hotkey clashes with a macOS shortcut.
+    public private(set) var hotkeyWarning: String?
+    public private(set) var hotkeySettings: HotkeySettingsViewModel?
+    @ObservationIgnored private let checker = SystemHotkeyChecker()
     @ObservationIgnored private let logger = Logger(subsystem: "app.taellmi", category: "app")
 
     public init() {
@@ -32,26 +38,27 @@ public final class AppController {
             startupError = "tällmi konnte nicht starten. Details stehen im Systemprotokoll."
             return
         }
-        if let hotkey = environment.hotkey {
-            hotkeyLabel = Self.label(for: hotkey)
-            let companion = CompanionController(
-                model: environment.captureModel, settings: environment.companionSettings(), hotkeys: hotkeys)
-            self.companion = companion
-            hotkeys.register(hotkey) { Task { await companion.toggle() } }
+        logger.notice("macOS reports \(SystemHotkeyChecker.systemShortcuts().count) system shortcuts")
+        hotkeySettings = HotkeySettingsViewModel(store: environment.hotkeyStore, checker: checker) {
+            [weak self] hotkey in self?.registerCaptureHotkey(hotkey)
         }
+        let companion = CompanionController(
+            model: environment.captureModel, appearance: environment.appearanceModel,
+            settings: environment.companionSettings(), hotkeys: hotkeys)
+        self.companion = companion
+        if let hotkey = environment.hotkey { registerCaptureHotkey(hotkey) }
+    }
+
+    /// (Re-)registers the hotkey that calls tälli, and notes a clash with macOS shortcuts.
+    private func registerCaptureHotkey(_ hotkey: Hotkey) {
+        hotkeyLabel = hotkey.displayLabel
+        hotkeyWarning = checker.conflict(for: hotkey).map(HotkeySettingsViewModel.conflictText)
+        guard let companion else { return }
+        hotkeys.register(hotkey, id: 1) { Task { await companion.toggle() } }
     }
 
     /// "⌥⌘ Leertaste"-style label for the menu.
     public nonisolated static func label(for hotkey: Hotkey) -> String {
-        var symbols = ""
-        if hotkey.modifiers.contains(.control) { symbols += "⌃" }
-        if hotkey.modifiers.contains(.option) { symbols += "⌥" }
-        if hotkey.modifiers.contains(.shift) { symbols += "⇧" }
-        if hotkey.modifiers.contains(.command) { symbols += "⌘" }
-        switch hotkey.key {
-        case .space: return symbols + " Leertaste"
-        case .escape: return symbols + "Esc"
-        case .letter(let character): return symbols + String(character).uppercased()
-        }
+        hotkey.displayLabel
     }
 }

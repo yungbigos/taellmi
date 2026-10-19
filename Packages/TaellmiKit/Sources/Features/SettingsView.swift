@@ -5,18 +5,23 @@ import SwiftUI
 /// The Settings window: General (tälli's shortcut, writing style) and Vocabulary.
 public struct SettingsView: View {
     var hotkey: HotkeySettingsViewModel
+    var exploreHotkey: HotkeySettingsViewModel
     var appearance: AppearanceViewModel
     var vocabulary: VocabularyViewModel
 
-    public init(hotkey: HotkeySettingsViewModel, appearance: AppearanceViewModel, vocabulary: VocabularyViewModel) {
+    public init(
+        hotkey: HotkeySettingsViewModel, exploreHotkey: HotkeySettingsViewModel, appearance: AppearanceViewModel,
+        vocabulary: VocabularyViewModel
+    ) {
         self.hotkey = hotkey
+        self.exploreHotkey = exploreHotkey
         self.appearance = appearance
         self.vocabulary = vocabulary
     }
 
     public var body: some View {
         TabView {
-            GeneralSettingsView(hotkey: hotkey, appearance: appearance)
+            GeneralSettingsView(hotkey: hotkey, exploreHotkey: exploreHotkey, appearance: appearance)
                 .tabItem { Label("Allgemein", systemImage: "gearshape") }
             VocabularySettingsView(model: vocabulary)
                 .tabItem { Label("Vokabular", systemImage: "character.book.closed") }
@@ -27,6 +32,7 @@ public struct SettingsView: View {
 
 struct GeneralSettingsView: View {
     @Bindable var hotkey: HotkeySettingsViewModel
+    @Bindable var exploreHotkey: HotkeySettingsViewModel
     var appearance: AppearanceViewModel
 
     var body: some View {
@@ -44,6 +50,15 @@ struct GeneralSettingsView: View {
             } footer: {
                 Text("Mit diesem Kürzel erscheint tälli neben dem Mauszeiger und hört zu.")
             }
+            Section("Archiv öffnen") {
+                LabeledContent("Tastenkürzel") {
+                    HotkeyRecorder(model: exploreHotkey)
+                }
+                if let warning = exploreHotkey.warning {
+                    Label(warning, systemImage: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                }
+            }
             Section("Schreibweise") {
                 Picker(
                     "Texte anzeigen",
@@ -58,8 +73,11 @@ struct GeneralSettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 460, height: 300)
-        .task { await hotkey.load() }
+        .frame(width: 460, height: 400)
+        .task {
+            await hotkey.load()
+            await exploreHotkey.load()
+        }
         .alert(
             "Kürzel ist schon belegt",
             isPresented: Binding(

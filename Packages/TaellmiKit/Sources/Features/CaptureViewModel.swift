@@ -17,6 +17,8 @@ public final class CaptureViewModel {
     public private(set) var level: Float = 0
     /// When the last Entry was saved, so tälli can confirm briefly.
     public private(set) var lastSavedAt: Date?
+    /// The Entry saved last, so tälli's confirmation can open it.
+    public private(set) var lastSavedEntryID: String?
     /// Text typed into tälli instead of talking.
     public var typedText = ""
 
@@ -70,7 +72,7 @@ public final class CaptureViewModel {
         isBusy = true
         defer { isBusy = false }
         do {
-            _ = try await journal.addTypedEntry(text)
+            lastSavedEntryID = try await journal.addTypedEntry(text).id
             typedText = ""
             lastSavedAt = Date()
         } catch {
@@ -152,7 +154,7 @@ public final class CaptureViewModel {
             isRecording = false
             recordingStartedAt = nil
             stopPreview()
-            _ = try await journal.addVoiceEntry(recording)
+            lastSavedEntryID = try await journal.addVoiceEntry(recording).id
             lastSavedAt = Date()
         } catch {
             isRecording = false

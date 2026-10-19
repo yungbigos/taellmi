@@ -2,13 +2,14 @@ import Config
 import Features
 import Foundation
 
-/// The `capture.hotkey` setting.
+/// A hotkey setting (`capture.hotkey`, `explore.hotkey`).
 nonisolated struct LiveHotkeyStore: HotkeyStore {
     let settings: SettingsStore
     let editor: ConfigEditor
+    let key: String
 
-    func current() async throws -> String { try settings.string(SettingKeys.hotkey) }
-    func save(_ value: String) async throws { try editor.setSetting(SettingKeys.hotkey, to: .string(value)) }
+    func current() async throws -> String { try settings.string(key) }
+    func save(_ value: String) async throws { try editor.setSetting(key, to: .string(value)) }
 }
 
 /// The `appearance.text_case` setting.

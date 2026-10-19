@@ -16,6 +16,12 @@ public final class AppController {
     /// Set when the configured hotkey clashes with a macOS shortcut.
     public private(set) var hotkeyWarning: String?
     public private(set) var hotkeySettings: HotkeySettingsViewModel?
+    public private(set) var exploreHotkeySettings: HotkeySettingsViewModel?
+    @ObservationIgnored private var explore: ExploreWindowController?
+    @ObservationIgnored private var captureWarning: String?
+    @ObservationIgnored private var exploreWarning: String?
+    private static let captureHotkeyID: UInt32 = 1
+    private static let exploreHotkeyID: UInt32 = 4
     @ObservationIgnored private let checker = SystemHotkeyChecker()
     @ObservationIgnored private let logger = Logger(subsystem: "app.taellmi", category: "app")
 
@@ -42,19 +48,46 @@ public final class AppController {
         hotkeySettings = HotkeySettingsViewModel(store: environment.hotkeyStore, checker: checker) {
             [weak self] hotkey in self?.registerCaptureHotkey(hotkey)
         }
+        exploreHotkeySettings = HotkeySettingsViewModel(store: environment.exploreHotkeyStore, checker: checker) {
+            [weak self] hotkey in self?.registerExploreHotkey(hotkey)
+        }
+        let explore = ExploreWindowController(model: environment.exploreModel)
+        self.explore = explore
         let companion = CompanionController(
             model: environment.captureModel, appearance: environment.appearanceModel,
-            settings: environment.companionSettings(), hotkeys: hotkeys)
+            settings: environment.companionSettings(), hotkeys: hotkeys
+        ) { entryID in explore.show(selecting: entryID) }
         self.companion = companion
         if let hotkey = environment.hotkey { registerCaptureHotkey(hotkey) }
+        if let hotkey = environment.exploreHotkey { registerExploreHotkey(hotkey) }
+    }
+
+    /// Opens the Explore window ("Archiv öffnen").
+    public func openExplore() {
+        explore?.show()
+    }
+
+    private func registerExploreHotkey(_ hotkey: Hotkey) {
+        exploreWarning = checker.conflict(for: hotkey).map {
+            "Archiv-Kürzel: " + HotkeySettingsViewModel.conflictText($0)
+        }
+        updateWarning()
+        guard let explore else { return }
+        hotkeys.register(hotkey, id: Self.exploreHotkeyID) { explore.show() }
+    }
+
+    private func updateWarning() {
+        let warnings = [captureWarning, exploreWarning].compactMap { $0 }
+        hotkeyWarning = warnings.isEmpty ? nil : warnings.joined(separator: " ")
     }
 
     /// (Re-)registers the hotkey that calls tälli, and notes a clash with macOS shortcuts.
     private func registerCaptureHotkey(_ hotkey: Hotkey) {
         hotkeyLabel = hotkey.displayLabel
-        hotkeyWarning = checker.conflict(for: hotkey).map(HotkeySettingsViewModel.conflictText)
+        captureWarning = checker.conflict(for: hotkey).map(HotkeySettingsViewModel.conflictText)
+        updateWarning()
         guard let companion else { return }
-        hotkeys.register(hotkey, id: 1) { Task { await companion.toggle() } }
+        hotkeys.register(hotkey, id: Self.captureHotkeyID) { Task { await companion.toggle() } }
     }
 
     /// "⌥⌘ Leertaste"-style label for the menu.

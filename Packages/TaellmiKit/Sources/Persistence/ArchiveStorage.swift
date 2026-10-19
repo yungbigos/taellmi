@@ -12,6 +12,10 @@ public protocol ArchiveStorage: Sendable {
     func write(_ data: Data, to path: String) throws
     func exists(_ path: String) -> Bool
     func remove(_ path: String) throws
+    /// Hands a file or folder to the macOS Trash (still recoverable there).
+    func moveToSystemTrash(_ path: String) throws
+    /// Moves a file or folder inside the Archive, creating parent folders.
+    func move(_ path: String, to destination: String) throws
     /// Moves an outside file (e.g. a fresh recording) into the Archive.
     func importFile(from url: URL, to path: String) throws
     /// Relative paths of all files with this name below `folder`, sorted.
@@ -23,9 +27,18 @@ public protocol ArchiveStorage: Sendable {
 /// Stores the Archive as plain files in a folder.
 public struct PlainFolderStorage: ArchiveStorage {
     public let root: URL
+    private let systemTrash: @Sendable (URL) throws -> Void
 
-    public init(root: URL) {
+    /// - Parameter systemTrash: how "delete for good" hands things to the macOS Trash. Tests pass a plain
+    ///   delete so they never touch the user's real Trash.
+    public init(
+        root: URL,
+        systemTrash: @escaping @Sendable (URL) throws -> Void = {
+            try FileManager.default.trashItem(at: $0, resultingItemURL: nil)
+        }
+    ) {
         self.root = root.standardizedFileURL
+        self.systemTrash = systemTrash
     }
 
     public func read(_ path: String) throws -> Data {
@@ -46,6 +59,17 @@ public struct PlainFolderStorage: ArchiveStorage {
 
     public func remove(_ path: String) throws {
         try FileManager.default.removeItem(at: url(path))
+    }
+
+    public func moveToSystemTrash(_ path: String) throws {
+        try systemTrash(url(path))
+    }
+
+    public func move(_ path: String, to destination: String) throws {
+        let target = try url(destination)
+        try FileManager.default.createDirectory(
+            at: target.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try FileManager.default.moveItem(at: url(path), to: target)
     }
 
     public func importFile(from source: URL, to path: String) throws {

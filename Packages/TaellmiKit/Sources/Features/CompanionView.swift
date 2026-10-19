@@ -8,6 +8,7 @@ struct CompanionView: View {
     var focusRequest: Int
     var hint: String
     var onSubmitTyped: () -> Void
+    var onOpenSaved: () -> Void
     @FocusState private var typingFocused: Bool
 
     var body: some View {
@@ -23,8 +24,11 @@ struct CompanionView: View {
     @ViewBuilder private var bubble: some View {
         VStack(alignment: .leading, spacing: 6) {
             if showsSaved {
-                Label("Gespeichert", systemImage: "checkmark.circle.fill")
-                    .foregroundStyle(.green)
+                Button(action: onOpenSaved) {
+                    Label("Gespeichert – öffnen", systemImage: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                }
+                .buttonStyle(.plain)
             } else if let error = model.errorMessage {
                 Text(error).foregroundStyle(.red)
             } else {

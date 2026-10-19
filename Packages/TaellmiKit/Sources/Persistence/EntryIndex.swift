@@ -14,6 +14,45 @@ public struct EntryIndex: Sendable {
         try database.writer.write { db in try Self.upsert(entry, transcript: transcript, in: db) }
     }
 
+    /// Removes an Entry from the index (e.g. when it goes to the Trash).
+    public func remove(id: String) throws {
+        try database.writer.write { db in
+            try db.execute(sql: "DELETE FROM entry_search WHERE entry_id = ?", arguments: [id])
+            _ = try EntryRecord.deleteOne(db, key: id)
+        }
+    }
+
+    /// Entries matching the search words and filters, newest first. Every word must match; words of three
+    /// letters or more match anywhere inside a word.
+    public func search(_ query: EntryQuery, now: Date = Date(), calendar: Calendar = .current) throws -> [Entry] {
+        var conditions: [String] = []
+        var arguments: StatementArguments = []
+        if let earliest = query.earliestDate(now: now, calendar: calendar) {
+            conditions.append("created_at >= ?")
+            arguments += [earliest]
+        }
+        if let sources = query.sources {
+            conditions.append("source IN (\(sources.map { _ in "?" }.joined(separator: ", ")))")
+            arguments += StatementArguments(sources.map(\.rawValue))
+        }
+        for word in query.words {
+            if word.count >= 3 {
+                conditions.append("id IN (SELECT entry_id FROM entry_search WHERE entry_search MATCH ?)")
+                arguments += ["\"" + word.replacingOccurrences(of: "\"", with: "\"\"") + "\""]
+            } else {
+                conditions.append("instr(lower(text), ?) > 0")
+                arguments += [word]
+            }
+        }
+        let filter = conditions.isEmpty ? "" : "WHERE " + conditions.joined(separator: " AND ")
+        return try database.reader.read { db in
+            try EntryRecord.fetchAll(
+                db, sql: "SELECT * FROM entry \(filter) ORDER BY created_at DESC", arguments: arguments
+            )
+            .map(\.entry)
+        }
+    }
+
     public func entry(id: String) throws -> Entry? {
         try database.reader.read { db in try EntryRecord.fetchOne(db, key: id)?.entry }
     }
@@ -21,6 +60,20 @@ public struct EntryIndex: Sendable {
     public func recent(limit: Int) throws -> [Entry] {
         try database.reader.read { db in
             try EntryRecord.order(Column("created_at").desc).limit(limit).fetchAll(db).map(\.entry)
+        }
+    }
+
+    /// Fires after every change to the Entries table.
+    public func changes() -> AsyncStream<Void> {
+        let writer = database.writer
+        return AsyncStream { continuation in
+            let observation = DatabaseRegionObservation(tracking: Table("entry"))
+            let cancellable = observation.start(in: writer) { _ in
+                continuation.finish()
+            } onChange: { _ in
+                continuation.yield()
+            }
+            continuation.onTermination = { _ in cancellable.cancel() }
         }
     }
 
@@ -81,6 +134,7 @@ public struct EntryIndex: Sendable {
         try database.writer.write { db in
             let ids = loaded.map(\.entry.id)
             try EntryRecord.filter(!ids.contains(Column("id"))).deleteAll(db)
+            try db.execute(sql: "DELETE FROM entry_search")
             for item in loaded { try Self.upsert(item.entry, transcript: item.transcript, in: db) }
         }
         return RebuildReport(indexed: loaded.count, invalidFolders: invalid)
@@ -88,6 +142,10 @@ public struct EntryIndex: Sendable {
 
     private static func upsert(_ entry: Entry, transcript: Transcript?, in db: Database) throws {
         try EntryRecord(entry).upsert(db)
+        try db.execute(sql: "DELETE FROM entry_search WHERE entry_id = ?", arguments: [entry.id])
+        try db.execute(
+            sql: "INSERT INTO entry_search (entry_id, text) VALUES (?, ?)",
+            arguments: [entry.id, entry.text.lowercased()])
         try db.execute(sql: "DELETE FROM segment WHERE entry_id = ?", arguments: [entry.id])
         guard let transcript else { return }
         for (ordinal, segment) in transcript.segments.enumerated() {

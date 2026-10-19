@@ -7,10 +7,13 @@ public struct MenuBarView: View {
     var appearance: AppearanceViewModel
     let hotkeyLabel: String
     let hotkeyWarning: String?
+    let onOpenArchive: () -> Void
 
     public init(
-        model: CaptureViewModel, appearance: AppearanceViewModel, hotkeyLabel: String, hotkeyWarning: String?
+        model: CaptureViewModel, appearance: AppearanceViewModel, hotkeyLabel: String, hotkeyWarning: String?,
+        onOpenArchive: @escaping () -> Void
     ) {
+        self.onOpenArchive = onOpenArchive
         self.model = model
         self.appearance = appearance
         self.hotkeyLabel = hotkeyLabel
@@ -52,7 +55,7 @@ public struct MenuBarView: View {
             }
             Divider()
             HStack {
-                Button("Archiv im Finder zeigen") { NSWorkspace.shared.open(model.archiveFolder) }
+                Button("Archiv öffnen", action: onOpenArchive)
                 Spacer()
                 SettingsLink { Text("Einstellungen …") }
                     // A menu-bar-only app must bring itself to the front, or the window opens behind others.

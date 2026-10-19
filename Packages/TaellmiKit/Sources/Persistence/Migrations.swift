@@ -8,6 +8,12 @@ enum Migrations {
             try createEntryTables(db)
             try createConfigTables(db)
         }
+        migrator.registerMigration("v2_entry_search") { db in
+            // Trigram index: finds parts of words ("angst" in "Zukunftsangst"). Text is stored lowercased.
+            try db.execute(
+                sql: "CREATE VIRTUAL TABLE entry_search USING fts5(entry_id UNINDEXED, text, tokenize = 'trigram')")
+            try db.execute(sql: "INSERT INTO entry_search (entry_id, text) SELECT id, lower(text) FROM entry")
+        }
         return migrator
     }
 

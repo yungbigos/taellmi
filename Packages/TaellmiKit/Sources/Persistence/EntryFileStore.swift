@@ -153,6 +153,34 @@ public struct EntryFileStore: Sendable {
         try storage.readableURL(for: "\(entry.folder)/\(Self.recordingName)")
     }
 
+    static let trashFolder = "trash"
+
+    /// Moves the Entry's folder into the app's Trash (`trash/entries/…`). Returns the trashed folder.
+    public func moveToTrash(_ entry: Entry) throws -> String {
+        let trashed = "\(Self.trashFolder)/\(entry.folder)"
+        try storage.move(entry.folder, to: trashed)
+        return trashed
+    }
+
+    /// Moves a trashed folder back to where it was and returns the Entry.
+    public func restoreFromTrash(trashedFolder: String) throws -> Entry {
+        let original = String(trashedFolder.dropFirst(Self.trashFolder.count + 1))
+        try storage.move(trashedFolder, to: original)
+        return try loadEntry(folder: original).entry
+    }
+
+    /// Deletes a trashed Entry from tällmi by handing it to the macOS Trash.
+    public func deleteFromTrash(trashedFolder: String) throws {
+        try storage.moveToSystemTrash(trashedFolder)
+    }
+
+    /// Folders in the Trash, oldest first.
+    public func trashedFolders() throws -> [String] {
+        try storage.files(named: Self.documentName, under: Self.trashFolder).map {
+            String($0.dropLast(Self.documentName.count + 1))
+        }
+    }
+
     /// Relative folders of all Entries, oldest first.
     public func allEntryFolders() throws -> [String] {
         try storage.files(named: Self.documentName, under: "entries").map {

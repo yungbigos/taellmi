@@ -11,7 +11,8 @@ struct TaellmiApp: App {
             if let environment = controller.environment {
                 MenuBarView(
                     model: environment.captureModel, appearance: environment.appearanceModel,
-                    hotkeyLabel: controller.hotkeyLabel, hotkeyWarning: controller.hotkeyWarning)
+                    hotkeyLabel: controller.hotkeyLabel, hotkeyWarning: controller.hotkeyWarning,
+                    onOpenArchive: { controller.openExplore() })
             } else {
                 Text(controller.startupError ?? "Starte …").padding()
             }
@@ -22,9 +23,12 @@ struct TaellmiApp: App {
         .menuBarExtraStyle(.window)
 
         Settings {
-            if let environment = controller.environment, let hotkey = controller.hotkeySettings {
+            if let environment = controller.environment, let hotkey = controller.hotkeySettings,
+                let exploreHotkey = controller.exploreHotkeySettings
+            {
                 SettingsView(
-                    hotkey: hotkey, appearance: environment.appearanceModel, vocabulary: environment.vocabularyModel)
+                    hotkey: hotkey, exploreHotkey: exploreHotkey, appearance: environment.appearanceModel,
+                    vocabulary: environment.vocabularyModel)
             } else {
                 Text(controller.startupError ?? "Starte …").padding()
             }

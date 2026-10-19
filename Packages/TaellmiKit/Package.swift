@@ -77,7 +77,7 @@ let package = Package(
         .target(
             name: "TestSupport",
             dependencies: [
-                "Domain", "Persistence", "Config",
+                "Domain", "Persistence", "Config", "Features",
                 .product(name: "GRDB", package: "GRDB.swift"),
                 .product(name: "Clocks", package: "swift-clocks"),
             ],

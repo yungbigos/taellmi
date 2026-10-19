@@ -60,13 +60,15 @@ public final class CompanionController {
     private var previousApp: NSRunningApplication?
     /// Bumped whenever the input field should take focus (after the panel became key).
     private var focusRequest = 0
+    private let onOpenEntry: (String) -> Void
     private static let cancelHotkeyID: UInt32 = 2
     private static let finishHotkeyID: UInt32 = 3
 
     public init(
         model: CaptureViewModel, appearance: AppearanceViewModel, settings: CompanionSettings,
-        hotkeys: GlobalHotkeyMonitor
+        hotkeys: GlobalHotkeyMonitor, onOpenEntry: @escaping (String) -> Void
     ) {
+        self.onOpenEntry = onOpenEntry
         self.model = model
         self.appearance = appearance
         self.settings = settings
@@ -107,6 +109,13 @@ public final class CompanionController {
     private func submitTyped() async {
         await model.submitTyped()
         if model.errorMessage == nil { await confirmSavedAndHide() } else { render() }
+    }
+
+    private func openSavedEntry() {
+        guard let id = model.lastSavedEntryID else { return }
+        hideTask?.cancel()
+        hide()
+        onOpenEntry(id)
     }
 
     private func showAtCursor() {
@@ -192,10 +201,10 @@ public final class CompanionController {
         panel.contentView = NSHostingView(
             rootView: CompanionView(
                 model: model, showsSaved: showsSaved, focusRequest: focusRequest,
-                hint: "\(settings.finishKey.displayLabel) fertig · \(settings.cancelKey.displayLabel) verwerfen"
-            ) { [weak self] in
-                Task { await self?.submitTyped() }
-            }
+                hint: "\(settings.finishKey.displayLabel) fertig · \(settings.cancelKey.displayLabel) verwerfen",
+                onSubmitTyped: { [weak self] in Task { await self?.submitTyped() } },
+                onOpenSaved: { [weak self] in self?.openSavedEntry() }
+            )
             .textCase(appearance.swiftUICase))
     }
 }

@@ -27,6 +27,8 @@ public final class AppEnvironment {
     public let vocabularyModel: VocabularyViewModel
     public let appearanceModel: AppearanceViewModel
     public let hotkeyStore: any HotkeyStore
+    public let exploreHotkeyStore: any HotkeyStore
+    public let exploreModel: ExploreViewModel
     public let settings: SettingsStore
     /// The configured global hotkey; read once at start.
     public private(set) var hotkey: Hotkey?
@@ -107,7 +109,13 @@ public final class AppEnvironment {
             preview: LivePreviewService(resolver: resolver, factories: livePreviews, vocabulary: vocabularySources))
         appearanceModel = AppearanceViewModel(
             store: LiveAppearanceStore(settings: settings, editor: ConfigEditor(database: database)))
-        hotkeyStore = LiveHotkeyStore(settings: settings, editor: ConfigEditor(database: database))
+        hotkeyStore = LiveHotkeyStore(
+            settings: settings, editor: ConfigEditor(database: database), key: SettingKeys.hotkey)
+        exploreHotkeyStore = LiveHotkeyStore(
+            settings: settings, editor: ConfigEditor(database: database), key: SettingKeys.exploreHotkey)
+        exploreModel = ExploreViewModel(
+            library: LiveExploreLibrary(files: files, index: index),
+            autosaveDelay: .seconds((try? settings.number(SettingKeys.exploreAutosaveDelaySeconds)) ?? 0))
         vocabularyModel = VocabularyViewModel(
             settings: LiveVocabularySettings(
                 curation: CurationStore(storage: PlainFolderStorage(root: paths.archive)), settings: settings,
@@ -124,6 +132,11 @@ public final class AppEnvironment {
         pipelineKick.kick()
         try startMaintenance()
         watchMemoryPressure()
+    }
+
+    /// The configured shortcut for the Explore window.
+    public var exploreHotkey: Hotkey? {
+        (try? settings.string(SettingKeys.exploreHotkey)).flatMap { try? Hotkey(parsing: $0) }
     }
 
     /// tälli's settings from config.

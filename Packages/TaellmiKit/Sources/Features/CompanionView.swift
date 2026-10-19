@@ -4,6 +4,8 @@ import SwiftUI
 struct CompanionView: View {
     @Bindable var model: CaptureViewModel
     var showsSaved: Bool
+    /// Changes when the panel has become key and the input field should take focus.
+    var focusRequest: Int
     var hint: String
     var onSubmitTyped: () -> Void
     @FocusState private var typingFocused: Bool
@@ -36,7 +38,11 @@ struct CompanionView: View {
                     .font(.callout)
                     .focused($typingFocused)
                     .onSubmit(onSubmitTyped)
-                    .onAppear { typingFocused = true }
+                    .task(id: focusRequest) {
+                        // One run-loop turn later the window is key, so the focus request sticks.
+                        await Task.yield()
+                        typingFocused = true
+                    }
             }
             Spacer(minLength: 0)
             Text(hint)

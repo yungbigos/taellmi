@@ -56,6 +56,10 @@ public final class CompanionController {
     private var showsSaved = false
     private var hideTask: Task<Void, Never>?
     private var followTask: Task<Void, Never>?
+    /// The app you were in when tälli appeared; it gets the keyboard back when tälli hides.
+    private var previousApp: NSRunningApplication?
+    /// Bumped whenever the input field should take focus (after the panel became key).
+    private var focusRequest = 0
     private static let cancelHotkeyID: UInt32 = 2
     private static let finishHotkeyID: UInt32 = 3
 
@@ -112,9 +116,14 @@ public final class CompanionController {
         panel.setFrame(targetFrame(), display: true)
         startFollowing()
         panel.alphaValue = 0
-        // A non-activating panel can take the keyboard without bringing tällmi to the front: typing goes
-        // into tälli, and the app you were in keeps its place and gets the keyboard back when tälli hides.
+        // Typing only reaches tälli when tällmi is the active app, so activate briefly and remember where
+        // you were; hiding hands the keyboard straight back to that app.
+        let frontmost = NSWorkspace.shared.frontmostApplication
+        if frontmost?.processIdentifier != ProcessInfo.processInfo.processIdentifier { previousApp = frontmost }
+        NSApplication.shared.activate()
         panel.makeKeyAndOrderFront(nil)
+        focusRequest += 1
+        render()
         NSAnimationContext.runAnimationGroup {
             $0.duration = 0.18
             panel.animator().alphaValue = 1
@@ -166,6 +175,8 @@ public final class CompanionController {
     private func hide() {
         followTask?.cancel()
         followTask = nil
+        previousApp?.activate()
+        previousApp = nil
         hotkeys.unregister(id: Self.cancelHotkeyID)
         hotkeys.unregister(id: Self.finishHotkeyID)
         showsSaved = false
@@ -180,7 +191,7 @@ public final class CompanionController {
     private func render() {
         panel.contentView = NSHostingView(
             rootView: CompanionView(
-                model: model, showsSaved: showsSaved,
+                model: model, showsSaved: showsSaved, focusRequest: focusRequest,
                 hint: "\(settings.finishKey.displayLabel) fertig · \(settings.cancelKey.displayLabel) verwerfen"
             ) { [weak self] in
                 Task { await self?.submitTyped() }

@@ -112,7 +112,9 @@ public final class CompanionController {
         panel.setFrame(targetFrame(), display: true)
         startFollowing()
         panel.alphaValue = 0
-        panel.orderFrontRegardless()
+        // A non-activating panel can take the keyboard without bringing tällmi to the front: typing goes
+        // into tälli, and the app you were in keeps its place and gets the keyboard back when tälli hides.
+        panel.makeKeyAndOrderFront(nil)
         NSAnimationContext.runAnimationGroup {
             $0.duration = 0.18
             panel.animator().alphaValue = 1

@@ -127,6 +127,14 @@ Decisions are locked (see section 3); we fix model choices later if real use sho
 - **Later:** playful physics, e.g. reacting to the Mac's motion or orientation.
 - The menu bar stays only as a fallback.
 
+### Context for an Entry (requested 2026-10-19, later)
+- **Screenshots:** capture a screenshot (or a region) together with an Entry.
+- **Extra context:** a web page, the clipboard, or files, given to tälli by:
+  - drag & drop onto tälli
+  - a "+" button
+  - selecting text in another app, then calling tälli
+- **Open questions:** the domain term (likely "Attachment"), how it is stored (files in the Entry folder, encrypted like the rest), what gets indexed, and the permissions needed (Screen Recording for screenshots, Accessibility for reading a selection).
+
 ### Character and game-like visuals (requested 2026-10-19, later)
 - **A cute, custom character for tälli.**
   - First research open-source 3D asset libraries and licences.

@@ -6,6 +6,7 @@ struct CompanionView: View {
     var showsSaved: Bool
     var hint: String
     var onSubmitTyped: () -> Void
+    @FocusState private var typingFocused: Bool
 
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
@@ -33,7 +34,9 @@ struct CompanionView: View {
                 TextField("… oder tippen", text: $model.typedText)
                     .textFieldStyle(.plain)
                     .font(.callout)
+                    .focused($typingFocused)
                     .onSubmit(onSubmitTyped)
+                    .onAppear { typingFocused = true }
             }
             Spacer(minLength: 0)
             Text(hint)

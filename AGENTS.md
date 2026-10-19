@@ -7,6 +7,7 @@ tällmi is a local-only, privacy-first macOS voice journal. You talk into it in 
 - [docs/plan.md](docs/plan.md): product, phases, data model
 - [docs/architecture/overview.md](docs/architecture/overview.md): modules, dependency direction, concurrency
 - [docs/architecture/config.md](docs/architecture/config.md): how models, prompts and settings live in the database
+- [docs/brand.md](docs/brand.md): names, UI words, voice, logo, colour, type, motion. Read before writing any UI text or visual.
 - [docs/decisions/](docs/decisions/): ADRs. Add one for every decision that changes architecture, stack or principles.
 
 ## The owner does not write Swift

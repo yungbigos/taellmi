@@ -2,10 +2,13 @@
 
 A private, local-only journal you talk or write into. Over time it becomes a connected archive of your thoughts that you can search, ask questions about, and explore visually.
 
+These are the domain terms used in code and docs. Users see different words, given as _In the app_; [docs/brand.md](docs/brand.md) has the full mapping and the voice rules.
+
 ## Archive
 
 **Entry**:
 One act of capture: a single recording, a single written note, or a single imported note. Entries are never appended to; each new capture is a new Entry.
+_In the app_: thought
 _Avoid_: Note, record, memo, item
 
 **Text**:
@@ -14,52 +17,64 @@ _Avoid_: Body, content, cleaned transcript
 
 **Transcript**:
 The verbatim output of a speech-to-text model for one Recording, with timings. It seeds the Text and maps words to moments in the audio. It is kept alongside the Recording and expires with it under Retention.
+_In the app_: transcript
 _Avoid_: Text (when meaning model output)
 
 **Recording**:
 The audio captured for a voice Entry.
+_In the app_: recording
 _Avoid_: Audio note, voice memo, take
 
 **Source**:
 Where an Entry came from: spoken, typed, or the app it was imported from (e.g. Apple Notes, Obsidian, Bear). An imported Entry keeps the date it was originally created.
+_In the app_: spoken, typed, or the app's name
 _Avoid_: Input mode, origin, type
 
 **Archive**:
 The folder holding every Entry. It is encrypted by default, lives in the app's Library folder by default, or in a folder you choose.
+_In the app_: not shown; the window is just tällmi
 _Avoid_: Vault, library, database
 
 **Retention**:
 How long Recordings are kept before they are deleted or moved elsewhere. The Text is kept forever.
+_In the app_: "keep recordings for …"
 _Avoid_: Expiry, cleanup policy
 
 **Trash**:
 The app's own holding area for deleted Entries. A later cleanup moves them to the macOS Trash.
+_In the app_: trash
 _Avoid_: Bin, deleted items
 
 **Recovery Key**:
 A one-time secret shown at setup. It is the only way to read the encrypted Archive on another Mac or after losing the Keychain.
+_In the app_: recovery key
 _Avoid_: Backup password, master key
 
 ## Meaning
 
 **Fragment**:
 A contiguous part of an Entry's Text that is about one thing. An Entry has one or more Fragments.
+_In the app_: passage
 _Avoid_: Chunk, segment, section, block
 
 **Atom**:
 One self-contained statement within a Fragment. It is a short generated paraphrase, always linked to the exact words it came from, and editable. It is the smallest unit of meaning.
+_In the app_: point
 _Avoid_: Sentence, thought, idea, proposition, claim
 
 **Mention**:
 The exact words in an Entry's Text that refer to a Concept, such as "Mutti" referring to the Concept *Mutter*.
+_In the app_: mention
 _Avoid_: Occurrence, reference, tag
 
 **Concept**:
 A thing that recurs across the Archive: a topic, person, place, emotion, or another configured kind. A Concept is a single entity across the whole system, however many different words refer to it.
+_In the app_: no umbrella word; shown by kind (people, places, topics, feelings)
 _Avoid_: Tag, keyword, entity, topic (as the general term)
 
 **Link**:
 A connection between two things that you made by hand. Links are permanent. When an endpoint disappears, the Link is shown as broken, never silently removed.
+_In the app_: connection
 _Avoid_: Relation, edge (in conversation)
 
 **Curation**:
@@ -68,10 +83,12 @@ _Avoid_: Manual edits, overrides, annotations
 
 **Vocabulary**:
 The words the app should spell exactly your way, mostly names (e.g. "Marleen"). It comes from your own list (part of Curation) and, if you opt in, your contacts. The Text of a new voice Entry is corrected towards it, and each correction is recorded on the Entry.
+_In the app_: spellings
 _Avoid_: Dictionary, custom words, glossary
 
 **Cluster**:
 A group of Concepts or Fragments found automatically because they belong together.
+_In the app_: constellation
 _Avoid_: Topic, category, group
 
 **Concept kind**:
@@ -82,15 +99,22 @@ _Avoid_: Type, label
 
 **Capture**:
 The mode for getting thoughts in, by speaking, writing or importing.
+_In the app_: not shown
 _Avoid_: Record mode, input
 
 **Explore**:
 The mode for viewing, searching and asking questions about the Archive: Concepts, Fragments, clusters and visualizations.
+_In the app_: not shown; the window is just tällmi
 _Avoid_: Browse, library view
 
 **Companion**:
 The small animated presence that appears next to the cursor for Capture, called **tälli** in the app. It appears when you call it (hotkey or click). It never appears unasked, unless you turned on invitations at times you set.
+_In the app_: tälli
 _Avoid_: Assistant, advisor, avatar, Clippy (in code and docs; "tälli" is the name users see)
+
+**Command**:
+Any action in the app (new Entry, delete, switch view, search, …), identified by a fixed id, with a shortcut you can change. ⌘K opens the command palette, which finds Commands and Entries.
+_Avoid_: Action, shortcut (for the action itself), hotkey
 
 ## Models and config
 

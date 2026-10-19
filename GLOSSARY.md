@@ -112,6 +112,11 @@ The small animated presence that appears next to the cursor for Capture, called 
 _In the app_: tälli
 _Avoid_: Assistant, advisor, avatar, Clippy (in code and docs; "tälli" is the name users see)
 
+**Thinking**:
+What the Companion visibly does while the app works on Entries in the background: transcribing, finding Fragments, Concepts and Links. Thoughts (Entries) belong only to the user; tälli thinks about them.
+_In the app_: thinking ("tälli is thinking")
+_Avoid_: Mulling, pondering, processing (in the app)
+
 **Command**:
 Any action in the app (new Entry, delete, switch view, search, …), identified by a fixed id, with a shortcut you can change. ⌘K opens the command palette, which finds Commands and Entries.
 _Avoid_: Action, shortcut (for the action itself), hotkey

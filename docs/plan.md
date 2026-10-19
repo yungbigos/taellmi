@@ -138,10 +138,8 @@ Decisions are locked (see section 3); we fix model choices later if real use sho
 - **Open questions:** the domain term (likely "Attachment"), how it is stored (files in the Entry folder, encrypted like the rest), what gets indexed, and the permissions needed (Screen Recording for screenshots, Accessibility for reading a selection).
 
 ### Character and game-like visuals (requested 2026-10-19, later)
-- **A cute, custom character for tälli.**
-  - First research open-source 3D asset libraries and licences.
-  - Then adapt a base model until it is truly ours (own look, own animations).
-  - It replaces the placeholder orb as a config-selectable skin.
+- **A cute, custom character for tälli.** Decided 2026-10-20: tälli is the living ä, drawn in 2D from the Funnel Display glyph, not a 3D model ([ADR 0009](decisions/0009-talli-is-the-living-a.md), look and motion in [brand.md](brand.md)).
+  - It replaces the placeholder orb; its look is a set of config tokens ([brand/tokens.json](brand/tokens.json)).
 - **A visual, game-like rendering of the thoughts:** Concepts, Fragments and clusters as an explorable world (RealityKit). This connects to the "mind palace" idea in section 5a.
 
 ### Explore window (requested 2026-10-19, next)

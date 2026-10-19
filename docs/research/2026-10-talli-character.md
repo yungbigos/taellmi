@@ -1,6 +1,6 @@
 # tälli character: open-source bases and render pipeline
 
-Date: 2026-10-19. Issue: #7. Status: research only, no decision yet (an ADR follows once the owner picks a path).
+Date: 2026-10-19. Issue: #7. Status: **superseded by [ADR 0009](../decisions/0009-talli-is-the-living-a.md)** (2026-10-20): tälli is the living ä, drawn in 2D from the font. The 3D path below is not pursued for tälli.
 
 Goal: a cute, custom companion character ("tälli") that is "truly ours", shipped as a config-selectable skin, with licences that allow modification and redistribution if the app is open-sourced.
 

@@ -2,11 +2,12 @@
 
 Decided with the owner on 2026-10-20. This is the source of truth for how tällmi looks, moves and talks. Agents read it before writing any UI text or visual. Domain terms live in [GLOSSARY.md](../GLOSSARY.md); this file maps them to the words users see.
 
+Visual identity (logo, colour values, type scale, tälli's look and motion) decided on 2026-10-20. The exact numbers live in [brand/tokens.json](brand/tokens.json); the app reads them through config, never from Swift. A live reference is in [brand/prototype.html](brand/prototype.html).
+
 **Still open, not decided here:**
 - German and other translations
 - a better name for the list view than "stack"
-- exact colour values
-- the logo drawings
+- sound design (later, opt-in)
 
 ## 1. The idea
 
@@ -36,8 +37,9 @@ The main window has no name of its own: it is **tällmi**. The menu item is **op
 ## 3. Logo
 
 - **The mark is the ä with its two dots. The dots are tälli's eyes.** The letter and the dots belong together.
-- **Wordmark:** `tällmi` in lowercase, drawn by us on top of Funnel Display, so we own the result. In animated uses the dots may blink or drift.
-- **App icon:** the ä or tälli's face (two dots) on the brand blues.
+- **Wordmark (decided):** `tällmi` in lowercase on Funnel Display 700, **softened** (a round-joined outline of 6 % of the size, so it matches tälli's body), in ink. The ä dots are larger and a little closer than a normal umlaut, so the a becomes a face; they are pink. The i keeps an ink dot. In animated uses the dots may blink or drift. A crisp version was rejected: it reads like any software company.
+- **App icon (decided): "peek".** tälli itself, on a night-blue ground: the softened ä fills the tile and is cut off by the bottom edge, its pink eyes look up at you. No white, no light blue. The Dock icon is still; it may blink once at launch.
+- Files: [brand/logo/](brand/logo/).
 - **Never:**
   - capitals
   - an "ae" spelling
@@ -47,10 +49,12 @@ The main window has no name of its own: it is **tällmi**. The menu item is **op
 ## 4. Avatar (tälli)
 
 The brief for the character work in issue #7:
-- round and soft, with no limbs at first (or tiny ones)
-- **two dot eyes, the same dots as the logo**
-- a mouth only when it is speaking or reacting
-- a blue gradient body
+- **tälli is the living ä** ([ADR 0009](decisions/0009-talli-is-the-living-a.md)): the letter and the creature are one organism with one shape language. Its body is the Funnel Display "a", softened (slightly inflated, rounder ends); its eyes are the two dots.
+- no limbs
+- **two dot eyes, the same dots as the logo.** The dots do everything: lift, squash, stretch, glance. Rarely, one dot stretches into a short arc for a raised brow.
+- **the mouth is the a's lower counter.** It opens only when tälli says something.
+- when tälli thinks, the ä grows letters: äh → ähh → ähm → ähmmm, and folds them back when done
+- **body: G1 blue with "key + bounce" light**: six gradient steps, a soft tint (never white) from the top left, and light bouncing back into the bottom right so it never sinks into night
 - thumbnail-sized next to the cursor
 - no gender, no age: a small creature, not a person and not a pet breed
 
@@ -63,9 +67,22 @@ The brief for the character work in issue #7:
 | **mist** | pale sky blue: quiet fills, tälli's light side |
 | **pink** | **only for the dots**: tälli's eyes, the ä in the logo, the listening pulse. Nothing else is pink. |
 
+Decided values (palette "G1 deep sea"), with contrast against the page:
+
+| Token | Light | Dark | Check |
+|---|---|---|---|
+| paper | `#FFFFFF` | `#0A1230` (night) | |
+| ink | `#0C1638` | `#E7ECF8` | text 17.7 / 15.5 : 1 |
+| blue | `#2852D2` | `#7398FF` | text 6.5 / 6.7 : 1. Labels on blue: white in light, night in dark (white on light-blue is only 2.7). |
+| mist | `#DCE4F5` | `#1A2850` | fill only; ink on mist 13.9 / 12.1 : 1 |
+| pink | `#F0397C` | `#FF6A9C` | dots only, graphic 3.8 / 6.8 : 1 |
+| quiet | `#586282` | `#98A3C3` | secondary text 6.0 / 7.3 : 1 |
+
+tälli's body and the icon's night ground are gradients, listed in [brand/tokens.json](brand/tokens.json).
+
 - Everything else follows macOS: light and dark mode, system greys.
 - The old peach-pink-indigo orb gradient is retired.
-- Exact values come with the logo work and live as config tokens (config first), not in Swift.
+- The values live as config tokens (config first), not in Swift.
 
 ## 6. Type
 
@@ -79,32 +96,56 @@ Licence and fallback:
 
 Rules:
 - Parts that macOS draws stay in SF Pro: menu bar menus, system alerts, file pickers. We don't fight that.
-- Text follows the macOS text-size setting. No fixed point sizes.
+- Text follows the macOS text-size setting. No fixed point sizes: every size is a multiple of the macOS body style (13 pt at default).
+
+| Token | Face | Size × body | Use |
+|---|---|---|---|
+| display.moment | Display 600 | 4.6 | the one loud thing per screen (a month, a constellation) |
+| display.title | Display 600 | 2.0 | view title |
+| display.heading | Display 500 | 1.45 | section, constellation name |
+| text.thought | Sans 400 | 1.15 (15 pt) | your thought, at reading size |
+| text.body | Sans 400 | 1.0 | lists, settings, ⌘K |
+| text.label | Sans 500 | 0.85 | date, source |
+| text.whisper | Sans 400 italic | 0.77 | the small explainer |
+
+- **One loud thing per screen**, and it is not too loud. Your own text is never animated, rotated or set in display type.
 - Fonts are bundled with the app. Nothing loads from the network.
 
 ## 7. Style
 
 - **The frame is native macOS 26:** Liquid Glass sidebar and toolbars, system controls, generous space, few lines, no custom chrome.
-- **What makes it unusual lives inside the views** (flow, time, space), never in the frame.
+- **What makes it unusual lives inside the views** (flow, time, space), never in the frame. The look is editorial: big display type, a lot of white space, asymmetry. It grows from calm to wild across the views:
+  - **stack**: Apple Notes-clean.
+  - **flow**: magazine spreads, asymmetric, a big date or topic.
+  - **time**: words laid out along time, big years and months.
+  - **space**: you fly through your words in 3D, like a graph made of words. Flat type on planes, with depth (sharp up close, fading and blurring far away), never extruded letters.
+  - Wherever you are, a thought you focus turns flat, horizontal, at reading size and searchable.
+- Paper first: the light look is the reference, and dark gets equal care.
 - **Glass goes on navigation and controls, plus tälli's bubble. It never goes under your thoughts.**
 - **All lowercase is deliberate.** Apple's guidelines ask for title case in menus and buttons. We chose lowercase, knowingly, for everything we draw.
 
 ## 8. Motion
 
-**Soft and lifelike, never bouncy.**
-- tälli breathes slowly when idle, swells gently with your voice, and fades in and out instead of popping.
+**Alive, like an organism that thinks.** Soft and lifelike: one soft overshoot (about 4 %) is allowed where something arrives, never repeated bounces, wiggles or celebrations.
+- tälli breathes slowly when idle and swells gently with your voice.
+- **Coming alive:** at the cursor tälli **rises** a little and grows in (0.85 s); when the window launches it **rolls in** from the side and settles upright (1.1 s). In both, the eyes open last. Leaving: the eyes close, then it sinks a little and fades (0.28 s).
+- **It reacts to stimuli, even when idle:** the eyes glance at the cursor when it moves fast or comes close (never constant tracking); it swells with your voice; it thinks visibly while the app works on your thoughts; it is livelier in the morning and slower and sleepier at night (the Mac's clock only, nothing recorded). Camera and device motion come later (#31).
+- When tälli is hidden, the organism lives quietly in the menu bar dots and the ä in the window. tälli itself still never appears unasked.
+- Slow ambient life inside the views (space and time drift, new connections glow in softly), never under your text.
 - **The dots carry status, so words are the exception:**
 
   | State | What the dots do |
   |---|---|
   | listening | pulse with your voice |
-  | you pause | drift slowly, like an "äh" |
-  | saving | settle into a blink |
+  | you pause | drift slowly and wait, like an "äh" |
+  | tälli is thinking | look up and to the side; the ä grows "hmmm" letters |
+  | saving | settle into a blink; the mouth opens for "saved." |
   | logo / icon | may blink once on hover or launch |
 
-- Saving is a small settle. No confetti, no wiggle, no celebration.
+- Saving is a small settle, plus a level-change haptic on the trackpad. No confetti, no wiggle, no celebration. Haptics only for moments you caused.
 - Switching views (⌘1–⌘4) is a quick crossfade. Space drifts slowly.
-- Reduce Motion makes tälli a still face. Reduce Transparency removes glass.
+- Reduce Motion makes tälli a still face: entrances become fades, no breathing, swell, drift, blink or glance. Status shows as the dots brightening with your voice and the thinking letters fading in place. Reduce Transparency removes glass.
+- Every timing and curve is a named token in [brand/tokens.json](brand/tokens.json).
 
 ## 9. Voice
 

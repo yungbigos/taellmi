@@ -8,11 +8,13 @@ public struct SettingsView: View {
     var exploreHotkey: HotkeySettingsViewModel
     var appearance: AppearanceViewModel
     var vocabulary: VocabularyViewModel
+    var commandShortcuts: [(Command, HotkeySettingsViewModel)]
 
     public init(
         hotkey: HotkeySettingsViewModel, exploreHotkey: HotkeySettingsViewModel, appearance: AppearanceViewModel,
-        vocabulary: VocabularyViewModel
+        vocabulary: VocabularyViewModel, commandShortcuts: [(Command, HotkeySettingsViewModel)]
     ) {
+        self.commandShortcuts = commandShortcuts
         self.hotkey = hotkey
         self.exploreHotkey = exploreHotkey
         self.appearance = appearance
@@ -25,6 +27,8 @@ public struct SettingsView: View {
                 .tabItem { Label("general", systemImage: "gearshape") }
             VocabularySettingsView(model: vocabulary)
                 .tabItem { Label("spellings", systemImage: "character.book.closed") }
+            ShortcutSettingsView(rows: commandShortcuts)
+                .tabItem { Label("shortcuts", systemImage: "keyboard") }
         }
         .textCase(appearance.swiftUICase)
     }
@@ -132,5 +136,54 @@ struct HotkeyRecorder: View {
     private func stopMonitoring() {
         if let monitor { NSEvent.removeMonitor(monitor) }
         monitor = nil
+    }
+}
+
+/// Every command with its shortcut. Click a shortcut, then press the new keys.
+struct ShortcutSettingsView: View {
+    var rows: [(Command, HotkeySettingsViewModel)]
+
+    var body: some View {
+        Form {
+            Section {
+                ForEach(rows, id: \.0) { command, model in
+                    ShortcutRow(title: command.title, model: model)
+                }
+            } footer: {
+                Text("these work while the tällmi window is in front.")
+            }
+        }
+        .formStyle(.grouped)
+        .frame(width: 460, height: 420)
+    }
+}
+
+private struct ShortcutRow: View {
+    let title: String
+    @Bindable var model: HotkeySettingsViewModel
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            LabeledContent(title) {
+                HotkeyRecorder(model: model)
+            }
+            if let warning = model.warning {
+                Label(warning, systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
+        }
+        .task { await model.load() }
+        .alert(
+            "this shortcut is taken",
+            isPresented: Binding(get: { model.pendingConflict != nil }, set: { if !$0 { model.discardPending() } })
+        ) {
+            Button("use it anyway") { Task { await model.confirmPending() } }
+            Button("cancel", role: .cancel) { model.discardPending() }
+        } message: {
+            if let pending = model.pendingConflict {
+                Text(HotkeySettingsViewModel.conflictText(pending.owner))
+            }
+        }
     }
 }

@@ -26,12 +26,15 @@ public enum SettingKeys {
     public static let companionCancelKey = "companion.cancel_key"
     public static let companionFollowSmoothing = "companion.follow_smoothing"
 
-    public static let all = [
-        hotkey, sampleRate, idleUnloadSeconds, maxJobAttempts, segmentMaxPauseSeconds, retryBackoffSeconds,
-        waitForModelSeconds, maintenanceIntervalSeconds, vocabularyMinSimilarityNames,
-        vocabularyMinSimilarityOther, vocabularyUseContacts, companionCursorOffset, companionSavedDisplaySeconds,
-        textCase,
-    ]
+    /// Every setting the code reads; the seed tests check each has a default.
+    public static let all =
+        [
+            hotkey, sampleRate, idleUnloadSeconds, maxJobAttempts, segmentMaxPauseSeconds, retryBackoffSeconds,
+            waitForModelSeconds, maintenanceIntervalSeconds, vocabularyMinSimilarityNames, vocabularyMinSimilarityOther,
+            vocabularyUseContacts, textCase, exploreHotkey, exploreAutosaveDelaySeconds, companionCursorOffset,
+            companionSavedDisplaySeconds, companionFollowsCursor, companionFinishKey, companionCancelKey,
+            companionFollowSmoothing,
+        ] + Commands.all.map(\.settingKey)
 }
 
 public enum SettingsError: Error, Equatable {

@@ -19,6 +19,14 @@ struct SeedBundleTests {
         }
     }
 
+    @Test("every seeded setting is one the code knows, so none is forgotten in SettingKeys.all")
+    func noOrphanSettings() throws {
+        let known = Set(SettingKeys.all)
+        for setting in try SeedBundle.bundled().settings {
+            #expect(known.contains(setting.key), "seed \(setting.key) is not in SettingKeys.all")
+        }
+    }
+
     @Test("validation catches a pipeline role with no assignment")
     func catchesUnassignedRole() throws {
         var bundle = try SeedBundle.bundled()

@@ -128,10 +128,21 @@ public final class AppEnvironment {
         try await Task.detached(priority: .utility) { try await work.run() }.value
         hotkey = (try? settings.string(SettingKeys.hotkey)).flatMap { try? Hotkey(parsing: $0) }
         await appearanceModel.load()
+        exploreModel.shortcuts = commandShortcuts()
         captureModel.startObservingEntries()
         pipelineKick.kick()
         try startMaintenance()
         watchMemoryPressure()
+    }
+
+    /// Every command's shortcut, freshly read from config.
+    public func commandShortcuts() -> [Command: Hotkey] {
+        CommandShortcuts.load(from: settings)
+    }
+
+    /// A store for one command's shortcut setting.
+    public func commandShortcutStore(_ command: Command) -> any HotkeyStore {
+        LiveHotkeyStore(settings: settings, editor: ConfigEditor(database: database), key: command.settingKey)
     }
 
     /// The configured shortcut for the Explore window.

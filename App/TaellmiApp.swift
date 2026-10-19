@@ -28,7 +28,7 @@ struct TaellmiApp: App {
             {
                 SettingsView(
                     hotkey: hotkey, exploreHotkey: exploreHotkey, appearance: environment.appearanceModel,
-                    vocabulary: environment.vocabularyModel)
+                    vocabulary: environment.vocabularyModel, commandShortcuts: controller.commandShortcutSettings)
             } else {
                 Text(controller.startupError ?? "starting …").padding()
             }

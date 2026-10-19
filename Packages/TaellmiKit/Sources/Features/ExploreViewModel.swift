@@ -50,6 +50,14 @@ public protocol ExploreLibrary: Sendable {
 public final class ExploreViewModel {
     public var query = EntryQuery()
     public var showsTrash = false
+    /// Current shortcut of every command, from config.
+    public var shortcuts: [Command: Hotkey] = [:]
+    public var isPaletteOpen = false
+    /// Bumped when the search field should take focus / the recording should play or pause.
+    public private(set) var searchFocusRequest = 0
+    public private(set) var playbackRequest = 0
+    /// "new thought" hands over to tälli.
+    @ObservationIgnored public var onNewThought: () -> Void = {}
     public private(set) var entries: [Entry] = []
     public private(set) var trashedEntries: [TrashedEntry] = []
     public private(set) var detail: EntryDetail?
@@ -79,6 +87,33 @@ public final class ExploreViewModel {
         observation = Task { [weak self] in
             for await _ in changes { await self?.refresh() }
         }
+    }
+
+    /// Runs a command (from its shortcut or the ⌘K palette).
+    public func perform(_ command: Command) async {
+        switch command {
+        case .openPalette: isPaletteOpen = true
+        case .newThought: onNewThought()
+        case .deleteThought: await trashSelected()
+        case .searchThoughts:
+            if showsTrash { await show(trash: false) }
+            searchFocusRequest += 1
+        case .showStack: await show(trash: false)
+        case .showTrash: await show(trash: true)
+        case .playRecording: playbackRequest += 1
+        }
+    }
+
+    /// Thoughts matching a palette search, newest first.
+    public func findThoughts(_ text: String, limit: Int) async -> [Entry] {
+        guard !text.trimmingCharacters(in: .whitespaces).isEmpty else { return [] }
+        return Array(((try? await library.search(EntryQuery(text: text))) ?? []).prefix(limit))
+    }
+
+    private func show(trash: Bool) async {
+        showsTrash = trash
+        await select(nil)
+        await refresh()
     }
 
     public func refresh() async {

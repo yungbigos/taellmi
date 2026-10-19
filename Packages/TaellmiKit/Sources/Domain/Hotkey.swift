@@ -7,6 +7,7 @@ public struct Hotkey: Sendable, Equatable {
         case space
         case escape
         case enter
+        case delete
         case letter(Character)
         case digit(Int)
         case function(Int)
@@ -95,6 +96,7 @@ public struct Hotkey: Sendable, Equatable {
         case .space: return symbols + " space"
         case .escape: return symbols + "Esc"
         case .enter: return symbols + "↩"
+        case .delete: return symbols + "⌫"
         case .letter(let letter): return symbols + String(letter).uppercased()
         case .digit(let digit): return symbols + String(digit)
         case .function(let number): return symbols + "F\(number)"
@@ -121,6 +123,7 @@ public struct Hotkey: Sendable, Equatable {
         case .space: "space"
         case .escape: "escape"
         case .enter: "return"
+        case .delete: "delete"
         case .letter(let letter): String(letter)
         case .digit(let digit): String(digit)
         case .function(let number): "f\(number)"
@@ -132,6 +135,7 @@ public struct Hotkey: Sendable, Equatable {
         case "space": return .space
         case "escape", "esc": return .escape
         case "return", "enter": return .enter
+        case "delete", "backspace": return .delete
         case let letter where letter.count == 1 && letter.first?.isLetter == true:
             let key = Key.letter(letter.first ?? "a")
             return keysByCode.values.contains(key) ? key : nil
@@ -144,7 +148,7 @@ public struct Hotkey: Sendable, Equatable {
     }
 
     private static let keysByCode: [Int: Key] = {
-        var keys: [Int: Key] = [49: .space, 53: .escape, 36: .enter]
+        var keys: [Int: Key] = [49: .space, 53: .escape, 36: .enter, 51: .delete]
         let letters: [Character: Int] = [
             "a": 0, "s": 1, "d": 2, "f": 3, "h": 4, "g": 5, "z": 6, "x": 7, "c": 8, "v": 9, "b": 11, "q": 12,
             "w": 13, "e": 14, "r": 15, "y": 16, "t": 17, "o": 31, "u": 32, "i": 34, "p": 35, "l": 37, "j": 38,

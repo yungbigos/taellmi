@@ -5,10 +5,13 @@ import SwiftUI
 /// The Explore window: filters, the list of Entries with search, and the open Entry.
 public struct ExploreView: View {
     @Bindable var model: ExploreViewModel
+    @State private var palette: CommandPaletteModel
+    @State private var searchFocused = false
     @Environment(\.undoManager) private var undoManager
 
     public init(model: ExploreViewModel) {
         self.model = model
+        _palette = State(initialValue: CommandPaletteModel(explore: model))
     }
 
     public var body: some View {
@@ -24,6 +27,11 @@ public struct ExploreView: View {
             }
         }
         .frame(minWidth: 900, minHeight: 560)
+        .background(CommandShortcutButtons(model: model))
+        .sheet(isPresented: $model.isPaletteOpen) {
+            CommandPaletteView(palette: palette)
+        }
+        .onChange(of: model.searchFocusRequest) { searchFocused = true }
         .task {
             model.startObserving()
             await model.refresh()
@@ -93,7 +101,7 @@ public struct ExploreView: View {
             .padding(.vertical, 2)
             .tag(entry.id)
         }
-        .searchable(text: $model.query.text, prompt: "search")
+        .searchable(text: $model.query.text, isPresented: $searchFocused, prompt: "search")
         .onChange(of: model.query.text) { Task { await model.refresh() } }
         .overlay {
             if model.entries.isEmpty {
@@ -158,7 +166,6 @@ struct EntryDetailView: View {
                 } label: {
                     Label("delete thought", systemImage: "trash")
                 }
-                .keyboardShortcut(.delete, modifiers: .command)
             }
             TextEditor(text: $model.editorText)
                 .font(.body)
@@ -170,7 +177,7 @@ struct EntryDetailView: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
             if detail.entry.source == .voice {
-                RecordingSection(detail: detail)
+                RecordingSection(detail: detail, playbackRequest: model.playbackRequest)
             }
         }
         .padding()
@@ -181,6 +188,8 @@ struct EntryDetailView: View {
 /// Player plus the Transcript as sentences that jump to their moment in the audio.
 struct RecordingSection: View {
     let detail: EntryDetail
+    /// Changes when the "play or pause recording" command runs.
+    let playbackRequest: Int
     @State private var player: AVPlayer?
     @State private var isExpanded = false
 
@@ -227,6 +236,11 @@ struct RecordingSection: View {
         .onChange(of: detail.entry.id) {
             player?.pause()
             player = nil
+        }
+        .onChange(of: playbackRequest) {
+            guard let url = detail.recordingURL else { return }
+            isExpanded = true
+            togglePlayback(url: url)
         }
     }
 

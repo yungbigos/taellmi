@@ -17,6 +17,8 @@ public final class AppController {
     public private(set) var hotkeyWarning: String?
     public private(set) var hotkeySettings: HotkeySettingsViewModel?
     public private(set) var exploreHotkeySettings: HotkeySettingsViewModel?
+    /// One shortcut editor per command, in catalogue order.
+    public private(set) var commandShortcutSettings: [(Command, HotkeySettingsViewModel)] = []
     @ObservationIgnored private var explore: ExploreWindowController?
     @ObservationIgnored private var captureWarning: String?
     @ObservationIgnored private var exploreWarning: String?
@@ -58,6 +60,18 @@ public final class AppController {
             settings: environment.companionSettings(), hotkeys: hotkeys
         ) { entryID in explore.show(selecting: entryID) }
         self.companion = companion
+        environment.exploreModel.onNewThought = { Task { await companion.toggle() } }
+        let settings = environment.settings
+        commandShortcutSettings = Commands.all.map { command in
+            let checker = CombinedConflictChecker([
+                checker,
+                CommandShortcutChecker(current: { CommandShortcuts.load(from: settings) }, ignoring: command),
+            ])
+            let model = HotkeySettingsViewModel(store: environment.commandShortcutStore(command), checker: checker) {
+                _ in environment.exploreModel.shortcuts = environment.commandShortcuts()
+            }
+            return (command, model)
+        }
         if let hotkey = environment.hotkey { registerCaptureHotkey(hotkey) }
         if let hotkey = environment.exploreHotkey { registerExploreHotkey(hotkey) }
     }

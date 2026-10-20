@@ -67,6 +67,9 @@ let package = Package(
         /// Apple system frameworks used as data sources (NaturalLanguage, Contacts).
         .target(name: "SystemServices", dependencies: ["Domain", "Persistence"], swiftSettings: strict),
 
+        /// Developer tool: builds an encrypted demo Archive from test thoughts (scripts/make-demo-archive.sh).
+        .executableTarget(name: "DemoArchiveTool", dependencies: ["Persistence"], swiftSettings: strict),
+
         // MARK: Engines (the only targets that import ML SDKs)
         .target(
             name: "FluidAudioEngine",

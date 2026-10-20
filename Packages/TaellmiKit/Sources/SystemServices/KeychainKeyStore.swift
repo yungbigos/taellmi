@@ -6,9 +6,12 @@ import Security
 /// The Archive key and Recovery Key in this Mac's Keychain (ADR 0010). Items are readable after you
 /// log in, so capture never has to ask.
 public struct KeychainKeyStore: ArchiveKeyStore {
-    private let service = "app.taellmi.archive"
+    private let service: String
 
-    public init() {}
+    /// Named after the app's bundle id, so a demo build (`app.taellmi.demo`) never touches the real key.
+    public init(bundleID: String = Bundle.main.bundleIdentifier ?? "app.taellmi") {
+        service = "\(bundleID).archive"
+    }
 
     public func loadKey() throws -> SymmetricKey? { try read("archive-key").map(SymmetricKey.init(data:)) }
     public func saveKey(_ key: SymmetricKey) throws { try write(key.withUnsafeBytes { Data($0) }, "archive-key") }

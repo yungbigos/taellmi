@@ -154,8 +154,10 @@ public final class AppController {
     nonisolated static func waitForOtherInstances() async {
         let me = ProcessInfo.processInfo.processIdentifier
         for _ in 0..<60 {
-            let others = NSRunningApplication.runningApplications(withBundleIdentifier: "app.taellmi")
-                .filter { $0.processIdentifier != me }
+            let others = NSRunningApplication.runningApplications(
+                withBundleIdentifier: Bundle.main.bundleIdentifier ?? "app.taellmi"
+            )
+            .filter { $0.processIdentifier != me }
             if others.isEmpty { return }
             try? await Task.sleep(for: .milliseconds(250))
         }

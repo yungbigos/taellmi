@@ -36,11 +36,13 @@ public enum SettingKeys {
     public static let searchRRFK = "search.rrf_k"
     public static let searchVectorCandidates = "search.vector_candidates"
     public static let searchMinSimilarity = "search.min_similarity"
+    /// Meaning matches more than this below the best one are dropped (0 = off).
+    public static let searchRelativeSimilarityWindow = "search.relative_similarity_window"
 
     /// Settings of the meaning layer (passages, embeddings, search).
     static let meaning = [
         fragmentTargetLength, fragmentMaxLength, embedBatchSize, searchRRFK, searchVectorCandidates,
-        searchMinSimilarity,
+        searchMinSimilarity, searchRelativeSimilarityWindow,
     ]
     /// Colours, type, tälli's look and motion (docs/brand/tokens.json), shipped as `Seeds/brand.json`.
     public static let brandTokens = "brand.tokens"

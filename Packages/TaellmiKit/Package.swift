@@ -24,6 +24,11 @@ let package = Package(
         .package(url: "https://github.com/groue/GRDB.swift", from: "7.11.1"),
         .package(url: "https://github.com/FluidInference/FluidAudio", from: "0.17.7"),
         .package(url: "https://github.com/pointfreeco/swift-clocks", from: "1.1.1"),
+        // MLX runtime for embedding models; pinned exactly because the Metal shaders must match the code.
+        .package(url: "https://github.com/ml-explore/mlx-swift-lm", exact: "3.32.3"),
+        .package(url: "https://github.com/huggingface/swift-transformers", exact: "1.3.5"),
+        // Named so the integration tests can set MLX's shader location; resolved by mlx-swift-lm.
+        .package(url: "https://github.com/ml-explore/mlx-swift", exact: "0.32.3"),
     ],
     targets: [
         // MARK: Core (no third-party ML)
@@ -49,6 +54,14 @@ let package = Package(
             swiftSettings: strict
         ),
         .target(name: "Search", dependencies: ["Domain", "Persistence", "Config"], swiftSettings: strict),
+        /// Measuring search quality on evaluation sets (developer tool, not part of the app).
+        .target(
+            name: "SearchEvaluation", dependencies: ["Domain", "Persistence", "Config", "Search"],
+            swiftSettings: strict),
+        /// `swift run SearchEvalTool`: measures search on evaluation sets with real models (scripts/eval-search.sh).
+        .executableTarget(
+            name: "SearchEvalTool", dependencies: ["SearchEvaluation", "Config", "Domain", "MLXEmbedderEngine"],
+            swiftSettings: strict),
         .target(name: "Audio", dependencies: ["Domain"], swiftSettings: strict),
         .target(name: "Features", dependencies: ["Domain"], swiftSettings: ui),
         /// Apple system frameworks used as data sources (NaturalLanguage, Contacts).
@@ -63,6 +76,18 @@ let package = Package(
         ),
 
         .target(
+            name: "MLXEmbedderEngine",
+            dependencies: [
+                "Domain",
+                .product(name: "MLXEmbedders", package: "mlx-swift-lm"),
+                .product(name: "MLXLMCommon", package: "mlx-swift-lm"),
+                .product(name: "Tokenizers", package: "swift-transformers"),
+            ],
+            path: "Sources/Engines/MLXEmbedderEngine",
+            swiftSettings: strict
+        ),
+
+        .target(
             name: "SpeechAnalyzerEngine", dependencies: ["Domain"], path: "Sources/Engines/SpeechAnalyzerEngine",
             swiftSettings: strict),
 
@@ -71,7 +96,7 @@ let package = Package(
             name: "AppComposition",
             dependencies: [
                 "Domain", "Persistence", "Config", "Pipeline", "Search", "Audio", "Features", "SystemServices",
-                "FluidAudioEngine", "SpeechAnalyzerEngine",
+                "FluidAudioEngine", "SpeechAnalyzerEngine", "MLXEmbedderEngine",
             ],
             swiftSettings: ui
         ),
@@ -112,6 +137,10 @@ let package = Package(
             name: "SearchTests", dependencies: ["Search", "Config", "Persistence", "Domain", "TestSupport"],
             swiftSettings: strict),
         .testTarget(
+            name: "SearchEvaluationTests",
+            dependencies: ["SearchEvaluation", "Search", "Config", "Persistence", "Domain", "TestSupport"],
+            swiftSettings: strict),
+        .testTarget(
             name: "FeaturesTests", dependencies: ["Features", "Domain", "TestSupport"], swiftSettings: ui),
 
         .testTarget(
@@ -123,12 +152,20 @@ let package = Package(
         .testTarget(
             name: "SystemServicesTests", dependencies: ["SystemServices", "Domain"], swiftSettings: strict),
         .testTarget(
+            name: "MLXEmbedderEngineTests", dependencies: ["MLXEmbedderEngine", "Domain"], swiftSettings: strict),
+        .testTarget(
             name: "FluidAudioEngineTests", dependencies: ["FluidAudioEngine", "Domain"], swiftSettings: strict),
 
         // MARK: Integration tests (real models; skipped by scripts/check.sh)
         .testTarget(
             name: "SpeechAnalyzerEngineIntegrationTests", dependencies: ["SpeechAnalyzerEngine", "Domain"],
             resources: [.copy("Fixtures")], swiftSettings: strict),
+        .testTarget(
+            name: "MLXEmbedderEngineIntegrationTests",
+            dependencies: [
+                "MLXEmbedderEngine", "Domain", "TestSupport", .product(name: "MLX", package: "mlx-swift"),
+            ],
+            swiftSettings: strict),
         .testTarget(
             name: "FluidAudioEngineIntegrationTests",
             dependencies: ["FluidAudioEngine", "Domain"],

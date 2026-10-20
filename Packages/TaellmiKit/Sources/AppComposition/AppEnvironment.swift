@@ -6,6 +6,7 @@ import Features
 import FluidAudioEngine
 import Foundation
 import IOKit.ps
+import MLXEmbedderEngine
 import Persistence
 import Pipeline
 import Search
@@ -21,7 +22,7 @@ public final class AppEnvironment {
         ParakeetTranscriber.engineKey: ParakeetTranscriber.factory
     ]
     /// Embedding engines, by engine key.
-    public static let liveEmbedders: [String: EmbedderFactory] = [:]
+    public static let liveEmbedders: [String: EmbedderFactory] = [MLXEmbedder.engineKey: MLXEmbedder.factory]
     /// Live-preview engines, by engine key.
     public static let livePreviewEngines: [String: LivePreviewFactory] = [
         AppleSpeechLivePreview.engineKey: AppleSpeechLivePreview.factory

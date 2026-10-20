@@ -1,0 +1,125 @@
+{"id": "p1-001", "topics": []}
+{"id": "p1-002", "topics": ["place:flat-giesing", "home:heating"]}
+{"id": "p1-003", "topics": ["person:lea", "place:isar", "health:running"]}
+{"id": "p1-004", "topics": ["person:lea", "hobby:cooking"]}
+{"id": "p1-005", "topics": ["place:flat-giesing", "work:launch", "home:heating", "feeling:anger"]}
+{"id": "p1-006", "topics": []}
+{"id": "p1-007", "topics": ["person:lea", "hobby:cooking"]}
+{"id": "p1-008", "topics": ["home:heating"]}
+{"id": "p1-009", "topics": ["person:sven", "place:office", "work:launch"]}
+{"id": "p1-010", "topics": ["person:sven", "place:office", "work:launch"]}
+{"id": "p1-011", "topics": ["health:sleep"]}
+{"id": "p1-012", "topics": []}
+{"id": "p1-013", "topics": ["place:flat-giesing", "home:heating", "feeling:anger"]}
+{"id": "p1-014", "topics": ["person:anna", "person:mama", "person:oma", "place:regensburg", "home:heating", "hobby:cooking"]}
+{"id": "p1-015", "topics": ["work:launch", "health:sleep", "money:worries", "feeling:anxiety"]}
+{"id": "p1-016", "topics": ["place:office"]}
+{"id": "p1-017", "topics": ["place:isar", "health:running"]}
+{"id": "p1-018", "topics": ["person:lea", "person:tobi", "person:sven", "place:office", "place:flat-giesing", "work:launch", "health:sleep", "health:running", "home:heating", "money:worries", "feeling:anger", "hobby:reading"]}
+{"id": "p1-019", "topics": ["home:heating"]}
+{"id": "p1-020", "topics": ["hobby:reading"]}
+{"id": "p1-021", "topics": ["person:lea"]}
+{"id": "p1-022", "topics": ["person:lea", "person:sven", "place:office", "place:flat-giesing", "home:heating"]}
+{"id": "p1-023", "topics": ["person:tobi", "health:running"]}
+{"id": "p1-024", "topics": ["person:lea", "home:heating", "feeling:gratitude"]}
+{"id": "p1-025", "topics": ["person:tobi", "place:isar", "health:running"]}
+{"id": "p1-026", "topics": ["person:anna", "person:mama", "person:oma", "place:regensburg", "event:christmas"]}
+{"id": "p1-027", "topics": ["place:isar", "health:running"]}
+{"id": "p1-028", "topics": ["person:lea", "person:mama", "hobby:cooking"]}
+{"id": "p1-029", "topics": ["health:sleep", "feeling:anxiety"]}
+{"id": "p1-030", "topics": ["place:office", "work:launch"]}
+{"id": "p1-031", "topics": ["person:sven"]}
+{"id": "p1-032", "topics": ["place:flat-giesing", "home:heating", "feeling:anger"]}
+{"id": "p1-033", "topics": []}
+{"id": "p1-034", "topics": ["place:office"]}
+{"id": "p1-035", "topics": ["place:isar", "health:running"]}
+{"id": "p1-036", "topics": ["person:lea", "home:heating", "feeling:anxiety", "feeling:gratitude"]}
+{"id": "p1-037", "topics": ["health:sleep"]}
+{"id": "p1-038", "topics": ["person:sven", "place:office", "work:launch"]}
+{"id": "p1-039", "topics": ["person:anna", "hobby:reading"]}
+{"id": "p1-040", "topics": ["person:anna", "event:christmas"]}
+{"id": "p1-041", "topics": ["home:heating", "feeling:anger"]}
+{"id": "p1-042", "topics": ["person:sven", "work:launch", "work:stress", "health:sleep"]}
+{"id": "p1-043", "topics": ["feeling:loneliness"]}
+{"id": "p1-044", "topics": ["home:heating"]}
+{"id": "p1-045", "topics": ["person:tobi"]}
+{"id": "p1-046", "topics": ["person:lea", "work:stress", "hobby:cooking"]}
+{"id": "p1-047", "topics": ["person:tobi", "place:isar", "place:alps", "health:running"]}
+{"id": "p1-048", "topics": ["place:flat-giesing", "home:heating", "feeling:anger"]}
+{"id": "p1-049", "topics": ["person:sven", "place:office", "dream"]}
+{"id": "p1-050", "topics": ["person:lea", "person:mama", "health:running", "event:christmas"]}
+{"id": "p1-051", "topics": ["person:lea", "person:mama", "place:regensburg", "event:christmas"]}
+{"id": "p1-052", "topics": []}
+{"id": "p1-053", "topics": ["place:office"]}
+{"id": "p1-054", "topics": ["person:sven", "place:office", "work:launch", "work:stress"]}
+{"id": "p1-055", "topics": ["person:lea", "place:isar", "health:running"]}
+{"id": "p1-056", "topics": []}
+{"id": "p1-057", "topics": ["place:flat-giesing", "home:heating"]}
+{"id": "p1-058", "topics": ["place:flat-giesing", "home:heating", "money:worries", "feeling:anger"]}
+{"id": "p1-059", "topics": ["person:lea", "feeling:gratitude"]}
+{"id": "p1-060", "topics": ["health:sleep"]}
+{"id": "p1-061", "topics": ["place:office", "work:ai-worries"]}
+{"id": "p1-062", "topics": []}
+{"id": "p1-063", "topics": ["person:tobi", "health:running", "event:half-marathon"]}
+{"id": "p1-064", "topics": ["health:running", "event:half-marathon"]}
+{"id": "p1-065", "topics": ["person:sven", "health:sleep", "feeling:anxiety"]}
+{"id": "p1-066", "topics": ["person:sven", "work:launch", "feeling:anxiety"]}
+{"id": "p1-067", "topics": ["person:lea"]}
+{"id": "p1-068", "topics": ["person:lea", "person:tobi", "place:flat-giesing", "home:heating", "home:moving", "feeling:anxiety"]}
+{"id": "p1-069", "topics": ["person:lea", "feeling:gratitude"]}
+{"id": "p1-070", "topics": ["person:oma", "place:regensburg"]}
+{"id": "p1-071", "topics": ["place:isar", "health:running", "home:heating"]}
+{"id": "p1-072", "topics": ["hobby:cooking"]}
+{"id": "p1-073", "topics": ["place:flat-giesing", "health:sleep", "home:heating"]}
+{"id": "p1-074", "topics": ["place:office", "work:launch"]}
+{"id": "p1-075", "topics": ["person:sven", "work:launch", "work:stress"]}
+{"id": "p1-076", "topics": []}
+{"id": "p1-077", "topics": ["person:sven", "place:office", "work:launch"]}
+{"id": "p1-078", "topics": ["person:mama", "place:regensburg", "event:christmas"]}
+{"id": "p1-079", "topics": ["home:heating"]}
+{"id": "p1-080", "topics": ["person:lea", "place:flat-giesing", "home:heating", "feeling:anxiety", "feeling:anger"]}
+{"id": "p1-081", "topics": ["place:isar", "health:running"]}
+{"id": "p1-082", "topics": ["person:sven", "place:office", "work:launch"]}
+{"id": "p1-083", "topics": ["feeling:gratitude"]}
+{"id": "p1-084", "topics": ["person:lea", "person:tobi", "feeling:loneliness"]}
+{"id": "p1-085", "topics": ["person:lea", "work:stress", "health:sleep"]}
+{"id": "p1-086", "topics": []}
+{"id": "p1-087", "topics": ["person:lea", "hobby:cooking"]}
+{"id": "p1-088", "topics": ["person:lea", "place:flat-giesing", "home:heating"]}
+{"id": "p1-089", "topics": ["person:anna", "hobby:reading"]}
+{"id": "p1-090", "topics": ["person:lea", "health:sleep", "feeling:loneliness"]}
+{"id": "p1-091", "topics": ["person:anna", "person:mama", "place:regensburg", "event:christmas"]}
+{"id": "p1-092", "topics": ["place:isar", "health:running"]}
+{"id": "p1-093", "topics": ["person:mama", "hobby:cooking"]}
+{"id": "p1-094", "topics": ["place:office"]}
+{"id": "p1-095", "topics": ["person:lea", "person:sven", "place:office", "work:launch", "work:stress"]}
+{"id": "p1-096", "topics": ["health:sleep"]}
+{"id": "p1-097", "topics": ["work:stress", "health:sleep", "feeling:anxiety"]}
+{"id": "p1-098", "topics": ["place:office"]}
+{"id": "p1-099", "topics": ["person:lea", "place:isar", "health:running", "health:knee"]}
+{"id": "p1-100", "topics": ["place:flat-giesing", "home:heating", "feeling:anger"]}
+{"id": "p1-101", "topics": []}
+{"id": "p1-102", "topics": ["person:tobi", "home:heating", "hobby:reading"]}
+{"id": "p1-103", "topics": ["home:heating", "feeling:anger"]}
+{"id": "p1-104", "topics": ["person:sven", "place:office", "place:alps", "work:launch"]}
+{"id": "p1-105", "topics": ["hobby:cooking"]}
+{"id": "p1-106", "topics": ["person:lea", "place:flat-giesing", "work:launch", "work:stress", "health:sleep", "feeling:anxiety"]}
+{"id": "p1-107", "topics": []}
+{"id": "p1-108", "topics": ["person:lea", "feeling:gratitude", "hobby:cooking"]}
+{"id": "p1-109", "topics": ["person:lea", "home:heating"]}
+{"id": "p1-110", "topics": ["person:lea", "person:tobi", "health:running", "health:knee", "event:half-marathon"]}
+{"id": "p1-111", "topics": ["person:lea", "person:mama", "place:regensburg", "event:christmas"]}
+{"id": "p1-112", "topics": ["work:launch", "work:ai-worries"]}
+{"id": "p1-113", "topics": ["hobby:reading"]}
+{"id": "p1-114", "topics": ["person:sven", "place:office", "work:launch", "work:stress"]}
+{"id": "p1-115", "topics": ["place:office", "work:launch", "feeling:anger"]}
+{"id": "p1-116", "topics": ["place:office", "work:stress"]}
+{"id": "p1-117", "topics": ["health:sleep"]}
+{"id": "p1-118", "topics": ["person:tobi", "feeling:loneliness"]}
+{"id": "p1-119", "topics": ["place:flat-giesing", "home:heating", "feeling:anger"]}
+{"id": "p1-120", "topics": ["place:isar", "health:running"]}
+{"id": "p1-121", "topics": ["person:anna", "hobby:cooking", "event:christmas"]}
+{"id": "p1-122", "topics": ["person:sven", "place:office", "feeling:loneliness"]}
+{"id": "p1-123", "topics": ["person:lea", "place:flat-giesing", "home:heating", "home:moving", "money:worries"]}
+{"id": "p1-124", "topics": ["person:lea", "person:tobi", "place:isar", "health:sleep", "health:running", "home:heating", "feeling:gratitude", "hobby:cooking", "event:half-marathon"]}
+{"id": "p1-125", "topics": ["person:sven", "place:office", "work:launch"]}

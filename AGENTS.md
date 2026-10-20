@@ -34,6 +34,8 @@ scripts/check.sh --fix         # same, but auto-format first
 scripts/test-integration.sh    # real models on audio fixtures (slow, needs downloaded models)
 scripts/run-app.sh             # build, install to ~/Applications/taellmi.app, launch (--build: build only)
 scripts/download-model.sh <id> # the one user-started network step: fetch a seed model, verify SHA-256
+scripts/download-eval-data.sh  # developer step: the German and English search-evaluation controls (pinned, SHA-256)
+scripts/eval-search.sh         # measure search on eval/ and the controls with the real model (see docs/research)
 ```
 
 - Where the running app keeps its data: `~/Library/Containers/app.taellmi/Data/Library/Application Support/taellmi/` (`Archive/`, `taellmi.sqlite`, `models/`, `Scratch/`).

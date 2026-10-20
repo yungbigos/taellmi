@@ -43,15 +43,24 @@ The same rule covers typed thoughts, edits, Entries from before this layer exist
 - **"Another model is busy" is waiting, not failing:** the job retries later without using up an attempt.
 
 ### Search
-- **`HybridSearch` merges two rankings with Reciprocal Rank Fusion** (`search.rrf_k`):
-  - Entries containing every search word, ordered by FTS5 bm25
-  - Entries with a passage within `search.min_similarity` of the query, among the nearest `search.vector_candidates`
+- **Thoughts containing every search word come first.** They are ordered by Reciprocal Rank Fusion (`search.rrf_k`) of keyword relevance (FTS5 bm25) and meaning.
+- **Thoughts found only by meaning follow, as *related*.** Meaning finds passages within `search.min_similarity`, among the nearest `search.vector_candidates`. `HybridSearch.hits` marks each result `.words` or `.related`.
+- **Why "related":** measured on 1,000 synthetic journal thoughts and two public controls ([research](../research/2026-10-search-eval.md)), the embedding model ranks very well (MRR 97%). But its similarity scores for searches with and without an answer overlap, so no cut-off can say "nothing relevant". Meaning alone therefore never makes a thought an answer, and "nothing found" refers to words.
 - **Empty search stays newest first.**
-- **Search never waits for a model.** If the embedding model isn't installed, or another heavy model is busy, search answers from words alone.
+- **Search never waits for a model.** If the embedding model isn't installed, or another heavy model is busy, search answers instantly with words alone.
+- **A relative cut-off exists but is off** (`search.relative_similarity_window` = 0); measuring showed it hurts.
 
-### The embedding engine comes separately
-- **The embedding model is configured but has no engine yet.** The seeded model is Qwen3-Embedding-0.6B 8-bit (MLX) at 512 dimensions, with pinned file hashes. Until its engine (`mlx_embedder`) exists, the `embed` step waits without using up attempts, and search uses words.
-- **MLX needs Metal shaders that only Xcode builds**, so the engine comes in its own change. Building them needs the Metal Toolchain component of Xcode 26, which is not part of the default install.
+### The embedding engine
+- **`MLXEmbedder` (engine key `mlx_embedder`) runs MLX embedding models from their local folder.** It uses mlx-swift-lm 3.32.3 for the model and swift-transformers 1.3.5 for the tokenizer, both pinned exactly. It never downloads.
+- **Everything model-specific is a param:** size (`dimensions`, cut before normalising), `pooling` (last, mean, cls, first) and the `query_template` for searches.
+- **The seeded model is Qwen3-Embedding-0.6B 8-bit** at 512 dimensions, with last-token pooling.
+- **Padding is masked by length, not by token id.** Qwen's pad token is the very end token that last-token pooling reads.
+- **The Metal shaders come from the Xcode build.** MLX needs them, and only Xcode compiles them (it needs Xcode's Metal Toolchain, installed once with `xcodebuild -downloadComponent MetalToolchain`).
+  - The app bundles them automatically.
+  - `scripts/test-integration.sh` builds the app and points the real-model tests at them.
+  - The fast gate never runs MLX.
+- **MLX's memory is capped from the model's params:** `cache_limit_mb` (256) and `memory_limit_mb` (2048). Without the caps, the GPU buffer cache grows without bound over a long run (26 GB observed). With them, it stays at about 2 GB.
+- **Every embedding engine keeps `EmbedderContract`**, checked for the fake in the fast tests and for the real model in the integration tests.
 
 ## Why
 

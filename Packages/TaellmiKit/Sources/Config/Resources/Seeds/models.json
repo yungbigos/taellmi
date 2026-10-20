@@ -158,7 +158,9 @@
       {"path": "tokenizer_config.json", "bytes": 5404, "sha256": "443bfa629eb16387a12edbf92a76f6a6f10b2af3b53d87ba1550adfcf45f7fa0"}
     ],
     "params": {
+      "cache_limit_mb": 256,
       "dimensions": 512,
+      "memory_limit_mb": 2048,
       "pooling": "last",
       "query_template": "Instruct: Given a question or keywords, find passages of a personal journal that answer or match it\nQuery:{{query}}"
     },
@@ -170,6 +172,6 @@
     "est_memory_mb": 900,
     "license": "Apache-2.0",
     "enabled": true,
-    "seed_version": 1
+    "seed_version": 2
   }
 ]

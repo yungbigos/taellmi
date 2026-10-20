@@ -4,12 +4,26 @@ import Foundation
 import Persistence
 import os
 
-/// Finds thoughts by their words and by their meaning, best match first.
+/// One search result: a thought, and whether it contains the search words or was found only by meaning.
+public struct SearchHit: Sendable, Equatable {
+    public enum Match: Sendable, Equatable {
+        /// Contains every search word: a result.
+        case words
+        /// Close in meaning only: shown as related, never claimed as an answer.
+        case related
+    }
+
+    public var entry: Entry
+    public var match: Match
+}
+
+/// Finds thoughts by their words, then related thoughts by their meaning.
 ///
-/// Two rankings are merged with Reciprocal Rank Fusion: Entries that contain every search word (ordered by
-/// keyword relevance), and Entries with a passage close in meaning to the search text. Meaning search needs
-/// the embedding model; when it is not installed or another model is busy, search answers with words alone
-/// instead of waiting.
+/// Thoughts that contain every search word come first, ordered by Reciprocal Rank Fusion of keyword relevance
+/// and meaning. Thoughts found only by meaning follow as related, closest first. The embedding model ranks
+/// well but cannot tell "nothing relevant" from "something relevant" (docs/research/2026-10-search-eval.md),
+/// so meaning alone never makes a thought an answer. Meaning search needs the embedding model; when it is not
+/// installed or another model is busy, search answers with words alone instead of waiting.
 public struct HybridSearch: Sendable {
     private let logger = Logger(subsystem: "app.taellmi", category: "search")
     private let index: EntryIndex
@@ -31,11 +45,19 @@ public struct HybridSearch: Sendable {
         self.settings = settings
     }
 
+    /// Thoughts in the order `hits` returns them.
     public func search(_ query: EntryQuery, now: Date = Date(), calendar: Calendar = .current) async throws
         -> [Entry]
     {
+        try await hits(query, now: now, calendar: calendar).map(\.entry)
+    }
+
+    /// Newest first without search words; otherwise word matches, then related thoughts.
+    public func hits(_ query: EntryQuery, now: Date = Date(), calendar: Calendar = .current) async throws
+        -> [SearchHit]
+    {
         let byWords = try index.search(query, now: now, calendar: calendar)
-        guard !query.words.isEmpty else { return byWords }
+        guard !query.words.isEmpty else { return byWords.map { SearchHit(entry: $0, match: .words) } }
 
         let scores = try index.keywordScores(words: query.words)
         let keywordRanking = byWords.enumerated()
@@ -54,9 +76,12 @@ public struct HybridSearch: Sendable {
                 fused[entry.id, default: (entry, 0)].score += 1 / (k + Double(rank + 1))
             }
         }
-        return fused.values
+        let wordIDs = Set(byWords.map(\.id))
+        let results = fused.values.filter { wordIDs.contains($0.entry.id) }
             .sorted { $0.score != $1.score ? $0.score > $1.score : $0.entry.createdAt > $1.entry.createdAt }
-            .map(\.entry)
+            .map { SearchHit(entry: $0.entry, match: .words) }
+        let related = meaningRanking.filter { !wordIDs.contains($0.id) }.map { SearchHit(entry: $0, match: .related) }
+        return results + related
     }
 
     /// Entries with a passage close in meaning to the search text, closest first. Empty when meaning search
@@ -77,10 +102,15 @@ public struct HybridSearch: Sendable {
         }
 
         let minSimilarity = try settings.number(SettingKeys.searchMinSimilarity)
-        let hits = try vectors.nearest(
+        var hits = try vectors.nearest(
             to: vector, space: model.vectorSpace, limit: Int(try settings.number(SettingKeys.searchVectorCandidates))
         )
         .filter { $0.similarity >= minSimilarity }
+        let window = try settings.number(SettingKeys.searchRelativeSimilarityWindow)
+        if window > 0, let best = hits.first?.similarity {
+            // A clear best match makes the weak tail noise, even above the fixed threshold.
+            hits = hits.filter { $0.similarity >= best - window }
+        }
         let entryOfFragment = Dictionary(
             try fragments.fragments(ids: hits.map(\.nodeID)).map { ($0.id, $0.entryID) },
             uniquingKeysWith: { first, _ in first })

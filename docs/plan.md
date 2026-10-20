@@ -182,7 +182,7 @@ Decisions are locked (see section 3); we fix model choices later if real use sho
 - Every thought is split into passages, and each passage is embedded by the `embed` model.
 - Explore search ranks by words and meaning, best match first. It falls back to words while no embedding model can run.
 - **Next:**
-  - the MLX embedding engine (needs Xcode's Metal Toolchain)
+  - try search by meaning on real thoughts (the MLX embedding engine is built; download the model with `scripts/download-model.sh qwen3-embedding-0.6b-8bit`)
   - extraction of points, mentions and Concepts with Apple's on-device model first, Qwen3.5-4B as fallback (#4)
   - constellations of Concepts
 

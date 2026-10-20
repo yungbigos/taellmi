@@ -1,0 +1,182 @@
+{"id": "q001", "text": "Lea", "kind": "exact", "all_topics": ["person:lea"]}
+{"id": "q002", "text": "meine Freundin", "kind": "paraphrase", "all_topics": ["person:lea"]}
+{"id": "q003", "text": "my girlfriend", "kind": "english", "all_topics": ["person:lea"]}
+{"id": "q004", "text": "Wann hatte ich Streit mit meiner Partnerin?", "kind": "question", "all_topics": ["person:lea"]}
+{"id": "q005", "text": "Anna", "kind": "exact", "all_topics": ["person:anna"]}
+{"id": "q006", "text": "meine große Schwester", "kind": "paraphrase", "all_topics": ["person:anna"]}
+{"id": "q007", "text": "my sister", "kind": "english", "all_topics": ["person:anna"]}
+{"id": "q008", "text": "Was gibt es Neues von meiner Schwester?", "kind": "question", "all_topics": ["person:anna"]}
+{"id": "q009", "text": "Mama", "kind": "exact", "all_topics": ["person:mama"]}
+{"id": "q010", "text": "Mutti", "kind": "part", "all_topics": ["person:mama"]}
+{"id": "q011", "text": "Telefonat mit meiner Mutter", "kind": "paraphrase", "all_topics": ["person:mama"]}
+{"id": "q012", "text": "my mom", "kind": "english", "all_topics": ["person:mama"]}
+{"id": "q013", "text": "Oma", "kind": "exact", "all_topics": ["person:oma"]}
+{"id": "q014", "text": "Großmutter im Krankenhaus", "kind": "paraphrase", "all_topics": ["person:oma"]}
+{"id": "q015", "text": "grandma in hospital", "kind": "english", "all_topics": ["person:oma"]}
+{"id": "q016", "text": "Wie geht es Oma nach dem Sturz?", "kind": "question", "all_topics": ["person:oma"]}
+{"id": "q017", "text": "Tobi", "kind": "exact", "all_topics": ["person:tobi"]}
+{"id": "q018", "text": "mein bester Kumpel", "kind": "paraphrase", "all_topics": ["person:tobi"]}
+{"id": "q019", "text": "my best friend", "kind": "english", "all_topics": ["person:tobi"]}
+{"id": "q020", "text": "Sven", "kind": "exact", "all_topics": ["person:sven"]}
+{"id": "q021", "text": "mein Chef", "kind": "paraphrase", "all_topics": ["person:sven"]}
+{"id": "q022", "text": "my team lead", "kind": "english", "all_topics": ["person:sven"]}
+{"id": "q023", "text": "Was hat mein Teamlead gesagt?", "kind": "question", "all_topics": ["person:sven"]}
+{"id": "q024", "text": "Dr. Weber", "kind": "exact", "all_topics": ["person:dr-weber"]}
+{"id": "q025", "text": "Therapiesitzung", "kind": "paraphrase", "all_topics": ["person:dr-weber"]}
+{"id": "q026", "text": "therapy session", "kind": "english", "all_topics": ["person:dr-weber"]}
+{"id": "q027", "text": "Was habe ich in der Therapie gelernt?", "kind": "question", "all_topics": ["person:dr-weber"]}
+{"id": "q028", "text": "Isar", "kind": "exact", "all_topics": ["place:isar"]}
+{"id": "q029", "text": "am Fluss spazieren", "kind": "paraphrase", "all_topics": ["place:isar"]}
+{"id": "q030", "text": "walk by the river", "kind": "english", "all_topics": ["place:isar"]}
+{"id": "q031", "text": "Büro", "kind": "exact", "all_topics": ["place:office"]}
+{"id": "q032", "text": "im Großraumbüro", "kind": "paraphrase", "all_topics": ["place:office"]}
+{"id": "q033", "text": "at the office", "kind": "english", "all_topics": ["place:office"]}
+{"id": "q034", "text": "Giesing", "kind": "exact", "all_topics": ["place:flat-giesing"]}
+{"id": "q035", "text": "alte Wohnung und Vermieter", "kind": "paraphrase", "all_topics": ["place:flat-giesing"]}
+{"id": "q036", "text": "my old apartment", "kind": "english", "all_topics": ["place:flat-giesing"]}
+{"id": "q037", "text": "Haidhausen", "kind": "exact", "all_topics": ["place:new-flat"]}
+{"id": "q038", "text": "neue Wohnung mit Balkon", "kind": "paraphrase", "all_topics": ["place:new-flat"]}
+{"id": "q039", "text": "our new place", "kind": "english", "all_topics": ["place:new-flat"]}
+{"id": "q040", "text": "Regensburg", "kind": "exact", "all_topics": ["place:regensburg"]}
+{"id": "q041", "text": "Besuch bei der Familie zuhause", "kind": "paraphrase", "all_topics": ["place:regensburg"]}
+{"id": "q042", "text": "visiting my hometown", "kind": "english", "all_topics": ["place:regensburg"]}
+{"id": "q043", "text": "Lissabon", "kind": "exact", "all_topics": ["place:lisbon"]}
+{"id": "q044", "text": "Urlaub in Portugal", "kind": "paraphrase", "all_topics": ["place:lisbon"]}
+{"id": "q045", "text": "Lisbon trip", "kind": "english", "all_topics": ["place:lisbon"]}
+{"id": "q046", "text": "Alpen", "kind": "exact", "all_topics": ["place:alps"]}
+{"id": "q047", "text": "Berge", "kind": "part", "all_topics": ["place:alps"]}
+{"id": "q048", "text": "Wanderung auf einen Gipfel", "kind": "paraphrase", "all_topics": ["place:alps"]}
+{"id": "q049", "text": "hiking in the mountains", "kind": "english", "all_topics": ["place:alps"]}
+{"id": "q050", "text": "Launch", "kind": "exact", "all_topics": ["work:launch"]}
+{"id": "q051", "text": "Veröffentlichung der App", "kind": "paraphrase", "all_topics": ["work:launch"]}
+{"id": "q052", "text": "release day", "kind": "english", "all_topics": ["work:launch"]}
+{"id": "q053", "text": "Wie lief der Launch?", "kind": "question", "all_topics": ["work:launch"]}
+{"id": "q054", "text": "Stress bei der Arbeit", "kind": "exact", "all_topics": ["work:stress"]}
+{"id": "q055", "text": "Überstunden", "kind": "part", "all_topics": ["work:stress"]}
+{"id": "q056", "text": "zu viel zu tun im Job", "kind": "paraphrase", "all_topics": ["work:stress"]}
+{"id": "q057", "text": "overwhelmed at work", "kind": "english", "all_topics": ["work:stress"]}
+{"id": "q058", "text": "Gehaltsverhandlung", "kind": "exact", "all_topics": ["work:salary"]}
+{"id": "q059", "text": "Gehalt", "kind": "part", "all_topics": ["work:salary"]}
+{"id": "q060", "text": "mehr Geld verdienen", "kind": "paraphrase", "all_topics": ["work:salary"]}
+{"id": "q061", "text": "asking for a raise", "kind": "english", "all_topics": ["work:salary"]}
+{"id": "q062", "text": "KI", "kind": "exact", "all_topics": ["work:ai-worries"]}
+{"id": "q063", "text": "Angst dass Maschinen meinen Job übernehmen", "kind": "paraphrase", "all_topics": ["work:ai-worries"]}
+{"id": "q064", "text": "will AI replace designers", "kind": "english", "all_topics": ["work:ai-worries"]}
+{"id": "q065", "text": "schlecht geschlafen", "kind": "exact", "all_topics": ["health:sleep"]}
+{"id": "q066", "text": "Schlaf", "kind": "part", "all_topics": ["health:sleep"]}
+{"id": "q067", "text": "nachts wach liegen", "kind": "paraphrase", "all_topics": ["health:sleep"]}
+{"id": "q068", "text": "insomnia", "kind": "english", "all_topics": ["health:sleep"]}
+{"id": "q069", "text": "Wann konnte ich nicht schlafen?", "kind": "question", "all_topics": ["health:sleep"]}
+{"id": "q070", "text": "Laufen", "kind": "exact", "all_topics": ["health:running"]}
+{"id": "q071", "text": "Lauftraining", "kind": "part", "all_topics": ["health:running"]}
+{"id": "q072", "text": "joggen gehen", "kind": "paraphrase", "all_topics": ["health:running"]}
+{"id": "q073", "text": "running training", "kind": "english", "all_topics": ["health:running"]}
+{"id": "q074", "text": "Knie", "kind": "exact", "all_topics": ["health:knee"]}
+{"id": "q075", "text": "Knieschmerzen", "kind": "part", "all_topics": ["health:knee"]}
+{"id": "q076", "text": "Verletzung beim Sport", "kind": "paraphrase", "all_topics": ["health:knee"]}
+{"id": "q077", "text": "knee pain", "kind": "english", "all_topics": ["health:knee"]}
+{"id": "q078", "text": "Burnout", "kind": "exact", "all_topics": ["health:burnout"]}
+{"id": "q079", "text": "völlig ausgebrannt und leer", "kind": "paraphrase", "all_topics": ["health:burnout"]}
+{"id": "q080", "text": "exhausted and empty", "kind": "english", "all_topics": ["health:burnout"]}
+{"id": "q081", "text": "Wann ging gar nichts mehr?", "kind": "question", "all_topics": ["health:burnout"]}
+{"id": "q082", "text": "Heizung", "kind": "exact", "all_topics": ["home:heating"]}
+{"id": "q083", "text": "Heizkörper", "kind": "part", "all_topics": ["home:heating"]}
+{"id": "q084", "text": "Wohnung ist kalt", "kind": "paraphrase", "all_topics": ["home:heating"]}
+{"id": "q085", "text": "the heating is broken", "kind": "english", "all_topics": ["home:heating"]}
+{"id": "q086", "text": "Umzug", "kind": "exact", "all_topics": ["home:moving"]}
+{"id": "q087", "text": "Kartons", "kind": "part", "all_topics": ["home:moving"]}
+{"id": "q088", "text": "zusammenziehen und Wohnungssuche", "kind": "paraphrase", "all_topics": ["home:moving"]}
+{"id": "q089", "text": "moving in together", "kind": "english", "all_topics": ["home:moving"]}
+{"id": "q090", "text": "Tomaten", "kind": "exact", "all_topics": ["home:balcony-plants"]}
+{"id": "q091", "text": "Basilikum", "kind": "part", "all_topics": ["home:balcony-plants"]}
+{"id": "q092", "text": "Pflanzen auf dem Balkon", "kind": "paraphrase", "all_topics": ["home:balcony-plants"]}
+{"id": "q093", "text": "balcony garden", "kind": "english", "all_topics": ["home:balcony-plants"]}
+{"id": "q094", "text": "Steuererklärung", "kind": "exact", "all_topics": ["money:taxes"]}
+{"id": "q095", "text": "Steuer", "kind": "part", "all_topics": ["money:taxes"]}
+{"id": "q096", "text": "Papierkram fürs Finanzamt", "kind": "paraphrase", "all_topics": ["money:taxes"]}
+{"id": "q097", "text": "tax return", "kind": "english", "all_topics": ["money:taxes"]}
+{"id": "q098", "text": "Geldsorgen", "kind": "exact", "all_topics": ["money:worries"]}
+{"id": "q099", "text": "reicht das Geld für die Miete", "kind": "paraphrase", "all_topics": ["money:worries"]}
+{"id": "q100", "text": "money worries", "kind": "english", "all_topics": ["money:worries"]}
+{"id": "q101", "text": "Angst", "kind": "exact", "all_topics": ["feeling:anxiety"]}
+{"id": "q102", "text": "Zukunftsangst", "kind": "part", "all_topics": ["feeling:anxiety"]}
+{"id": "q103", "text": "Gedankenkreisen und Sorgen", "kind": "paraphrase", "all_topics": ["feeling:anxiety"]}
+{"id": "q104", "text": "anxious about the future", "kind": "english", "all_topics": ["feeling:anxiety"]}
+{"id": "q105", "text": "dankbar", "kind": "exact", "all_topics": ["feeling:gratitude"]}
+{"id": "q106", "text": "schöner Moment heute", "kind": "paraphrase", "all_topics": ["feeling:gratitude"]}
+{"id": "q107", "text": "grateful", "kind": "english", "all_topics": ["feeling:gratitude"]}
+{"id": "q108", "text": "einsam", "kind": "exact", "all_topics": ["feeling:loneliness"]}
+{"id": "q109", "text": "allein fühlen obwohl Leute da sind", "kind": "paraphrase", "all_topics": ["feeling:loneliness"]}
+{"id": "q110", "text": "lonely", "kind": "english", "all_topics": ["feeling:loneliness"]}
+{"id": "q111", "text": "wütend", "kind": "exact", "all_topics": ["feeling:anger"]}
+{"id": "q112", "text": "total genervt und sauer", "kind": "paraphrase", "all_topics": ["feeling:anger"]}
+{"id": "q113", "text": "so angry", "kind": "english", "all_topics": ["feeling:anger"]}
+{"id": "q114", "text": "Gitarre", "kind": "exact", "all_topics": ["hobby:guitar"]}
+{"id": "q115", "text": "Akkorde", "kind": "part", "all_topics": ["hobby:guitar"]}
+{"id": "q116", "text": "Instrument üben", "kind": "paraphrase", "all_topics": ["hobby:guitar"]}
+{"id": "q117", "text": "guitar practice", "kind": "english", "all_topics": ["hobby:guitar"]}
+{"id": "q118", "text": "gekocht", "kind": "exact", "all_topics": ["hobby:cooking"]}
+{"id": "q119", "text": "Rezept", "kind": "part", "all_topics": ["hobby:cooking"]}
+{"id": "q120", "text": "Abendessen selbst gemacht", "kind": "paraphrase", "all_topics": ["hobby:cooking"]}
+{"id": "q121", "text": "cooking dinner", "kind": "english", "all_topics": ["hobby:cooking"]}
+{"id": "q122", "text": "Buch", "kind": "exact", "all_topics": ["hobby:reading"]}
+{"id": "q123", "text": "was ich gerade lese", "kind": "paraphrase", "all_topics": ["hobby:reading"]}
+{"id": "q124", "text": "the book I'm reading", "kind": "english", "all_topics": ["hobby:reading"]}
+{"id": "q125", "text": "Weihnachten", "kind": "exact", "all_topics": ["event:christmas"]}
+{"id": "q126", "text": "Feiertage bei der Familie", "kind": "paraphrase", "all_topics": ["event:christmas"]}
+{"id": "q127", "text": "christmas", "kind": "english", "all_topics": ["event:christmas"]}
+{"id": "q128", "text": "Geburtstag von Tobi", "kind": "exact", "all_topics": ["event:tobi-birthday"]}
+{"id": "q129", "text": "Party zum 35.", "kind": "paraphrase", "all_topics": ["event:tobi-birthday"]}
+{"id": "q130", "text": "Tobi's birthday party", "kind": "english", "all_topics": ["event:tobi-birthday"]}
+{"id": "q131", "text": "Halbmarathon", "kind": "exact", "all_topics": ["event:half-marathon"]}
+{"id": "q132", "text": "das Rennen über 21 Kilometer", "kind": "paraphrase", "all_topics": ["event:half-marathon"]}
+{"id": "q133", "text": "race day", "kind": "english", "all_topics": ["event:half-marathon"]}
+{"id": "q134", "text": "Wie lief der Halbmarathon?", "kind": "question", "all_topics": ["event:half-marathon"]}
+{"id": "q135", "text": "Mila", "kind": "exact", "all_topics": ["event:baby-mila"]}
+{"id": "q136", "text": "Nichte", "kind": "part", "all_topics": ["event:baby-mila"]}
+{"id": "q137", "text": "Baby ist da, ich bin Onkel", "kind": "paraphrase", "all_topics": ["event:baby-mila"]}
+{"id": "q138", "text": "my niece was born", "kind": "english", "all_topics": ["event:baby-mila"]}
+{"id": "q139", "text": "geträumt", "kind": "exact", "all_topics": ["dream"]}
+{"id": "q140", "text": "Traum", "kind": "part", "all_topics": ["dream"]}
+{"id": "q141", "text": "heute Nacht hatte ich so einen komischen Traum", "kind": "paraphrase", "all_topics": ["dream"]}
+{"id": "q142", "text": "I had a dream", "kind": "english", "all_topics": ["dream"]}
+{"id": "q143", "text": "mit Lea zusammenziehen", "kind": "combo", "all_topics": ["person:lea", "home:moving"]}
+{"id": "q144", "text": "Urlaub mit Lea", "kind": "combo", "all_topics": ["person:lea", "place:lisbon"]}
+{"id": "q145", "text": "Oma an Weihnachten", "kind": "combo", "all_topics": ["person:oma", "event:christmas"]}
+{"id": "q146", "text": "Gehaltsgespräch mit Sven", "kind": "combo", "all_topics": ["person:sven", "work:salary"]}
+{"id": "q147", "text": "Knie beim Laufen", "kind": "combo", "all_topics": ["health:knee", "health:running"]}
+{"id": "q148", "text": "Annas Baby", "kind": "combo", "all_topics": ["person:anna", "event:baby-mila"]}
+{"id": "q149", "text": "wegen der Arbeit nicht schlafen", "kind": "combo", "all_topics": ["work:stress", "health:sleep"]}
+{"id": "q150", "text": "über meine Angst in der Therapie gesprochen", "kind": "combo", "all_topics": ["person:dr-weber", "feeling:anxiety"]}
+{"id": "q151", "text": "Vermieter wegen der Heizung", "kind": "combo", "all_topics": ["home:heating", "place:flat-giesing"]}
+{"id": "q152", "text": "Kaution und Umzugskosten", "kind": "combo", "all_topics": ["money:worries", "home:moving"]}
+{"id": "q153", "text": "Segeltörn", "kind": "none", "all_topics": []}
+{"id": "q154", "text": "mein Hund", "kind": "none", "all_topics": []}
+{"id": "q155", "text": "Schach spielen", "kind": "none", "all_topics": []}
+{"id": "q156", "text": "Bitcoin kaufen", "kind": "none", "all_topics": []}
+{"id": "q157", "text": "Urlaub in Italien", "kind": "none", "all_topics": []}
+{"id": "q158", "text": "Hochzeit planen", "kind": "none", "all_topics": []}
+{"id": "q159", "text": "Klavierstunde", "kind": "none", "all_topics": []}
+{"id": "q160", "text": "Skifahren", "kind": "none", "all_topics": []}
+{"id": "q161", "text": "Autounfall", "kind": "none", "all_topics": []}
+{"id": "q162", "text": "Bundestagswahl", "kind": "none", "all_topics": []}
+{"id": "q163", "text": "Schrebergarten", "kind": "none", "all_topics": []}
+{"id": "q164", "text": "Japanisch lernen", "kind": "none", "all_topics": []}
+{"id": "q165", "text": "unsere Katze", "kind": "none", "all_topics": []}
+{"id": "q166", "text": "Wochenende in Paris", "kind": "none", "all_topics": []}
+{"id": "q167", "text": "neues Tattoo", "kind": "none", "all_topics": []}
+{"id": "q168", "text": "sailing trip", "kind": "none", "all_topics": []}
+{"id": "q169", "text": "walking the dog", "kind": "none", "all_topics": []}
+{"id": "q170", "text": "chess tournament", "kind": "none", "all_topics": []}
+{"id": "q171", "text": "crypto portfolio", "kind": "none", "all_topics": []}
+{"id": "q172", "text": "wedding planning", "kind": "none", "all_topics": []}
+{"id": "q173", "text": "piano lesson", "kind": "none", "all_topics": []}
+{"id": "q174", "text": "ski holiday", "kind": "none", "all_topics": []}
+{"id": "q175", "text": "car crash", "kind": "none", "all_topics": []}
+{"id": "q176", "text": "election results", "kind": "none", "all_topics": []}
+{"id": "q177", "text": "Rom", "kind": "none", "all_topics": []}
+{"id": "q178", "text": "Venedig", "kind": "none", "all_topics": []}
+{"id": "q179", "text": "Pizza in Neapel", "kind": "none", "all_topics": []}
+{"id": "q180", "text": "Hundeschule", "kind": "none", "all_topics": []}
+{"id": "q181", "text": "Schachbrett", "kind": "none", "all_topics": []}
+{"id": "q182", "text": "Börse und Aktien", "kind": "none", "all_topics": []}

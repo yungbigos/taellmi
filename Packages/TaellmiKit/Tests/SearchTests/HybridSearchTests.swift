@@ -130,4 +130,35 @@ struct HybridSearchTests {
         try harness.add("words", "Zukunftsangstfreie Ferien: Strand, Eis, Sonne, Meer und Kinder im Sand.")
         #expect(try await harness.ids("Zukunftsangst").first == "both")
     }
+
+    @Test("with a relative window, meaning matches far below the best one are dropped")
+    func relativeWindow() async throws {
+        let harness = try Harness()
+        try ConfigEditor(database: harness.database).setSetting(SettingKeys.searchMinSimilarity, to: .number(0))
+        try harness.add("close", "Zukunftsangst, immer wieder Zukunftsangst.")
+        try harness.add("far", "Ich habe Angst vor der Zukunft.")
+        #expect(Set(try await harness.ids("Zukunftsangst")) == ["close", "far"])
+
+        try ConfigEditor(database: harness.database).setSetting(
+            SettingKeys.searchRelativeSimilarityWindow, to: .number(0.05))
+        #expect(try await harness.ids("Zukunftsangst") == ["close"])
+    }
+
+    @Test("thoughts with the search words come first; thoughts found only by meaning follow, marked as related")
+    func wordsBeforeRelated() async throws {
+        let harness = try Harness()
+        try harness.add("related", "Zukunftsängste, Zukunftsängste, immer diese Zukunftsängste.")
+        try harness.add("words", "Heute Zukunftsangst gehabt, dann Fahrrad repariert, Kette geölt, Reifen gewechselt.")
+        let hits = try await harness.search.hits(EntryQuery(text: "Zukunftsangst"), now: sampleDate)
+        #expect(hits.map(\.entry.id) == ["words", "related"])
+        #expect(hits.map(\.match) == [.words, .related])
+    }
+
+    @Test("without words in common, every result is related")
+    func onlyRelated() async throws {
+        let harness = try Harness()
+        try harness.add("worry", "Ich habe Angst vor der Zukunft.")
+        let hits = try await harness.search.hits(EntryQuery(text: "Zukunftsangst"), now: sampleDate)
+        #expect(hits.map(\.match) == [.related])
+    }
 }

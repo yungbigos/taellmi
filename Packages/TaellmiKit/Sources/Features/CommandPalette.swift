@@ -48,6 +48,8 @@ public final class CommandPaletteModel {
     public var query = ""
 
     @ObservationIgnored private let explore: ExploreViewModel
+    /// The thoughts found for the current text, so choosing one opens it with what was searched for.
+    @ObservationIgnored private var hits: [String: SearchHit] = [:]
     @ObservationIgnored private let thoughtLimit: Int
 
     public init(explore: ExploreViewModel, thoughtLimit: Int = 8) {
@@ -66,9 +68,11 @@ public final class CommandPaletteModel {
         let commands = Commands.all
             .filter { command in words.allSatisfy { command.title.contains($0) } }
             .map { PaletteItem(kind: .command($0), title: $0.title, shortcut: explore.shortcuts[$0]?.displayLabel) }
-        let thoughts = await explore.findThoughts(text, limit: thoughtLimit).map(Self.item)
+        let found = await explore.findThoughts(text, limit: thoughtLimit)
+        let thoughts = found.map(Self.item)
         // Searches can finish out of order (one may first load a model); only the latest typing counts.
         guard query == text else { return }
+        hits = Dictionary(found.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         results = commands + thoughts
         highlighted = 0
     }
@@ -89,7 +93,11 @@ public final class CommandPaletteModel {
         case .command(let command): await explore.perform(command)
         case .thought(let id):
             if explore.showsTrash { await explore.perform(.showStack) }
-            await explore.select(id)
+            if let hit = hits[id] {
+                await explore.open(hit, searchedFor: query)
+            } else {
+                await explore.select(id)
+            }
         }
     }
 

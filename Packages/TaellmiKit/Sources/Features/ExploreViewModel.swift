@@ -31,6 +31,12 @@ nonisolated public struct TrashedEntry: Sendable, Equatable, Identifiable {
     }
 }
 
+/// A search a thought was opened from, so it can still be highlighted once the search itself is closed.
+struct OpenedSearch: Equatable {
+    var text: String
+    var hit: SearchHit
+}
+
 /// A part of a thought's text to highlight while a search is active.
 public struct TextHighlight: Sendable, Equatable {
     public enum Kind: Sendable, Equatable {
@@ -115,6 +121,8 @@ public final class ExploreViewModel {
     @ObservationIgnored private var lastTrashed: String?
     @ObservationIgnored private var observation: Task<Void, Never>?
     @ObservationIgnored private var refreshGeneration = 0
+    /// The search the open thought was opened from (⌘K), while the window's own search field is empty.
+    private var openedSearch: OpenedSearch?
 
     /// - Parameters:
     ///   - autosaveDelay: pause after the last keystroke before saving (from config).
@@ -255,19 +263,39 @@ public final class ExploreViewModel {
     }
 
     /// What to highlight in a thought's text as it is now: the search words wherever they occur, and for a
-    /// related thought the passage that matched. Recomputed from the text, so highlights follow your typing;
-    /// they are only drawn, never saved.
+    /// related thought the passage that matched. The search is the window's own, or else the one the thought
+    /// was opened from (⌘K). Recomputed from the text, so highlights follow your typing; they are only drawn,
+    /// never saved.
     public func highlights(in text: String, entryID: String) -> [TextHighlight] {
-        let words = query.words
-        guard !words.isEmpty else { return [] }
+        guard let search = search(for: entryID) else { return [] }
         var highlights: [TextHighlight] = []
-        if let hit = matches[entryID], hit.match == .related, let passage = hit.passage,
+        if let hit = search.hit, hit.match == .related, let passage = hit.passage,
             let range = Self.locate(passage, of: hit.entry.text, in: text)
         {
             highlights.append(TextHighlight(range: range, kind: .passage))
         }
-        highlights += TextMatch.ranges(of: words, in: text).map { TextHighlight(range: $0, kind: .word) }
+        highlights += TextMatch.ranges(of: search.words, in: text).map { TextHighlight(range: $0, kind: .word) }
         return highlights
+    }
+
+    /// Changes whenever the thought or the search it is shown with changes; the editor then scrolls to the first
+    /// highlight.
+    public func highlightKey(for entryID: String) -> String {
+        entryID + "|" + (search(for: entryID)?.text ?? "")
+    }
+
+    /// Opens a search result and keeps showing what was searched for in it, e.g. after choosing it in ⌘K.
+    public func open(_ hit: SearchHit, searchedFor text: String) async {
+        await select(hit.id)
+        guard detail?.entry.id == hit.id else { return }
+        openedSearch = OpenedSearch(text: text, hit: hit)
+    }
+
+    /// The search that applies to a thought: the window's search field, or the search it was opened from.
+    private func search(for entryID: String) -> (text: String, words: [String], hit: SearchHit?)? {
+        if !query.words.isEmpty { return (query.text, query.words, matches[entryID]) }
+        guard let opened = openedSearch, opened.hit.id == entryID else { return nil }
+        return (opened.text, EntryQuery(text: opened.text).words, opened.hit)
     }
 
     /// Where the passage from the searched text now is in the edited text, if it is still there unchanged.
@@ -353,6 +381,7 @@ public final class ExploreViewModel {
     }
 
     public func select(_ id: String?) async {
+        openedSearch = nil
         await saveIfNeeded()
         guard let id else {
             setDetail(nil)

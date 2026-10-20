@@ -246,7 +246,7 @@ struct EntryDetailView: View {
             HighlightingTextEditor(
                 text: $model.editorText,
                 highlights: model.highlights(in: model.editorText, entryID: detail.entry.id),
-                scrollKey: detail.entry.id + "|" + model.query.text
+                scrollKey: model.highlightKey(for: detail.entry.id)
             )
         }
         .frame(maxWidth: brand.map { CGFloat($0.space.readingWidthPt) } ?? .infinity, alignment: .leading)

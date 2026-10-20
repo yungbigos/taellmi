@@ -119,4 +119,39 @@ struct SearchHighlightTests {
         await early.value
         #expect(model.entries.count == 3)
     }
+
+    @Test("a thought opened from ⌘K highlights the searched words in its text, and scrolls to them")
+    func openedFromPalette() async {
+        let (model, _) = await makeModel()
+        let palette = CommandPaletteModel(explore: model)
+        await palette.update(query: "heizung")
+        let item = palette.results.first { $0.kind == .thought("heat") }
+        await palette.choose(try! #require(item))
+
+        #expect(model.detail?.entry.id == "heat")
+        #expect(texts(model.highlights(in: model.editorText, entryID: "heat"), in: model.editorText) == ["Heizung"])
+        #expect(model.highlightKey(for: "heat").contains("heizung"))
+    }
+
+    @Test("a related thought opened from ⌘K shades the passage that matched")
+    func relatedOpenedFromPalette() async {
+        let (model, _) = await makeModel()
+        let palette = CommandPaletteModel(explore: model)
+        await palette.update(query: "heizung")
+        let item = palette.results.first { $0.kind == .thought("cold") }
+        await palette.choose(try! #require(item))
+
+        let shaded = model.highlights(in: model.editorText, entryID: "cold").filter { $0.kind == .passage }
+        #expect(texts(shaded, in: model.editorText) == ["Die Bude ist eiskalt geworden."])
+    }
+
+    @Test("opening another thought afterwards shows it without the old search")
+    func otherThoughtHasNoOldHighlights() async {
+        let (model, _) = await makeModel()
+        let palette = CommandPaletteModel(explore: model)
+        await palette.update(query: "heizung")
+        await palette.choose(try! #require(palette.results.first { $0.kind == .thought("heat") }))
+        await model.select("cold")
+        #expect(model.highlights(in: model.editorText, entryID: "cold").isEmpty)
+    }
 }

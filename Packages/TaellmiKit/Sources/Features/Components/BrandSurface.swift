@@ -48,7 +48,7 @@ public enum SurfaceRendering: Sendable, Equatable {
 
 /// Named quiet fills from the brand tokens (`fill`).
 public enum BrandFillName: String, CaseIterable, Sendable {
-    case field, selection, match, axis
+    case field, selection, match, axis, related
     case matchCurrent = "match.current"
     case markSpoken = "mark.spoken"
     case markTyped = "mark.typed"
@@ -90,6 +90,12 @@ extension BrandTokens {
     public func fill(_ name: BrandFillName, increaseContrast: Bool) -> BrandFill? {
         guard let token = fill[name.rawValue], let role = BrandColorRole(rawValue: token.color) else { return nil }
         return BrandFill(color: role, opacity: increaseContrast ? token.contrastOpacity : token.opacity)
+    }
+
+    /// A named fill as a native colour, for AppKit views.
+    public func nsFill(_ name: BrandFillName, increaseContrast: Bool) -> NSColor? {
+        guard let fill = fill(name, increaseContrast: increaseContrast) else { return nil }
+        return nsColor(fill.color).withAlphaComponent(fill.opacity)
     }
 
     /// A named corner radius in points.

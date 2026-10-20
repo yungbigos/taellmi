@@ -62,6 +62,22 @@ struct CommandPaletteTests {
         palette.moveHighlight(by: 100)
         #expect(palette.highlighted == palette.results.count - 1)
     }
+
+    @Test("a slow search for earlier typing never replaces the results for what is typed now")
+    func staleSearchIsIgnored() async {
+        let (explore, library) = makeExplore()
+        let palette = CommandPaletteModel(explore: explore)
+        await library.holdSearches(for: "x")
+        let early = Task { await palette.update(query: "x") }
+        await library.waitUntilASearchIsHeld()
+
+        await palette.update(query: "marleen")
+        await library.releaseHeldSearches()
+        await early.value
+
+        #expect(palette.query == "marleen")
+        #expect(palette.results.map(\.title) == ["Termin mit Marleen verschieben."])
+    }
 }
 
 @Suite("Running commands in Explore")
@@ -90,4 +106,5 @@ struct ExploreCommandTests {
         #expect(checker.conflict(for: try Hotkey(parsing: "command+k")) == "\"search or run a command\"")
         #expect(checker.conflict(for: try Hotkey(parsing: "command+f")) == nil)
     }
+
 }

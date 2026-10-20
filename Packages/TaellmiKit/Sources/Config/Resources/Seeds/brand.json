@@ -1,6 +1,6 @@
 {
   "$schema_note": "tällmi brand tokens, decided with the owner on 2026-10-20 (docs/brand.md). Source of truth for colour, type, tälli's look and motion. The app must read these through the config layer (seed JSON), never hard-code them in Swift. Times are seconds, sizes are fractions of the referenced size unless a unit is named.",
-  "version": 4,
+  "version": 5,
   "color": {
     "light": {
       "paper": {
@@ -588,7 +588,13 @@
       "color": "blue",
       "opacity": 0.08,
       "contrast_opacity": 0.2,
-      "use": "a search match in flow"
+      "use": "a search match: a thought in flow, a search word in a text"
+    },
+    "related": {
+      "color": "quiet",
+      "opacity": 0.12,
+      "contrast_opacity": 0.3,
+      "use": "the passage that made a related thought match by meaning"
     },
     "match.current": {
       "color": "blue",

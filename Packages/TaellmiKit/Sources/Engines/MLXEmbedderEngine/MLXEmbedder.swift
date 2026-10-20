@@ -17,6 +17,10 @@ public actor MLXEmbedder: Embedder {
     private let directory: URL
     private let options: MLXEmbedderOptions
     private var container: EmbedderModelContainer?
+    /// The load in progress, so requests arriving meanwhile wait for it instead of loading the model again.
+    private var loading: Task<EmbedderModelContainer, any Error>?
+    /// Bumped by `unload()`, so a load that finishes after an unload is used once but not kept in memory.
+    private var generation = 0
 
     /// Points MLX at Metal shaders built by Xcode, for command-line tools and tests that `swift build` made.
     /// Apps built by Xcode find their bundled shaders without this.
@@ -61,17 +65,33 @@ public actor MLXEmbedder: Embedder {
     }
 
     public func unload() async {
+        generation += 1
         container = nil
+        loading = nil
         Memory.clearCache()
     }
 
     private func loaded() async throws -> EmbedderModelContainer {
         if let container { return container }
+        if let loading { return try await loading.value }
         // Process-wide in MLX; fine, because only one heavy model is loaded at a time.
         if let limit = options.cacheLimitBytes { Memory.cacheLimit = limit }
         if let limit = options.memoryLimitBytes { Memory.memoryLimit = limit }
-        let loaded = try await EmbedderModelFactory.shared.loadContainer(
-            from: directory, using: LocalTokenizerLoader())
+        let directory = directory
+        let task = Task {
+            try await EmbedderModelFactory.shared.loadContainer(from: directory, using: LocalTokenizerLoader())
+        }
+        let started = generation
+        loading = task
+        let loaded: EmbedderModelContainer
+        do {
+            loaded = try await task.value
+        } catch {
+            if started == generation { loading = nil }  // a failed load is tried again next time
+            throw error
+        }
+        guard started == generation else { return loaded }
+        loading = nil
         container = loaded
         return loaded
     }

@@ -107,4 +107,20 @@ struct ExploreViewModelTests {
         await model.refresh()
         #expect(model.entries.map(\.id) == ["a"])
     }
+
+    @Test("a slow search for earlier typing never replaces the list for what is typed now")
+    func staleListIsIgnored() async {
+        let (model, library) = makeModel()
+        await library.holdSearches(for: "z")
+        model.query.text = "z"
+        let early = Task { await model.refresh() }
+        await library.waitUntilASearchIsHeld()
+
+        model.query.text = "büro"
+        await model.refresh()
+        await library.releaseHeldSearches()
+        await early.value
+
+        #expect(model.entries.map(\.id) == ["b"])
+    }
 }

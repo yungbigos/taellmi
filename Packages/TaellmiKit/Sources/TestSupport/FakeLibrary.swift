@@ -8,16 +8,66 @@ public actor FakeLibrary: ExploreLibrary {
     private var entries: [Entry]
     private var trash: [String: Entry] = [:]
     private var continuations: [AsyncStream<Void>.Continuation] = []
+    private var related: [(id: String, passage: Range<Int>)] = []
+    private var heldTexts: Set<String> = []
+    private var held: [CheckedContinuation<Void, Never>] = []
+    private var heldWaiters: [CheckedContinuation<Void, Never>] = []
 
     public init(entries: [Entry]) {
         self.entries = entries
     }
 
-    public func search(_ query: EntryQuery) async throws -> [Entry] {
-        entries
+    /// The next search for exactly `text` waits until `releaseHeldSearches()`, like a slow search (e.g. one
+    /// that first loads a model) that finishes after a later one. Later searches for it run normally.
+    public func holdSearches(for text: String) {
+        heldTexts.insert(text)
+    }
+
+    /// Waits until a held search has started.
+    public func waitUntilASearchIsHeld() async {
+        if !held.isEmpty { return }
+        await withCheckedContinuation { heldWaiters.append($0) }
+    }
+
+    /// Every search with words also returns this thought as related (found only by meaning), with the
+    /// passage that matched, unless it already matches by words.
+    public func relate(_ id: String, passage: Range<Int>) {
+        related.append((id, passage))
+    }
+
+    public func releaseHeldSearches() {
+        heldTexts.removeAll()
+        for search in held { search.resume() }
+        held.removeAll()
+    }
+
+    public func search(_ query: EntryQuery) async throws -> [SearchHit] {
+        // The answer is computed now and handed back later, like a slow search over the Archive as it was.
+        let hits = answer(query)
+        if heldTexts.remove(query.text) != nil {
+            await withCheckedContinuation { continuation in
+                held.append(continuation)
+                for waiter in heldWaiters { waiter.resume() }
+                heldWaiters.removeAll()
+            }
+        }
+        return hits
+    }
+
+    private func answer(_ query: EntryQuery) -> [SearchHit] {
+        let words =
+            entries
             .filter { entry in query.words.allSatisfy { entry.text.lowercased().contains($0) } }
             .filter { query.sources?.contains($0.source) ?? true }
             .sorted { $0.createdAt > $1.createdAt }
+            .map { SearchHit(entry: $0, match: .words, wordRanges: TextMatch.ranges(of: query.words, in: $0.text)) }
+        guard !query.words.isEmpty else { return words }
+        let wordIDs = Set(words.map(\.id))
+        let relatedHits = related.compactMap { item -> SearchHit? in
+            guard !wordIDs.contains(item.id), let entry = entries.first(where: { $0.id == item.id }) else { return nil }
+            return SearchHit(entry: entry, match: .related, passage: item.passage)
+        }
+        return words + relatedHits
     }
 
     public nonisolated func changes() -> AsyncStream<Void> {

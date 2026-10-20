@@ -2,6 +2,22 @@ import Domain
 import Foundation
 import Observation
 
+/// One line of a search result: the part of the thought around the match on one line, with ellipses where
+/// text was left out, and where the search words are in it. Computed once when results arrive.
+nonisolated public struct ResultSnippet: Sendable, Equatable {
+    public let text: String
+    /// UTF-16 ranges of the search words in `text`.
+    public let ranges: [Range<Int>]
+
+    public init(hit: SearchHit, maxLength: Int) {
+        let snippet = Snippet(of: hit.entry.text, around: hit.wordRanges.first ?? hit.passage, maxLength: maxLength)
+        let lead = snippet.cutsStart ? "…" : ""
+        let shift = lead.utf16.count
+        text = lead + snippet.text.replacingOccurrences(of: "\n", with: " ") + (snippet.cutsEnd ? "…" : "")
+        ranges = snippet.ranges(hit.wordRanges).map { ($0.lowerBound + shift)..<($0.upperBound + shift) }
+    }
+}
+
 /// One row in the ⌘K palette: a command or a thought.
 nonisolated public struct PaletteItem: Sendable, Equatable, Identifiable {
     public enum Kind: Sendable, Equatable {
@@ -12,6 +28,10 @@ nonisolated public struct PaletteItem: Sendable, Equatable, Identifiable {
     public var kind: Kind
     public var title: String
     public var shortcut: String?
+    /// For a thought: where the search words are in `title` (UTF-16 ranges).
+    public var highlights: [Range<Int>] = []
+    /// For a thought found only by meaning.
+    public var isRelated = false
     public var id: String {
         switch kind {
         case .command(let command): "command:\(command.id)"
@@ -46,9 +66,9 @@ public final class CommandPaletteModel {
         let commands = Commands.all
             .filter { command in words.allSatisfy { command.title.contains($0) } }
             .map { PaletteItem(kind: .command($0), title: $0.title, shortcut: explore.shortcuts[$0]?.displayLabel) }
-        let thoughts = await explore.findThoughts(text, limit: thoughtLimit).map {
-            PaletteItem(kind: .thought($0.id), title: Self.firstLine(of: $0.text), shortcut: nil)
-        }
+        let thoughts = await explore.findThoughts(text, limit: thoughtLimit).map(Self.item)
+        // Searches can finish out of order (one may first load a model); only the latest typing counts.
+        guard query == text else { return }
         results = commands + thoughts
         highlighted = 0
     }
@@ -73,9 +93,14 @@ public final class CommandPaletteModel {
         }
     }
 
-    private nonisolated static func firstLine(of text: String) -> String {
-        let line = text.split(separator: "\n", maxSplits: 1).first.map(String.init) ?? text
-        return line.count > 90 ? String(line.prefix(90)) + "…" : line
+    private nonisolated static let snippetLength = 90
+
+    /// A thought row: the part of the text around the match, with the search words marked.
+    private nonisolated static func item(_ hit: SearchHit) -> PaletteItem {
+        let snippet = ResultSnippet(hit: hit, maxLength: snippetLength)
+        return PaletteItem(
+            kind: .thought(hit.id), title: snippet.text, shortcut: nil, highlights: snippet.ranges,
+            isRelated: hit.match == .related)
     }
 }
 

@@ -98,3 +98,30 @@ struct BrandSurfaceTests {
         #expect(tokens.motion.scroll.duration == 0.25)
     }
 }
+
+@Suite("Brand values for native text views")
+struct BrandNativeTests {
+    @Test("a type token gives a native font of the scale's size")
+    func nativeFont() throws {
+        let tokens = try shippedTokens()
+        let style = try #require(tokens.type.scale["text.thought"])
+        let expected = tokens.type.base.sizePt * style.size * BrandTokens.textSizeScale
+        #expect(abs(tokens.nsFont("text.thought").pointSize - expected) < 0.01)
+    }
+
+    @Test("a type token gives its line height for native text views")
+    func nativeLineHeight() throws {
+        let tokens = try shippedTokens()
+        let style = try #require(tokens.type.scale["text.thought"])
+        #expect(tokens.lineHeightMultiple("text.thought") == style.line)
+    }
+
+    @Test("a fill gives a native colour with the token's opacity, stronger with Increase Contrast")
+    func nativeFill() throws {
+        let tokens = try shippedTokens()
+        let quiet = try #require(tokens.nsFill(.related, increaseContrast: false))
+        let strong = try #require(tokens.nsFill(.related, increaseContrast: true))
+        #expect(abs(quiet.alphaComponent - 0.12) < 0.001)
+        #expect(strong.alphaComponent > quiet.alphaComponent)
+    }
+}

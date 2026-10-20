@@ -31,9 +31,24 @@ nonisolated public struct TrashedEntry: Sendable, Equatable, Identifiable {
     }
 }
 
+/// A part of a thought's text to highlight while a search is active.
+public struct TextHighlight: Sendable, Equatable {
+    public enum Kind: Sendable, Equatable {
+        /// A search word.
+        case word
+        /// The passage that made a related thought match by meaning.
+        case passage
+    }
+
+    /// UTF-16 range in the text.
+    public var range: Range<Int>
+    public var kind: Kind
+}
+
 /// What the Explore window needs from the Archive. Implemented in the composition root.
 public protocol ExploreLibrary: Sendable {
-    func search(_ query: EntryQuery) async throws -> [Entry]
+    /// Newest first without search words; otherwise thoughts with the words, then related ones.
+    func search(_ query: EntryQuery) async throws -> [SearchHit]
     /// Fires whenever Entries change (new Entry, Transcript arrived, edit, Trash).
     func changes() -> AsyncStream<Void>
     func detail(id: String) async throws -> EntryDetail
@@ -73,6 +88,14 @@ public final class ExploreViewModel {
     @ObservationIgnored private var composedSavedText = ""
     @ObservationIgnored private var composerAutosaveTask: Task<Void, Never>?
     public private(set) var entries: [Entry] = []
+    /// How the current search found each thought, by id. Empty without search words.
+    public private(set) var matches: [String: SearchHit] = [:] {
+        didSet { snippets = matches.mapValues { ResultSnippet(hit: $0, maxLength: Self.rowSnippetLength) } }
+    }
+    /// The excerpt each list row shows while a search is active.
+    public private(set) var snippets: [String: ResultSnippet] = [:]
+    /// A list row is one line; the match then sits in its first third.
+    private static let rowSnippetLength = 90
     public private(set) var trashedEntries: [TrashedEntry] = []
     public private(set) var detail: EntryDetail?
     public private(set) var errorMessage: String?
@@ -89,6 +112,7 @@ public final class ExploreViewModel {
     @ObservationIgnored private var savedText = ""
     @ObservationIgnored private var lastTrashed: String?
     @ObservationIgnored private var observation: Task<Void, Never>?
+    @ObservationIgnored private var refreshGeneration = 0
 
     /// - Parameters:
     ///   - autosaveDelay: pause after the last keystroke before saving (from config).
@@ -206,10 +230,41 @@ public final class ExploreViewModel {
         }
     }
 
-    /// Thoughts matching a palette search, newest first.
-    public func findThoughts(_ text: String, limit: Int) async -> [Entry] {
+    /// Thoughts matching a palette search: those with the words first, then related ones.
+    public func findThoughts(_ text: String, limit: Int) async -> [SearchHit] {
         guard !text.trimmingCharacters(in: .whitespaces).isEmpty else { return [] }
         return Array(((try? await library.search(EntryQuery(text: text))) ?? []).prefix(limit))
+    }
+
+    /// Whether the current search found this thought only by meaning.
+    public func isRelated(_ id: String) -> Bool {
+        !query.words.isEmpty && matches[id]?.match == .related
+    }
+
+    /// What to highlight in a thought's text as it is now: the search words wherever they occur, and for a
+    /// related thought the passage that matched. Recomputed from the text, so highlights follow your typing;
+    /// they are only drawn, never saved.
+    public func highlights(in text: String, entryID: String) -> [TextHighlight] {
+        let words = query.words
+        guard !words.isEmpty else { return [] }
+        var highlights: [TextHighlight] = []
+        if let hit = matches[entryID], hit.match == .related, let passage = hit.passage,
+            let range = Self.locate(passage, of: hit.entry.text, in: text)
+        {
+            highlights.append(TextHighlight(range: range, kind: .passage))
+        }
+        highlights += TextMatch.ranges(of: words, in: text).map { TextHighlight(range: $0, kind: .word) }
+        return highlights
+    }
+
+    /// Where the passage from the searched text now is in the edited text, if it is still there unchanged.
+    private static func locate(_ passage: Range<Int>, of original: String, in text: String) -> Range<Int>? {
+        let units = Array(original.utf16)
+        guard passage.lowerBound >= 0, passage.upperBound <= units.count else { return nil }
+        let passageText = String(decoding: units[passage], as: UTF16.self)
+        if original == text { return passage }
+        let found = (text as NSString).range(of: passageText)
+        return found.location == NSNotFound ? nil : found.location..<(found.location + found.length)
     }
 
     /// Saves a thought edited in place in the flow.
@@ -238,10 +293,7 @@ public final class ExploreViewModel {
     }
 
     private func updateMatches() {
-        let words = query.words
-        flowMatches =
-            words.isEmpty
-            ? [] : flowEntries.filter { entry in words.allSatisfy { entry.text.lowercased().contains($0) } }.map(\.id)
+        flowMatches = flowEntries.filter { matches[$0.id]?.match == .words }.map(\.id)
         if currentMatch.map({ !flowMatches.contains($0) }) ?? true { currentMatch = flowMatches.first }
     }
 
@@ -252,20 +304,37 @@ public final class ExploreViewModel {
     }
 
     public func refresh() async {
+        // Searches can finish out of order (the first one may load a model, the Archive may change meanwhile);
+        // only the newest refresh may change what the window shows.
+        refreshGeneration += 1
+        let generation = refreshGeneration
         do {
             if showsTrash {
-                trashedEntries = try await library.trashed()
+                let trashed = try await library.trashed()
+                guard generation == refreshGeneration else { return }
+                trashedEntries = trashed
             } else if view == .stack {
-                entries = try await library.search(query)
+                let asked = query
+                let found = try await library.search(asked)
+                guard generation == refreshGeneration else { return }
+                entries = found.map(\.entry)
+                matches =
+                    asked.words.isEmpty ? [:] : Dictionary(found.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
             } else {
                 // flow and time show everything the filters allow; in flow the search highlights instead.
                 var unfiltered = query
                 unfiltered.text = ""
                 if view == .time { unfiltered.period = .all }
-                entries = try await library.search(unfiltered)
+                let asked = query
+                let shown = try await library.search(unfiltered).map(\.entry)
+                let found = view == .flow && !asked.words.isEmpty ? try await library.search(asked) : []
+                guard generation == refreshGeneration else { return }
+                entries = shown
+                matches = Dictionary(found.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
                 updateMatches()
             }
         } catch {
+            guard generation == refreshGeneration else { return }
             errorMessage = "couldn't load your thoughts. try again."
         }
     }

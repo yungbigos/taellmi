@@ -58,8 +58,9 @@ struct CommandPaletteView: View {
     private func row(_ item: PaletteItem, highlighted: Bool) -> some View {
         HStack {
             Image(systemName: icon(for: item)).brandForeground(.quiet).frame(width: 18)
-            Text(item.title).lineLimit(1)
+            HighlightedText(text: item.title, ranges: item.highlights).lineLimit(1)
             Spacer()
+            if item.isRelated { RelatedLabel() }
             if let shortcut = item.shortcut {
                 Text(shortcut).brandFont("text.label").brandForeground(.quiet)
             }

@@ -79,7 +79,8 @@ public struct ExploreView: View {
         } detail: {
             Group {
                 if let detail = model.detail {
-                    EntryDetailView(model: model, detail: detail)
+                    // One editor per thought, so undo history never crosses from one thought to another.
+                    EntryDetailView(model: model, detail: detail).id(detail.entry.id)
                 } else {
                     ContentUnavailableView("no thought selected", systemImage: "text.alignleft")
                 }
@@ -163,11 +164,19 @@ public struct ExploreView: View {
             selection: Binding(get: { model.detail?.entry.id }, set: { id in Task { await model.select(id) } })
         ) { entry in
             // One line per thought: what it says, and when. Everything else is in the open thought's details.
+            // While searching, the line shows the part around the match with the words marked instead.
             HStack(alignment: .firstTextBaseline, spacing: brand.space(.s)) {
-                Text(entry.text.isEmpty ? "transcribing …" : CaptureViewModel.preview(of: entry))
-                    .lineLimit(1)
-                    .brandForeground(entry.text.isEmpty ? .quiet : .ink)
+                if let snippet = model.snippets[entry.id] {
+                    HighlightedText(text: snippet.text, ranges: snippet.ranges)
+                        .lineLimit(1)
+                        .brandForeground(.ink)
+                } else {
+                    Text(entry.text.isEmpty ? "transcribing …" : CaptureViewModel.preview(of: entry))
+                        .lineLimit(1)
+                        .brandForeground(entry.text.isEmpty ? .quiet : .ink)
+                }
                 Spacer(minLength: brand.space(.s))
+                if model.isRelated(entry.id) { RelatedLabel() }
                 Text(ThoughtMeta.short(entry.createdAt))
                     .brandFont("text.label").monospacedDigit().brandForeground(.quiet)
             }
@@ -238,10 +247,11 @@ struct EntryDetailView: View {
             )
             .brandFont("text.label")
             .brandForeground(.quiet)
-            TextEditor(text: $model.editorText)
-                .brandFont("text.thought")
-                .scrollContentBackground(.hidden)
-                .scrollIndicators(.automatic)
+            HighlightingTextEditor(
+                text: $model.editorText,
+                highlights: model.highlights(in: model.editorText, entryID: detail.entry.id),
+                scrollKey: detail.entry.id + "|" + model.query.text
+            )
         }
         .frame(maxWidth: brand.map { CGFloat($0.space.readingWidthPt) } ?? .infinity, alignment: .leading)
         .padding(.horizontal, brand.space(.xxxl))

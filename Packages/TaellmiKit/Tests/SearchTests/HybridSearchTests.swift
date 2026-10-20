@@ -161,4 +161,21 @@ struct HybridSearchTests {
         let hits = try await harness.search.hits(EntryQuery(text: "Zukunftsangst"), now: sampleDate)
         #expect(hits.map(\.match) == [.related])
     }
+
+    @Test("a result knows where its search words are, and a related thought knows the passage that matched")
+    func matchPositions() async throws {
+        let harness = try Harness()
+        try harness.add("words", "Fahrrad repariert.\n\nDie Zukunftsangst kam abends wieder.")
+        try harness.add("related", "Einkaufen war heute.\n\nIch habe Angst vor der Zukunft.")
+        let hits = try await harness.search.hits(EntryQuery(text: "Zukunftsangst"), now: sampleDate)
+        let words = try #require(hits.first { $0.entry.id == "words" })
+        let units = Array(words.entry.text.utf16)
+        #expect(words.wordRanges.map { String(decoding: units[$0], as: UTF16.self) } == ["Zukunftsangst"])
+        #expect(words.passage == nil)
+
+        let related = try #require(hits.first { $0.entry.id == "related" })
+        let passage = try #require(related.passage)
+        let relatedUnits = Array(related.entry.text.utf16)
+        #expect(String(decoding: relatedUnits[passage], as: UTF16.self) == "Ich habe Angst vor der Zukunft.")
+    }
 }

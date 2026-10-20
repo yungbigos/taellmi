@@ -4,19 +4,6 @@ import Foundation
 import Persistence
 import os
 
-/// One search result: a thought, and whether it contains the search words or was found only by meaning.
-public struct SearchHit: Sendable, Equatable {
-    public enum Match: Sendable, Equatable {
-        /// Contains every search word: a result.
-        case words
-        /// Close in meaning only: shown as related, never claimed as an answer.
-        case related
-    }
-
-    public var entry: Entry
-    public var match: Match
-}
-
 /// Finds thoughts by their words, then related thoughts by their meaning.
 ///
 /// Thoughts that contain every search word come first, ordered by Reciprocal Rank Fusion of keyword relevance
@@ -58,6 +45,7 @@ public struct HybridSearch: Sendable {
     {
         let byWords = try index.search(query, now: now, calendar: calendar)
         guard !query.words.isEmpty else { return byWords.map { SearchHit(entry: $0, match: .words) } }
+        let words = query.words
 
         let scores = try index.keywordScores(words: query.words)
         let keywordRanking = byWords.enumerated()
@@ -67,7 +55,8 @@ public struct HybridSearch: Sendable {
                 return left != right ? left > right : lhs.offset < rhs.offset
             }
             .map(\.element)
-        let meaningRanking = try await byMeaning(query, now: now, calendar: calendar)
+        let meaning = try await byMeaning(query, now: now, calendar: calendar)
+        let meaningRanking = meaning.map(\.entry)
 
         let k = try settings.number(SettingKeys.searchRRFK)
         var fused: [String: (entry: Entry, score: Double)] = [:]
@@ -79,14 +68,22 @@ public struct HybridSearch: Sendable {
         let wordIDs = Set(byWords.map(\.id))
         let results = fused.values.filter { wordIDs.contains($0.entry.id) }
             .sorted { $0.score != $1.score ? $0.score > $1.score : $0.entry.createdAt > $1.entry.createdAt }
-            .map { SearchHit(entry: $0.entry, match: .words) }
-        let related = meaningRanking.filter { !wordIDs.contains($0.id) }.map { SearchHit(entry: $0, match: .related) }
+            .map {
+                SearchHit(entry: $0.entry, match: .words, wordRanges: TextMatch.ranges(of: words, in: $0.entry.text))
+            }
+        let related = meaning.filter { !wordIDs.contains($0.entry.id) }.map {
+            SearchHit(
+                entry: $0.entry, match: .related, wordRanges: TextMatch.ranges(of: words, in: $0.entry.text),
+                passage: $0.passage)
+        }
         return results + related
     }
 
-    /// Entries with a passage close in meaning to the search text, closest first. Empty when meaning search
-    /// is not possible right now.
-    private func byMeaning(_ query: EntryQuery, now: Date, calendar: Calendar) async throws -> [Entry] {
+    /// Entries with a passage close in meaning to the search text, closest first, with that passage. Empty when
+    /// meaning search is not possible right now.
+    private func byMeaning(_ query: EntryQuery, now: Date, calendar: Calendar) async throws
+        -> [(entry: Entry, passage: Range<Int>)]
+    {
         let model: ModelConfig
         let vector: [Float]
         do {
@@ -111,20 +108,20 @@ public struct HybridSearch: Sendable {
             // A clear best match makes the weak tail noise, even above the fixed threshold.
             hits = hits.filter { $0.similarity >= best - window }
         }
-        let entryOfFragment = Dictionary(
-            try fragments.fragments(ids: hits.map(\.nodeID)).map { ($0.id, $0.entryID) },
+        let fragmentOfID = Dictionary(
+            try fragments.fragments(ids: hits.map(\.nodeID)).map { ($0.id, $0) },
             uniquingKeysWith: { first, _ in first })
 
         let earliest = query.earliestDate(now: now, calendar: calendar)
         var seen: Set<String> = []
-        var ranking: [Entry] = []
+        var ranking: [(entry: Entry, passage: Range<Int>)] = []
         for hit in hits {
-            guard let entryID = entryOfFragment[hit.nodeID], seen.insert(entryID).inserted,
-                let entry = try index.entry(id: entryID)
+            guard let fragment = fragmentOfID[hit.nodeID], seen.insert(fragment.entryID).inserted,
+                let entry = try index.entry(id: fragment.entryID)
             else { continue }
             if let earliest, entry.createdAt < earliest { continue }
             if let sources = query.sources, !sources.contains(entry.source) { continue }
-            ranking.append(entry)
+            ranking.append((entry, fragment.utf16Range))
         }
         return ranking
     }

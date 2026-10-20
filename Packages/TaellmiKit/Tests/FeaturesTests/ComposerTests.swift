@@ -26,7 +26,7 @@ struct ComposerTests {
         model.composerText = "Ein Gedanke, ganz in Ruhe aufgeschrieben."
         await model.finishComposing()
         #expect(!model.isComposing)
-        let saved = try await library.search(EntryQuery())
+        let saved = try await library.search(EntryQuery()).map(\.entry)
         #expect(saved.map(\.text) == ["Ein Gedanke, ganz in Ruhe aufgeschrieben."])
         #expect(saved.first?.source == .typed)
         #expect(model.detail?.entry.id == saved.first?.id)
@@ -41,7 +41,7 @@ struct ComposerTests {
         model.composerText = "Anfang und mehr"
         await model.saveComposerIfNeeded()
         await model.finishComposing()
-        #expect(try await library.search(EntryQuery()).map(\.text) == ["Anfang und mehr"])
+        #expect(try await library.search(EntryQuery()).map(\.entry.text) == ["Anfang und mehr"])
     }
 
     @Test("an empty composer creates nothing")

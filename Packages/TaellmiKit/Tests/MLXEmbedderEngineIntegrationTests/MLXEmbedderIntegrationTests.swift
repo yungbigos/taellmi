@@ -70,6 +70,19 @@ struct MLXEmbedderIntegrationTests {
 }
 
 extension MLXEmbedderIntegrationTests {
+    /// Typing in search sends a request per keystroke, often while the model is still loading.
+    @Test("requests that arrive together while the model loads get the same, correct answer")
+    func concurrentFirstUse() async throws {
+        let embedder = try makeEmbedder()
+        async let first = embedder.embed(["Wohnung ist kalt"], purpose: .query)
+        async let second = embedder.embed(["Wohnung ist kalt"], purpose: .query)
+        let (a, b) = try await (first, second)
+        let alone = try await embedder.embed(["Wohnung ist kalt"], purpose: .query)
+        #expect(EmbedderContract.cosine(a[0], b[0]) > 0.999)
+        #expect(EmbedderContract.cosine(a[0], alone[0]) > 0.999)
+        await embedder.unload()
+    }
+
     /// Long runs (indexing a whole Archive) once grew MLX's buffer cache to over 20 GB. With the seeded caps,
     /// memory stays bounded however many passages go through.
     @Test("embedding many long passages stays within the configured memory caps")

@@ -12,9 +12,9 @@ nonisolated struct LiveExploreLibrary: ExploreLibrary {
     /// Called after a Text was written, so its passages and vectors are refreshed soon.
     var onChange: @Sendable () -> Void = {}
 
-    /// Newest first without search words; with them, best match first by words and meaning.
-    func search(_ query: EntryQuery) async throws -> [Entry] {
-        try await search.search(query)
+    /// Newest first without search words; with them, thoughts with the words, then related ones.
+    func search(_ query: EntryQuery) async throws -> [SearchHit] {
+        try await search.hits(query)
     }
 
     func changes() -> AsyncStream<Void> {

@@ -26,12 +26,50 @@ public enum BrandColorRole: String, Sendable {
 extension BrandTokens {
     /// A colour that follows light and dark mode by itself.
     public func color(_ role: BrandColorRole) -> Color {
+        Color(nsColor: nsColor(role))
+    }
+
+    /// The same colour for AppKit views (e.g. a native text view).
+    public func nsColor(_ role: BrandColorRole) -> NSColor {
         let light = Self.nsColor(hex: role.swatch(in: color.light).value)
         let dark = Self.nsColor(hex: role.swatch(in: color.dark).value)
-        return Color(
-            nsColor: NSColor(name: nil) { appearance in
-                appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? dark : light
-            })
+        return NSColor(name: nil) { appearance in
+            appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua ? dark : light
+        }
+    }
+
+    /// A type style from the scale as a native font, for AppKit text views.
+    public func nsFont(_ token: String) -> NSFont {
+        guard let style = type.scale[token] else { return .systemFont(ofSize: NSFont.systemFontSize) }
+        let family = style.family == "display" ? type.families.display : type.families.text
+        let size = type.base.sizePt * style.size * Self.textSizeScale
+        let weight = Self.nsWeight(style.weight)
+        var descriptor = NSFontDescriptor(fontAttributes: [.family: family])
+            .addingAttributes([.traits: [NSFontDescriptor.TraitKey.weight: weight]])
+        if style.italic == true { descriptor = descriptor.withSymbolicTraits(.italic) }
+        return NSFont(descriptor: descriptor, size: size) ?? .systemFont(ofSize: size, weight: weight)
+    }
+
+    /// How much larger the Mac's text-size setting makes body text than the default; SwiftUI fonts follow it
+    /// through `relativeTo:`, native ones through this.
+    public static var textSizeScale: Double {
+        NSFont.preferredFont(forTextStyle: .body).pointSize / NSFont.systemFontSize
+    }
+
+    /// The line height of a type style, as a multiple of the font size, for native text views.
+    public func lineHeightMultiple(_ token: String) -> Double {
+        type.scale[token]?.line ?? 1
+    }
+
+    static func nsWeight(_ value: Double) -> NSFont.Weight {
+        switch value {
+        case ..<350: .light
+        case ..<450: .regular
+        case ..<550: .medium
+        case ..<650: .semibold
+        case ..<750: .bold
+        default: .heavy
+        }
     }
 
     /// A type style from the scale, relative to the macOS body size so it follows the text-size setting.

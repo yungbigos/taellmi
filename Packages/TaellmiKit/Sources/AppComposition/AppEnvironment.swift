@@ -258,7 +258,13 @@ public final class AppEnvironment {
             finishKey: (try? settings.string(SettingKeys.companionFinishKey)).flatMap { try? Hotkey(parsingKey: $0) }
                 ?? .enter,
             cancelKey: (try? settings.string(SettingKeys.companionCancelKey)).flatMap { try? Hotkey(parsingKey: $0) }
-                ?? .escape)
+                ?? .escape,
+            position: (try? settings.string(SettingKeys.companionPosition)) ?? "")
+    }
+
+    /// Remembers where you dropped tälli.
+    public func saveCompanionPosition(_ text: String) {
+        try? ConfigEditor(database: database).setSetting(SettingKeys.companionPosition, to: .string(text))
     }
 
     /// Waits until the pipeline has nothing left to do. Used by tests.

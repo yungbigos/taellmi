@@ -38,6 +38,8 @@ public enum SettingKeys {
     public static let companionTalliSize = "companion.talli_size_pt"
     public static let companionFinishKey = "companion.finish_key"
     public static let companionCancelKey = "companion.cancel_key"
+    /// Where you last dropped tälli ("x,y" in screen points), or empty for beside the cursor.
+    public static let companionPosition = "companion.position"
     public static let fragmentTargetLength = "fragment.target_chars"
     public static let fragmentMaxLength = "fragment.max_chars"
     public static let embedBatchSize = "embed.batch_size"
@@ -69,7 +71,8 @@ public enum SettingKeys {
             exploreHotkey,
             exploreAutosaveDelaySeconds, exploreStartView, importNoteExtensions,
             companionCursorOffset,
-            companionSavedDisplaySeconds, companionTalliSize, companionFinishKey, companionCancelKey, brandTokens,
+            companionSavedDisplaySeconds, companionTalliSize, companionFinishKey, companionCancelKey, companionPosition,
+            brandTokens,
         ] + meaning + Commands.all.map(\.settingKey)
 }
 

@@ -6,12 +6,16 @@ import SwiftUI
 /// (issue #54). There is no sidebar.
 public struct ExploreView: View {
     @Bindable var model: ExploreViewModel
+    /// The pointer in this window, for the tälli in the title to watch.
+    let cursor: (@MainActor () -> CGPoint?)?
     @State private var palette: CommandPaletteModel
+    @State private var talliPokes = 0
     @Environment(\.undoManager) private var undoManager
     @Environment(\.brand) private var brand
 
-    public init(model: ExploreViewModel) {
+    public init(model: ExploreViewModel, cursor: (@MainActor () -> CGPoint?)? = nil) {
         self.model = model
+        self.cursor = cursor
         _palette = State(initialValue: CommandPaletteModel(explore: model))
     }
 
@@ -20,6 +24,8 @@ public struct ExploreView: View {
             .brandAnimation(\.crossfade, value: model.view)
             .background { BrandSurfaceBackground(kind: .window, radius: nil).ignoresSafeArea() }
             .toolbar {
+                ToolbarItem(placement: .navigation) { titleTalli }
+                    .sharedBackgroundVisibility(.hidden)
                 ToolbarItem(placement: .principal) { viewPicker }
                     .sharedBackgroundVisibility(.hidden)
                 ToolbarItemGroup(placement: .primaryAction) {
@@ -96,6 +102,15 @@ public struct ExploreView: View {
         }
     }
 
+    /// tälli in place of the window title: it watches the cursor like the floating one, and a click pokes it.
+    private var titleTalli: some View {
+        TalliView(mood: .idle, entrance: nil, cursor: cursor, pokes: talliPokes)
+            .frame(width: brand.space(.xxl), height: brand.space(.xxl))
+            .contentShape(Rectangle())
+            .onTapGesture { talliPokes += 1 }
+            .accessibilityLabel("tällmi")
+    }
+
     private var viewPicker: some View {
         ViewSwitcher(current: model.view) { view in switchTo(view) }
     }
@@ -112,10 +127,14 @@ public struct ExploreView: View {
     }
 
     /// stack: the list of thoughts, and the open thought.
+    /// The list floats as a glass island on the left, like the bars; the open thought fills the rest.
     private var splitView: some View {
-        NavigationSplitView {
+        HStack(spacing: brand.space(.l)) {
             entryList
-        } detail: {
+                .frame(width: brand.map { CGFloat($0.space.listWidthPt.ideal) } ?? 300)
+                .clipShape(listShape)
+                .glassEffect(.regular, in: listShape)
+                .padding([.leading, .top, .bottom], brand.space(.l))
             Group {
                 if let detail = model.detail {
                     // One editor per thought, so undo history never crosses from one thought to another.
@@ -125,8 +144,12 @@ public struct ExploreView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background { readingGround }
         }
+        .background { readingGround }
+    }
+
+    private var listShape: RoundedRectangle {
+        RoundedRectangle(cornerRadius: brand?.radius(.panel) ?? 16, style: .continuous)
     }
 
     /// The page under your thoughts. It runs on under the toolbar and the bar, so both float over it as glass.
@@ -181,8 +204,6 @@ public struct ExploreView: View {
                 )
             }
         }
-        .navigationSplitViewColumnWidth(
-            min: brand?.space.listWidthPt.min ?? 240, ideal: brand?.space.listWidthPt.ideal ?? 300)
     }
 
     private var trashList: some View {

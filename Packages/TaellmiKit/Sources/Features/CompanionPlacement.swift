@@ -25,4 +25,19 @@ public enum CompanionPlacement {
         let y = min(max(start.minY + drag.dy, screen.minY), screen.maxY - start.height)
         return CGRect(origin: CGPoint(x: x, y: y), size: start.size)
     }
+
+    /// Where you last dropped tälli, if the panel would still be fully on one of the screens.
+    public nonisolated static func remembered(_ origin: CGPoint?, size: CGSize, screens: [CGRect]) -> CGRect? {
+        guard let origin else { return nil }
+        let frame = CGRect(origin: origin, size: size)
+        return screens.contains { $0.contains(frame) } ? frame : nil
+    }
+
+    /// The remembered spot as config text, "x,y".
+    public nonisolated static func encode(_ origin: CGPoint) -> String { "\(Double(origin.x)),\(Double(origin.y))" }
+
+    public nonisolated static func decode(_ text: String) -> CGPoint? {
+        let parts = text.split(separator: ",").compactMap { Double($0) }
+        return parts.count == 2 ? CGPoint(x: parts[0], y: parts[1]) : nil
+    }
 }

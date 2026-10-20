@@ -86,8 +86,9 @@ public final class AppController {
         self.explore = explore
         let companion = CompanionController(
             model: environment.captureModel, appearance: environment.appearanceModel,
-            settings: environment.companionSettings(), hotkeys: hotkeys
-        ) { entryID in explore.show(selecting: entryID) }
+            settings: environment.companionSettings(), hotkeys: hotkeys,
+            savePosition: { [weak environment] text in environment?.saveCompanionPosition(text) },
+            onOpenEntry: { entryID in explore.show(selecting: entryID) })
         self.companion = companion
         brand = environment.brand
         menuBarIcons = (

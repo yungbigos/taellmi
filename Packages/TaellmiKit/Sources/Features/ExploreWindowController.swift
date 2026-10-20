@@ -50,11 +50,18 @@ public final class ExploreWindowController: NSObject, NSWindowDelegate {
             styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView], backing: .buffered,
             defer: false)
         window.title = "tällmi"
+        // tälli takes the title's place (ExploreView); the name stays for the Window menu and ⌘Tab.
+        window.titleVisibility = .hidden
         // The toolbar floats over the content instead of sitting on its own grey band.
         window.titlebarAppearsTransparent = true
         window.toolbarStyle = .unified
         window.isReleasedWhenClosed = false
-        window.contentView = NSHostingView(rootView: ExploreView(model: model).brandStyle(brand))
+        let cursor: @MainActor () -> CGPoint? = { [weak window] in
+            guard let window, window.isVisible, let content = window.contentView else { return nil }
+            let point = window.convertPoint(fromScreen: NSEvent.mouseLocation)
+            return CGPoint(x: point.x, y: content.bounds.height - point.y)
+        }
+        window.contentView = NSHostingView(rootView: ExploreView(model: model, cursor: cursor).brandStyle(brand))
         window.setFrameAutosaveName("ExploreWindow")
         if !window.setFrameUsingName("ExploreWindow") { window.center() }
         window.delegate = self

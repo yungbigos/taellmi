@@ -12,10 +12,14 @@ public struct CompanionSettings: Sendable {
     /// Keys claimed only while tälli is open.
     public var finishKey: Hotkey
     public var cancelKey: Hotkey
+    /// Where you last dropped tälli, as config text ("x,y"); empty means beside the cursor.
+    public var position: String
 
     public init(
-        cursorOffset: Double, savedDisplaySeconds: Double, talliSize: Double, finishKey: Hotkey, cancelKey: Hotkey
+        cursorOffset: Double, savedDisplaySeconds: Double, talliSize: Double, finishKey: Hotkey, cancelKey: Hotkey,
+        position: String = ""
     ) {
+        self.position = position
         self.talliSize = talliSize
         self.finishKey = finishKey
         self.cancelKey = cancelKey
@@ -64,6 +68,9 @@ public final class CompanionController {
     private var isShown = false
     /// Where the pointer and the panel were when you pressed on tälli, and whether it has become a drag.
     private var press: (mouse: CGPoint, frame: CGRect, isDrag: Bool)?
+    /// Where you last dropped tälli; it comes back there next time.
+    private var droppedAt: CGPoint?
+    private let savePosition: (String) -> Void
     private var pokes = 0
     private var stirs = 0
     /// Bumped whenever the input field should take focus (after the panel became key).
@@ -77,8 +84,11 @@ public final class CompanionController {
 
     public init(
         model: CaptureViewModel, appearance: AppearanceViewModel, settings: CompanionSettings,
-        hotkeys: GlobalHotkeyMonitor, onOpenEntry: @escaping (String) -> Void
+        hotkeys: GlobalHotkeyMonitor, savePosition: @escaping (String) -> Void = { _ in },
+        onOpenEntry: @escaping (String) -> Void
     ) {
+        self.savePosition = savePosition
+        droppedAt = CompanionPlacement.decode(settings.position)
         self.onOpenEntry = onOpenEntry
         self.model = model
         self.appearance = appearance
@@ -145,7 +155,11 @@ public final class CompanionController {
         isShown = true
         showCount += 1
         render()
-        panel.setFrame(frameNearCursor(), display: true)
+        // Where you last dropped tälli, if that spot is still on a screen; otherwise beside the cursor.
+        let screens = NSScreen.screens.map(\.visibleFrame)
+        panel.setFrame(
+            CompanionPlacement.remembered(droppedAt, size: panelSize, screens: screens) ?? frameNearCursor(),
+            display: true)
         panel.alphaValue = 0
         // The non-activating panel takes the keyboard without making tällmi the active app (like Spotlight),
         // so tällmi's window stays where it is and the app you were in keeps its place. The field takes focus
@@ -224,7 +238,13 @@ public final class CompanionController {
 
     /// Letting go: a press that never became a drag was a poke.
     private func endPress() {
-        if press?.isDrag == true { stirs += 1 } else { pokes += 1 }
+        if press?.isDrag == true {
+            stirs += 1
+            droppedAt = panel.frame.origin
+            savePosition(CompanionPlacement.encode(panel.frame.origin))
+        } else {
+            pokes += 1
+        }
         press = nil
         render()
     }

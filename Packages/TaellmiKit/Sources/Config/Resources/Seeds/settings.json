@@ -12,6 +12,7 @@
   {"key": "companion.cancel_key", "type": "string", "value": "escape", "seed_version": 1},
   {"key": "companion.cursor_offset", "type": "number", "value": 18, "seed_version": 1},
   {"key": "companion.finish_key", "type": "string", "value": "return", "seed_version": 1},
+  {"key": "companion.position", "type": "string", "value": "", "seed_version": 1},
   {"key": "companion.saved_display_s", "type": "number", "value": 1.4, "seed_version": 1},
   {"key": "companion.talli_size_pt", "type": "number", "value": 96, "seed_version": 1},
   {"key": "embed.batch_size", "type": "number", "value": 16, "seed_version": 1},

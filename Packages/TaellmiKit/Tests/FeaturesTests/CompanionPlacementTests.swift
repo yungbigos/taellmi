@@ -56,4 +56,25 @@ struct CompanionDragTests {
         let end = CGPoint(x: 500 + distance * 0.6, y: 500 + distance * 0.8)
         #expect(CompanionPlacement.isDrag(from: start, to: end, tolerance: 4) == isDrag)
     }
+
+    private let size = CGSize(width: 300, height: 160)
+
+    @Test("where you dropped tälli is where it comes back, if that spot is still on a screen")
+    func comesBackWhereDropped() {
+        let frame = CompanionPlacement.remembered(CGPoint(x: 300, y: 200), size: size, screens: [screen])
+        #expect(frame?.origin == CGPoint(x: 300, y: 200))
+    }
+
+    @Test("a remembered spot no screen shows any more (display unplugged) is forgotten")
+    func forgetsOffScreenSpot() {
+        #expect(CompanionPlacement.remembered(CGPoint(x: 3000, y: 200), size: size, screens: [screen]) == nil)
+        #expect(CompanionPlacement.remembered(nil, size: size, screens: [screen]) == nil)
+    }
+
+    @Test("the remembered spot is stored and read back as text in config")
+    func storesAsText() {
+        #expect(CompanionPlacement.encode(CGPoint(x: 300.5, y: 200)) == "300.5,200.0")
+        #expect(CompanionPlacement.decode("300.5,200.0") == CGPoint(x: 300.5, y: 200))
+        #expect(CompanionPlacement.decode("") == nil)
+    }
 }

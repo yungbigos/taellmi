@@ -90,6 +90,12 @@ struct CompanionView: View {
         // Anywhere in the bubble puts you in the text field, not only the one line it occupies.
         .contentShape(.rect)
         .onTapGesture { typingFocused = true }
+        // The bubble's empty area carries tälli too.
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 4, coordinateSpace: .global)
+                .onChanged { _ in onDrag() }
+                .onEnded { _ in onDragEnded() }
+        )
         .brandSurface(.bubble, radius: .bubble)
     }
 }

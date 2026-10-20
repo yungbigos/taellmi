@@ -4,6 +4,7 @@ import NaturalLanguage
 /// Classifies German words with Apple's on-device NaturalLanguage tagger.
 public struct NaturalLanguageClassifier: WordClassifier {
     private static let nameTags: Set<NLTag> = [.personalName, .placeName, .organizationName]
+    private static let meaningTags: Set<NLTag> = [.noun, .verb, .adjective, .adverb]
 
     public init() {}
 
@@ -21,7 +22,8 @@ public struct NaturalLanguageClassifier: WordClassifier {
             words.append(
                 ClassifiedWord(
                     range: range, isPersonalName: nameTag == .personalName,
-                    isContentWord: isName || lexical == .noun))
+                    isContentWord: isName || lexical == .noun,
+                    carriesMeaning: isName || lexical.map(Self.meaningTags.contains) ?? false))
             return true
         }
         return words

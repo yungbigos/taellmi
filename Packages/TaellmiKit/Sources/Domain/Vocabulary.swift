@@ -27,8 +27,13 @@ public struct ClassifiedWord: Sendable {
     public var isPersonalName: Bool
     /// A noun or name, as opposed to verbs, pronouns, prepositions and other function words.
     public var isContentWord: Bool
+    /// A noun, name, verb, adjective or adverb: a word that says something, as opposed to function words.
+    public var carriesMeaning: Bool
 
-    public init(range: Range<String.Index>, isPersonalName: Bool, isContentWord: Bool) {
+    public init(
+        range: Range<String.Index>, isPersonalName: Bool, isContentWord: Bool, carriesMeaning: Bool? = nil
+    ) {
+        self.carriesMeaning = carriesMeaning ?? isContentWord
         self.range = range
         self.isPersonalName = isPersonalName
         self.isContentWord = isContentWord

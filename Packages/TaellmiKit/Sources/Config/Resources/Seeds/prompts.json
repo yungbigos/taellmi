@@ -84,5 +84,72 @@
       ]
     },
     "seed_version": 1
+  },
+  {
+    "id": "concepts",
+    "version": 2,
+    "role": "entities",
+    "language": "de",
+    "template": "Du liest einen Gedanken aus einem privaten Tagebuch (Deutsch, manchmal mit Englisch gemischt). Finde, was darin vorkommt:\n- person: jeder Mensch, mit Namen oder als Rolle. Rollen sind immer person, nie topic (z. B. \"Marleen\", \"meine Mutter\", \"mein Chef\", \"der Vermieter\", \"die Ärztin\")\n- place: Orte, auch alltägliche (z. B. \"München\", \"Giesing\", \"Büro\", \"Wohnung\", \"Küche\", \"Isar\")\n- topic: worum es geht, höchstens 5, jeweils ein kurzes Hauptwort aus dem Text (z. B. \"Heizung\", \"Schlaf\", \"Umzug\")\n- emotion: Gefühle, aber nur wenn sie im Text ausdrücklich genannt werden (z. B. \"müde\", \"traurig\", \"einsam\"). Errate nie Gefühle aus dem Ton.\n\nRegeln:\n- \"mention\" sind die genauen Wörter, wie sie im Text stehen.\n- \"name\" ist dasselbe Wort in Grundform, wie es im Text vorkommt (z. B. \"Vermieter\" für \"dem Vermieter\").\n- Nur Wörter aus dem Text. Nichts hinzufügen, keine Deutung.\n\nText:\n{{text}}",
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "concepts": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Grundform, z. B. Marleen, Heizung, müde"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "person",
+                  "place",
+                  "topic",
+                  "emotion"
+                ]
+              },
+              "mention": {
+                "type": "string",
+                "description": "die genauen Wörter aus dem Text"
+              }
+            },
+            "required": [
+              "name",
+              "kind",
+              "mention"
+            ]
+          }
+        }
+      },
+      "required": [
+        "concepts"
+      ]
+    },
+    "seed_version": 1
+  },
+  {
+    "id": "summary",
+    "version": 2,
+    "role": "summary",
+    "language": "de",
+    "template": "Fasse diesen Gedanken aus einem privaten Tagebuch in einem einzigen kurzen Satz zusammen, in seiner Sprache und aus der Ich-Sicht, wie er geschrieben ist.\n\nRegeln:\n- Verwende nur Wörter, die im Text vorkommen.\n- Keine Gründe, Gefühle oder Folgen, die nicht wörtlich dastehen.\n- Behalte Abschwächungen und Vergleiche bei (\"eher müde als genervt\" bleibt so).\n- Keine Deutung, kein Rat.\n\nText:\n{{text}}",
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "string",
+          "description": "ein Satz"
+        }
+      },
+      "required": [
+        "summary"
+      ]
+    },
+    "seed_version": 1
   }
 ]

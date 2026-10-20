@@ -24,17 +24,31 @@ struct UnderstandingPipelineTests {
     func long() async throws {
         let model = FakeLanguageModel(
             concepts: [("Marleen", "person", "Marleen"), ("Heizung", "topic", "Heizung")],
-            summary: "Gespräch mit Marleen über die Heizung.")
+            summary: "Mit Marleen über die Heizung in Giesing gesprochen.")
         let harness = try Harness(languageModel: model)
         let entry = try addTypedEntry(harness, text: longText)
 
         await harness.runUntilSettled()
 
         let read = try #require(try harness.understandings.understanding(entryID: entry.id))
-        #expect(read.summary == "Gespräch mit Marleen über die Heizung.")
+        #expect(read.summary == "Mit Marleen über die Heizung in Giesing gesprochen.")
         #expect(read.concepts.map(\.name) == ["Marleen", "Heizung"])
         #expect(read.concepts.first?.utf16Ranges.count == 4)
         #expect(await model.prompts.first?.contains(longText) == true)
+    }
+
+    @Test("a summary with words the thought doesn't contain is not shown, the concepts are")
+    func ungroundedSummary() async throws {
+        let model = FakeLanguageModel(
+            concepts: [("Marleen", "person", "Marleen")], summary: "Streit mit Marleen wegen der Miete.")
+        let harness = try Harness(languageModel: model)
+        let entry = try addTypedEntry(harness, text: longText)
+
+        await harness.runUntilSettled()
+
+        let read = try #require(try harness.understandings.understanding(entryID: entry.id))
+        #expect(read.summary == nil)
+        #expect(read.concepts.map(\.name) == ["Marleen"])
     }
 
     @Test("a short thought gets concepts but no summary")

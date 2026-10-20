@@ -18,7 +18,7 @@ public actor PipelineRunner {
     let settings: SettingsStore
     let pipeline: PipelineConfig
     private let vocabulary: [any VocabularySource]
-    private let classifier: any WordClassifier
+    let classifier: any WordClassifier
     let understanding: UnderstandingWork?
     let now: @Sendable () -> Date
     private var isRunning = false

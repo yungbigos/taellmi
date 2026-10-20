@@ -21,6 +21,8 @@ public enum SettingKeys {
     public static let textCase = "appearance.text_case"
     /// Thoughts shorter than this get concepts but no summary (ADR 0012).
     public static let summaryMinWords = "summary.min_words"
+    /// How many leading letters of a summary word must appear in the thought for the summary to be shown.
+    public static let summaryStemLength = "summary.stem_length"
     public static let archiveLocationBookmark = "archive.location_bookmark"
     public static let archivePendingMoveBookmark = "archive.pending_move_bookmark"
     public static let lockWindow = "privacy.lock_window"
@@ -59,7 +61,8 @@ public enum SettingKeys {
             hotkey, sampleRate, minimumRecordingSeconds, discardSilentRecordings, idleUnloadSeconds, maxJobAttempts,
             segmentMaxPauseSeconds, retryBackoffSeconds,
             waitForModelSeconds, maintenanceIntervalSeconds, vocabularyMinSimilarityNames, vocabularyMinSimilarityOther,
-            vocabularyUseContacts, textCase, summaryMinWords, archiveLocationBookmark, archivePendingMoveBookmark,
+            vocabularyUseContacts, textCase, summaryMinWords, summaryStemLength, archiveLocationBookmark,
+            archivePendingMoveBookmark,
             lockWindow,
             exploreHotkey,
             exploreAutosaveDelaySeconds, exploreStartView,

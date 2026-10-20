@@ -70,9 +70,16 @@ extension PipelineRunner {
             do {
                 let result = try await understanding.models.languageModel(summaryModel).generate(
                     prompt: summaryPrompt.render(["text": text]), schema: summaryPrompt.outputSchema ?? .object([:]))
-                summary = result.objectValue?["summary"]?.stringValue?
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-                if summary?.isEmpty == true { summary = nil }
+                let generated =
+                    result.objectValue?["summary"]?.stringValue?
+                    .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                // Shown only if every meaningful word is the thought's own (ADR 0012); otherwise none.
+                let stem = Int(try settings.number(SettingKeys.summaryStemLength))
+                if SummaryGrounding.isGrounded(generated, in: text, classifier: classifier, stemLength: stem) {
+                    summary = generated
+                } else {
+                    logger.info("A generated summary used words that aren't in the thought; not shown")
+                }
             } catch LanguageModelError.unavailable(let reason) {
                 throw LanguageModelError.unavailable(reason)
             } catch {

@@ -10,9 +10,9 @@ struct PromptStoreTests {
     func seeded() throws {
         let store = PromptStore(database: try makeSeededDatabase())
         let concepts = try store.current(role: .entities)
-        #expect(concepts.ref == "concepts@1")
+        #expect(concepts.ref == "concepts@2")
         #expect(concepts.outputSchema?.objectValue?["required"] == .array([.string("concepts")]))
-        #expect(try store.current(role: .summary).ref == "summary@1")
+        #expect(try store.current(role: .summary).ref == "summary@2")
     }
 
     @Test("placeholders are filled; text without placeholders stays as it is")

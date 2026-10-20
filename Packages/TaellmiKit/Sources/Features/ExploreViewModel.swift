@@ -651,7 +651,18 @@ public final class ExploreViewModel {
         conceptDetail = pickedConcepts.last.flatMap { pickedDetails[$0] }
     }
 
+    /// The thought you clicked: selected at once, while its text loads (the list reads this, not `detail`,
+    /// so the highlighted row never jumps back and forth).
+    public private(set) var selectedID: String?
+
+    /// A click in the list.
+    public func choose(_ id: String?) {
+        selectedID = id
+        Task { await select(id) }
+    }
+
     public func select(_ id: String?) async {
+        selectedID = id
         openedSearch = nil
         await saveIfNeeded()
         guard let id else {
@@ -659,7 +670,10 @@ public final class ExploreViewModel {
             return
         }
         do {
-            setDetail(try await library.detail(id: id))
+            let loaded = try await library.detail(id: id)
+            // Clicked another thought meanwhile: that one wins.
+            guard selectedID == id else { return }
+            setDetail(loaded)
         } catch {
             errorMessage = "couldn't open the thought. try again."
         }
@@ -736,6 +750,7 @@ public final class ExploreViewModel {
     private func setDetail(_ newDetail: EntryDetail?) {
         autosaveTask?.cancel()
         detail = newDetail
+        selectedID = newDetail?.entry.id
         savedText = newDetail?.entry.text ?? ""
         editorText = savedText
         autosaveTask?.cancel()

@@ -55,6 +55,17 @@ struct OpeningExploreTests {
         #expect(model.entries.count == 3)
     }
 
+    @Test("a clicked thought is selected at once, before it has loaded, so the row never flickers back")
+    func choosesAtOnce() async {
+        let model = ExploreViewModel(library: library(), autosaveDelay: .zero, startView: .stack)
+        await model.open(selecting: nil)
+        model.choose("b")
+        #expect(model.selectedID == "b")
+        for _ in 0..<100 where model.detail?.entry.id != "b" { await Task.yield() }
+        #expect(model.detail?.entry.id == "b")
+        #expect(model.selectedID == "b")
+    }
+
     @Test("opening twice keeps a single observation and the same thoughts")
     func openTwice() async {
         let model = ExploreViewModel(library: library(), autosaveDelay: .zero, startView: .flow)

@@ -145,7 +145,7 @@ public struct ExploreView: View {
     private var entryList: some View {
         List(
             model.entries,
-            selection: Binding(get: { model.detail?.entry.id }, set: { id in Task { await model.select(id) } })
+            selection: Binding(get: { model.selectedID }, set: { id in model.choose(id) })
         ) { entry in
             // One line per thought: what it says, and when. Everything else is in the open thought's details.
             // While searching, the line shows the part around the match with the words marked instead.

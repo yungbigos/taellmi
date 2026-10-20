@@ -20,7 +20,7 @@ public struct Entry: Sendable, Equatable, Identifiable {
     public var durationSeconds: Double?
     public var source: EntrySource
     public var title: String?
-    /// Folder relative to the Archive root, e.g. `entries/2026/10/20261019-203412-a1b2`.
+    /// Folder relative to the Archive root, e.g. `entries/<random id>`.
     public var folder: String
     /// The Entry's Text. Empty until a voice Entry is first transcribed; after that only the user changes it.
     public var text: String

@@ -8,12 +8,26 @@ public final class ExploreWindowController: NSObject, NSWindowDelegate {
     private var window: NSWindow?
     /// The brand tokens from config, applied to the window content.
     public var brand: BrandTokens?
+    /// Asks for Touch ID or your password first when "lock tällmi with touch id" is on.
+    private let authorize: () async -> Bool
 
-    public init(model: ExploreViewModel) {
+    public init(model: ExploreViewModel, authorize: @escaping () async -> Bool = { true }) {
         self.model = model
+        self.authorize = authorize
     }
 
     public func show(selecting entryID: String? = nil) {
+        if window?.isVisible == true {
+            present(selecting: entryID)
+            return
+        }
+        Task {
+            guard await authorize() else { return }
+            present(selecting: entryID)
+        }
+    }
+
+    private func present(selecting entryID: String?) {
         let window = window ?? makeWindow()
         self.window = window
         NSApplication.shared.setActivationPolicy(.regular)

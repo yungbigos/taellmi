@@ -19,6 +19,9 @@ public enum SettingKeys {
     public static let vocabularyMinSimilarityOther = "vocabulary.min_similarity_other"
     public static let vocabularyUseContacts = "vocabulary.use_contacts"
     public static let textCase = "appearance.text_case"
+    public static let archiveLocationBookmark = "archive.location_bookmark"
+    public static let archivePendingMoveBookmark = "archive.pending_move_bookmark"
+    public static let lockWindow = "privacy.lock_window"
     public static let exploreHotkey = "explore.hotkey"
     public static let exploreAutosaveDelaySeconds = "explore.autosave_delay_s"
     public static let companionCursorOffset = "companion.cursor_offset"
@@ -36,7 +39,9 @@ public enum SettingKeys {
             hotkey, sampleRate, minimumRecordingSeconds, discardSilentRecordings, idleUnloadSeconds, maxJobAttempts,
             segmentMaxPauseSeconds, retryBackoffSeconds,
             waitForModelSeconds, maintenanceIntervalSeconds, vocabularyMinSimilarityNames, vocabularyMinSimilarityOther,
-            vocabularyUseContacts, textCase, exploreHotkey, exploreAutosaveDelaySeconds,
+            vocabularyUseContacts, textCase, archiveLocationBookmark, archivePendingMoveBookmark, lockWindow,
+            exploreHotkey,
+            exploreAutosaveDelaySeconds,
             companionCursorOffset,
             companionSavedDisplaySeconds, companionFollowsCursor, companionFinishKey, companionCancelKey,
             companionFollowSmoothing, brandTokens,

@@ -49,7 +49,7 @@ let package = Package(
         .target(name: "Audio", dependencies: ["Domain"], swiftSettings: strict),
         .target(name: "Features", dependencies: ["Domain"], swiftSettings: ui),
         /// Apple system frameworks used as data sources (NaturalLanguage, Contacts).
-        .target(name: "SystemServices", dependencies: ["Domain"], swiftSettings: strict),
+        .target(name: "SystemServices", dependencies: ["Domain", "Persistence"], swiftSettings: strict),
 
         // MARK: Engines (the only targets that import ML SDKs)
         .target(

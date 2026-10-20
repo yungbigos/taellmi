@@ -3,6 +3,7 @@ import Domain
 import Features
 import Foundation
 import Observation
+import Persistence
 import SystemServices
 import os
 
@@ -24,6 +25,8 @@ public final class AppController {
     public private(set) var exploreHotkeySettings: HotkeySettingsViewModel?
     /// One shortcut editor per command, in catalogue order.
     public private(set) var commandShortcutSettings: [(Command, HotkeySettingsViewModel)] = []
+    public private(set) var privacy: PrivacyViewModel?
+    @ObservationIgnored private var panel: NSWindow?
     @ObservationIgnored private var explore: ExploreWindowController?
     @ObservationIgnored private var captureWarning: String?
     @ObservationIgnored private var exploreWarning: String?
@@ -43,9 +46,22 @@ public final class AppController {
     private func start() async {
         let environment: AppEnvironment
         do {
+            await Self.waitForOtherInstances()
             environment = try await AppEnvironment.live()
             self.environment = environment
+            defer { if environment.pendingRecoveryKey != nil { showRecoveryKey() } }
             try await environment.start()
+        } catch let locked as ArchiveLockedError {
+            askForRecoveryKey(locked.vault)
+            return
+        } catch is ArchiveVault.Error {
+            startupError =
+                "the key file of your thoughts is missing or still downloading. wait for it, then open tällmi again."
+            return
+        } catch is ArchiveUnavailableError {
+            startupError =
+                "the folder where your thoughts are stored isn't available. connect it and open tällmi again."
+            return
         } catch {
             logger.error("Start failed: \(String(describing: error))")
             startupError = "tällmi couldn't start. details are in the system log."
@@ -58,7 +74,15 @@ public final class AppController {
         exploreHotkeySettings = HotkeySettingsViewModel(store: environment.exploreHotkeyStore, checker: checker) {
             [weak self] hotkey in self?.registerExploreHotkey(hotkey)
         }
-        let explore = ExploreWindowController(model: environment.exploreModel)
+        let settingsStore = environment.settings
+        let explore = ExploreWindowController(model: environment.exploreModel) {
+            await WindowLock.authorize(settings: settingsStore)
+        }
+        privacy = environment.makePrivacyModel { Self.relaunch() }
+        if let failed = environment.migrationFailures, failed > 0 {
+            startupError =
+                "\(failed) thoughts couldn't be encrypted and are not shown. they are safe in a backup; see privacy settings."
+        }
         self.explore = explore
         let companion = CompanionController(
             model: environment.captureModel, appearance: environment.appearanceModel,
@@ -84,6 +108,57 @@ public final class AppController {
         }
         if let hotkey = environment.hotkey { registerCaptureHotkey(hotkey) }
         if let hotkey = environment.exploreHotkey { registerExploreHotkey(hotkey) }
+    }
+
+    /// Shows the new Recovery Key until you confirm you saved it.
+    public func showRecoveryKey() {
+        guard let environment, let key = environment.pendingRecoveryKey else { return }
+        let model = RecoveryKeyViewModel(recoveryKey: key.formatted) { group, keep in
+            try environment.confirmRecoveryKey(lastGroup: group, keepInKeychain: keep)
+        }
+        panel?.close()
+        panel = PanelWindow.show(title: "recovery key") {
+            RecoveryKeyView(model: model) { [weak self] in
+                self?.panel?.close()
+                Task { await self?.privacy?.load() }
+            }
+        }
+    }
+
+    /// On a new Mac: unlock the Archive with its Recovery Key, then start.
+    private func askForRecoveryKey(_ vault: ArchiveVault) {
+        let model = UnlockArchiveViewModel { text in
+            let recovery = try RecoveryKey(parsing: text)
+            _ = try vault.unlock(with: recovery)
+            return true
+        }
+        panel = PanelWindow.show(title: "unlock tällmi") {
+            UnlockArchiveView(model: model) { [weak self] in
+                self?.panel?.close()
+                Task { await self?.start() }
+            }
+        }
+    }
+
+    /// Starts a fresh copy of tällmi and quits this one (after moving the Archive).
+    private static func relaunch() {
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.createsNewApplicationInstance = true
+        NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: configuration) { _, _ in
+            DispatchQueue.main.async { NSApplication.shared.terminate(nil) }
+        }
+    }
+
+    /// The new instance waits (up to 15 s) until the old one has quit, so nothing is written into the old
+    /// Archive folder while it is being moved.
+    nonisolated static func waitForOtherInstances() async {
+        let me = ProcessInfo.processInfo.processIdentifier
+        for _ in 0..<60 {
+            let others = NSRunningApplication.runningApplications(withBundleIdentifier: "app.taellmi")
+                .filter { $0.processIdentifier != me }
+            if others.isEmpty { return }
+            try? await Task.sleep(for: .milliseconds(250))
+        }
     }
 
     /// Opens the Explore window ("Archiv öffnen").

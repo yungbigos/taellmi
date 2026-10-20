@@ -19,4 +19,6 @@ nonisolated public struct AppPaths: Sendable {
     public var database: URL { root.appendingPathComponent("taellmi.sqlite") }
     public var models: URL { root.appendingPathComponent("models", isDirectory: true) }
     public var scratch: URL { root.appendingPathComponent("Scratch", isDirectory: true) }
+    /// Decrypted copies for playback and transcription; cleared on start.
+    public var decryptedCache: URL { root.appendingPathComponent("Decrypted", isDirectory: true) }
 }

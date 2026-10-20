@@ -1,5 +1,6 @@
 import Audio
 import Config
+import CryptoKit
 import Domain
 import Features
 import FluidAudioEngine
@@ -8,6 +9,7 @@ import IOKit.ps
 import Persistence
 import Pipeline
 import SpeechAnalyzerEngine
+import Synchronization
 import SystemServices
 import os
 
@@ -34,6 +36,19 @@ public final class AppEnvironment {
     public private(set) var hotkey: Hotkey?
 
     private let paths: AppPaths
+    /// Where the Archive is (Library by default, or the folder you chose).
+    public let archiveRoot: URL
+    /// Set after a fresh setup until you confirm you saved it (ADR 0010).
+    /// Thoughts the last start couldn't encrypt; they stay out of the index and in the backup.
+    public private(set) var migrationFailures: Int?
+
+    public private(set) var pendingRecoveryKey: RecoveryKey? {
+        didSet { pendingBox.value.withLock { $0 = pendingRecoveryKey?.formatted } }
+    }
+    private let pendingBox = PendingRecoveryKeyBox()
+    let vault: ArchiveVault?
+    private let storage: any ArchiveStorage
+    private let archiveKey: SymmetricKey?
     let database: AppDatabase
     private let files: EntryFileStore
     private let index: EntryIndex
@@ -44,17 +59,42 @@ public final class AppEnvironment {
     private var maintenanceTask: Task<Void, Never>?
     private var memoryPressure: (any DispatchSourceMemoryPressure)?
 
-    /// Builds the real app. Opening and migrating the database happens off the main actor.
+    /// Builds the real app: opens the database, finds the Archive, and opens its key (ADR 0010).
+    /// Throws `ArchiveLockedError` when this Mac needs the Recovery Key first.
     public static func live() async throws -> AppEnvironment {
-        let (paths, database, sampleRate) = try await Task.detached(priority: .userInitiated) {
+        let (paths, database, sampleRate, root) = try await Task.detached(priority: .userInitiated) {
             let paths = try AppPaths.live()
             let database = try AppDatabase.open(at: paths.database)
             _ = try Seeder(database: database).apply(SeedBundle.bundled())
-            return (paths, database, try SettingsStore(database: database).number(SettingKeys.sampleRate))
+            let settings = SettingsStore(database: database)
+            let editor = ConfigEditor(database: database)
+            // A move you scheduled runs now, before anything reads or writes the Archive.
+            try? ArchiveLocation.applyPendingMove(settings: settings, editor: editor, default: paths.archive)
+            return (
+                paths, database, try settings.number(SettingKeys.sampleRate),
+                try ArchiveLocation.resolve(settings: settings, editor: editor, default: paths.archive)
+            )
         }.value
-        return try AppEnvironment(
-            paths: paths, database: database, engines: liveEngines, livePreviews: livePreviewEngines,
+        let vault = ArchiveVault(root: root, keyStore: KeychainKeyStore())
+        guard case .unlocked(let key, let newRecoveryKey) = try vault.open() else {
+            throw ArchiveLockedError(vault: vault)
+        }
+        let storage = EncryptedStorage(root: root, key: key, decryptedCache: paths.decryptedCache)
+        let environment = try AppEnvironment(
+            paths: paths, archiveRoot: root, storage: storage, archiveKey: key, vault: vault, database: database,
+            engines: liveEngines, livePreviews: livePreviewEngines,
             recorder: MicrophoneRecorder(scratchFolder: paths.scratch, sampleRate: sampleRate))
+        environment.pendingRecoveryKey = newRecoveryKey
+        return environment
+    }
+
+    /// You confirmed the new Recovery Key by typing its last group.
+    public func confirmRecoveryKey(lastGroup: String, keepInKeychain: Bool) throws -> Bool {
+        guard let vault, try vault.confirmRecoveryKey(lastGroup: lastGroup, keepInKeychain: keepInKeychain) else {
+            return false
+        }
+        pendingRecoveryKey = nil
+        return true
     }
 
     public convenience init(
@@ -62,23 +102,31 @@ public final class AppEnvironment {
         recorder: any AudioRecording
     ) throws {
         try self.init(
-            paths: paths, database: AppDatabase.open(at: paths.database), engines: engines,
-            livePreviews: livePreviews, recorder: recorder)
+            paths: paths, archiveRoot: paths.archive, storage: PlainFolderStorage(root: paths.archive), archiveKey: nil,
+            vault: nil,
+            database: AppDatabase.open(at: paths.database), engines: engines, livePreviews: livePreviews,
+            recorder: recorder)
     }
 
     init(
-        paths: AppPaths, database: AppDatabase, engines factories: [String: TranscriberFactory],
-        livePreviews: [String: LivePreviewFactory], recorder: any AudioRecording
+        paths: AppPaths, archiveRoot: URL, storage: any ArchiveStorage, archiveKey: SymmetricKey?, vault: ArchiveVault?,
+        database: AppDatabase,
+        engines factories: [String: TranscriberFactory], livePreviews: [String: LivePreviewFactory],
+        recorder: any AudioRecording
     ) throws {
         self.paths = paths
+        self.archiveRoot = archiveRoot
+        self.storage = storage
+        self.archiveKey = archiveKey
+        self.vault = vault
         self.database = database
         settings = SettingsStore(database: database)
-        files = EntryFileStore(storage: PlainFolderStorage(root: paths.archive))
+        files = EntryFileStore(storage: storage)
         index = EntryIndex(database: database)
         let installation = ModelInstallation(root: paths.models)
         let settings = settings
         let vocabularySources: [any VocabularySource] = [
-            CurationStore(storage: PlainFolderStorage(root: paths.archive)),
+            CurationStore(storage: storage),
             SettingGatedSource(
                 settings: settings, key: SettingKeys.vocabularyUseContacts, source: ContactsVocabularySource()),
         ]
@@ -94,7 +142,7 @@ public final class AppEnvironment {
             jobs: JobQueue(database: database), files: files, index: index, resolver: resolver, engines: engines,
             settings: settings, pipeline: PipelineConfig(database: database),
             vocabulary: [
-                CurationStore(storage: PlainFolderStorage(root: paths.archive)),
+                CurationStore(storage: storage),
                 SettingGatedSource(
                     settings: settings, key: SettingKeys.vocabularyUseContacts, source: ContactsVocabularySource()),
             ],
@@ -102,7 +150,7 @@ public final class AppEnvironment {
         let kick = PipelineKick(runner: runner)
         pipelineKick = kick
         journal = LiveJournal(
-            files: files, index: index, runner: runner, archiveFolder: paths.archive,
+            files: files, index: index, runner: runner, archiveFolder: archiveRoot,
             kickPipeline: { kick.kick() })
         captureModel = CaptureViewModel(
             recorder: recorder, journal: journal,
@@ -120,14 +168,16 @@ public final class AppEnvironment {
             capture: captureModel)
         vocabularyModel = VocabularyViewModel(
             settings: LiveVocabularySettings(
-                curation: CurationStore(storage: PlainFolderStorage(root: paths.archive)), settings: settings,
+                curation: CurationStore(storage: storage), settings: settings,
                 editor: ConfigEditor(database: database)))
     }
 
     /// Brings config and index up to date and resumes unfinished work, all off the main actor.
     public func start() async throws {
-        let work = StartupWork(paths: paths, database: database, files: files, index: index, runner: runner)
-        try await Task.detached(priority: .utility) { try await work.run() }.value
+        let work = StartupWork(
+            paths: paths, database: database, files: files, index: index, runner: runner, storage: storage,
+            archiveRoot: archiveRoot, archiveKey: archiveKey)
+        migrationFailures = try await Task.detached(priority: .utility) { try await work.run() }.value
         hotkey = (try? settings.string(SettingKeys.hotkey)).flatMap { try? Hotkey(parsing: $0) }
         await appearanceModel.load()
         exploreModel.shortcuts = commandShortcuts()
@@ -135,6 +185,16 @@ public final class AppEnvironment {
         pipelineKick.kick()
         try startMaintenance()
         watchMemoryPressure()
+    }
+
+    /// The privacy tab.
+    public func makePrivacyModel(restart: @escaping () -> Void) -> PrivacyViewModel {
+        let pending = pendingBox
+        return PrivacyViewModel(
+            settings: LivePrivacySettings(
+                archiveRoot: archiveRoot, files: files, settings: settings, editor: ConfigEditor(database: database),
+                pending: { pending.value.withLock { $0 } }),
+            restart: restart)
     }
 
     /// Every command's shortcut, freshly read from config.
@@ -222,6 +282,11 @@ nonisolated final class PipelineKick: Sendable {
     func waitUntilIdle() async {
         await current.withLock { $0 }?.value
     }
+}
+
+/// The not-yet-confirmed Recovery Key, readable from the privacy settings off the main actor.
+nonisolated final class PendingRecoveryKeyBox: Sendable {
+    let value = Mutex<String?>(nil)
 }
 
 /// A Vocabulary source that only contributes while a bool setting is on (e.g. the contacts opt-in).

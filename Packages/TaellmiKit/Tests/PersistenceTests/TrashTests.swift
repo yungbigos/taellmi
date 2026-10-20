@@ -10,7 +10,7 @@ struct TrashTests {
         let temp = try TemporaryDirectory()
         let files = EntryFileStore(storage: PlainFolderStorage(root: temp.url), calendar: berlinCalendar)
         let index = EntryIndex(database: try makeDatabase())
-        let entry = try files.createTypedEntry(text: "Wegwerfen?", createdAt: sampleDate, suffix: "tr45")
+        let entry = try files.createTypedEntry(text: "Wegwerfen?", createdAt: sampleDate, id: "tr45")
         try index.upsert(entry, transcript: nil)
         return (files, index, entry, temp)
     }

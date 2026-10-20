@@ -1,6 +1,8 @@
 [
   {"key": "app.maintenance_interval_s", "type": "number", "value": 30, "seed_version": 1},
   {"key": "appearance.text_case", "type": "string", "value": "normal", "seed_version": 1},
+  {"key": "archive.location_bookmark", "type": "string", "value": "", "seed_version": 1},
+  {"key": "archive.pending_move_bookmark", "type": "string", "value": "", "seed_version": 1},
   {"key": "capture.discard_silent_recordings", "type": "bool", "value": true, "seed_version": 1},
   {"key": "capture.hotkey", "type": "string", "value": "control+option+t", "seed_version": 2},
   {"key": "capture.min_recording_s", "type": "number", "value": 0.7, "seed_version": 1},
@@ -17,6 +19,7 @@
   {"key": "pipeline.max_attempts", "type": "number", "value": 3, "seed_version": 1},
   {"key": "pipeline.retry_backoff_s", "type": "number", "value": 30, "seed_version": 1},
   {"key": "pipeline.wait_for_model_s", "type": "number", "value": 300, "seed_version": 1},
+  {"key": "privacy.lock_window", "type": "bool", "value": false, "seed_version": 1},
   {"key": "shortcut.match.next", "type": "string", "value": "command+g", "seed_version": 1},
   {"key": "shortcut.match.previous", "type": "string", "value": "command+shift+g", "seed_version": 1},
   {"key": "shortcut.palette.open", "type": "string", "value": "command+k", "seed_version": 1},

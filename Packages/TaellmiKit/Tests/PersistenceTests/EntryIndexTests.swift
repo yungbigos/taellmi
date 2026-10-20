@@ -38,13 +38,13 @@ struct EntryIndexTests {
         let temp = try TemporaryDirectory()
         let files = EntryFileStore(storage: PlainFolderStorage(root: temp.url), calendar: berlinCalendar)
         let entry = try files.createVoiceEntry(
-            Recording(file: try temp.makeAudioFile(), durationSeconds: 5.6, startedAt: sampleDate), suffix: "a1b2")
+            Recording(file: try temp.makeAudioFile(), durationSeconds: 5.6, startedAt: sampleDate), id: "a1b2")
         let transcribed = try files.saveTranscript(germanTranscript, for: entry)
         _ = try files.createVoiceEntry(
             Recording(
                 file: try temp.makeAudioFile(named: "2.m4a"), durationSeconds: 2,
                 startedAt: sampleDate.addingTimeInterval(10)),
-            suffix: "c3d4")
+            id: "c3d4")
 
         let index = EntryIndex(database: try makeDatabase())
         let report = try index.rebuild(from: files)
@@ -63,13 +63,13 @@ struct EntryIndexRebuildTests {
         let storage = PlainFolderStorage(root: temp.url)
         let files = EntryFileStore(storage: storage, calendar: berlinCalendar)
         _ = try files.createVoiceEntry(
-            Recording(file: try temp.makeAudioFile(), durationSeconds: 1, startedAt: sampleDate), suffix: "good")
-        try storage.write(Data("kein front matter".utf8), to: "entries/2026/10/broken/entry.md")
+            Recording(file: try temp.makeAudioFile(), durationSeconds: 1, startedAt: sampleDate), id: "good")
+        try storage.write(Data("kein front matter".utf8), to: "entries/broken/entry.md")
 
         let report = try EntryIndex(database: try makeDatabase()).rebuild(from: files)
 
         #expect(report.indexed == 1)
-        #expect(report.invalidFolders == ["entries/2026/10/broken"])
+        #expect(report.invalidFolders == ["entries/broken"])
     }
 
     @Test("segments disappear from the index once the transcript is gone")

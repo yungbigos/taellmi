@@ -59,7 +59,7 @@ struct PipelineRunnerTests {
         func addEntry() throws -> Entry {
             let entry = try files.createVoiceEntry(
                 Recording(file: try archive.makeAudioFile(), durationSeconds: 3.4, startedAt: sampleDate),
-                suffix: "a1b2")
+                id: "a1b2")
             try index.upsert(entry, transcript: nil)
             return entry
         }

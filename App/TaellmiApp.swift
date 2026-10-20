@@ -30,11 +30,12 @@ struct TaellmiApp: App {
 
         Settings {
             if let environment = controller.environment, let hotkey = controller.hotkeySettings,
-                let exploreHotkey = controller.exploreHotkeySettings
+                let exploreHotkey = controller.exploreHotkeySettings, let privacy = controller.privacy
             {
                 SettingsView(
                     hotkey: hotkey, exploreHotkey: exploreHotkey, appearance: environment.appearanceModel,
-                    vocabulary: environment.vocabularyModel, commandShortcuts: controller.commandShortcutSettings
+                    vocabulary: environment.vocabularyModel, commandShortcuts: controller.commandShortcutSettings,
+                    privacy: privacy, showRecoveryKey: { controller.showRecoveryKey() }
                 )
                 .brandStyle(controller.brand)
             } else {

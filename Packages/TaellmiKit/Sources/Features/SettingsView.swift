@@ -9,11 +9,16 @@ public struct SettingsView: View {
     var appearance: AppearanceViewModel
     var vocabulary: VocabularyViewModel
     var commandShortcuts: [(Command, HotkeySettingsViewModel)]
+    var privacy: PrivacyViewModel
+    var showRecoveryKey: () -> Void
 
     public init(
         hotkey: HotkeySettingsViewModel, exploreHotkey: HotkeySettingsViewModel, appearance: AppearanceViewModel,
-        vocabulary: VocabularyViewModel, commandShortcuts: [(Command, HotkeySettingsViewModel)]
+        vocabulary: VocabularyViewModel, commandShortcuts: [(Command, HotkeySettingsViewModel)],
+        privacy: PrivacyViewModel, showRecoveryKey: @escaping () -> Void
     ) {
+        self.privacy = privacy
+        self.showRecoveryKey = showRecoveryKey
         self.commandShortcuts = commandShortcuts
         self.hotkey = hotkey
         self.exploreHotkey = exploreHotkey
@@ -29,6 +34,8 @@ public struct SettingsView: View {
                 .tabItem { Label("spellings", systemImage: "character.book.closed") }
             ShortcutSettingsView(rows: commandShortcuts)
                 .tabItem { Label("shortcuts", systemImage: "keyboard") }
+            PrivacySettingsView(model: privacy, showRecoveryKey: showRecoveryKey)
+                .tabItem { Label("privacy", systemImage: "lock") }
         }
         .textCase(appearance.swiftUICase)
     }

@@ -34,8 +34,8 @@ public struct EntryFileStore: Sendable {
     }
 
     /// Moves the recording into a new Entry folder and writes its `entry.md`.
-    public func createVoiceEntry(_ recording: Recording, suffix: String = Self.randomSuffix()) throws -> Entry {
-        let (id, folder, createdAt) = identity(for: recording.startedAt, suffix: suffix)
+    public func createVoiceEntry(_ recording: Recording, id: String = Self.randomID()) throws -> Entry {
+        let (folder, createdAt) = identity(for: recording.startedAt, id: id)
         let entry = Entry(
             id: id, createdAt: createdAt, durationSeconds: recording.durationSeconds, source: .voice, folder: folder)
         try saveText(entry)
@@ -49,23 +49,18 @@ public struct EntryFileStore: Sendable {
     }
 
     /// Writes a new typed Entry: its Text is there from the start, and there is no recording.
-    public func createTypedEntry(text: String, createdAt: Date, suffix: String = Self.randomSuffix()) throws -> Entry {
-        let (id, folder, created) = identity(for: createdAt, suffix: suffix)
+    public func createTypedEntry(text: String, createdAt: Date, id: String = Self.randomID()) throws -> Entry {
+        let (folder, created) = identity(for: createdAt, id: id)
         let entry = Entry(
             id: id, createdAt: created, durationSeconds: nil, source: .typed, folder: folder, text: text)
         try saveText(entry)
         return entry
     }
 
-    /// Id, folder and second-precise creation time for a new Entry.
-    private func identity(for date: Date, suffix: String) -> (id: String, folder: String, createdAt: Date) {
-        let createdAt = Date(timeIntervalSince1970: date.timeIntervalSince1970.rounded(.down))
-        let parts = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: createdAt)
-        let id = String(
-            format: "%04d%02d%02d-%02d%02d%02d-%@", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0,
-            parts.hour ?? 0, parts.minute ?? 0, parts.second ?? 0, suffix)
-        let folder = String(format: "entries/%04d/%02d/%@", parts.year ?? 0, parts.month ?? 0, id)
-        return (id, folder, createdAt)
+    /// Folder and second-precise creation time for a new Entry. Folder names carry no date (ADR 0010):
+    /// a synced Archive must not reveal when you recorded.
+    private func identity(for date: Date, id: String) -> (folder: String, createdAt: Date) {
+        ("entries/\(id)", Date(timeIntervalSince1970: date.timeIntervalSince1970.rounded(.down)))
     }
 
     /// Stores the Transcript. Only the very first Transcript of an Entry becomes its Text (as `firstText`
@@ -197,7 +192,10 @@ public struct EntryFileStore: Sendable {
         try EntryDocument(markdown: String(decoding: storage.read(path), as: UTF8.self))
     }
 
-    public static func randomSuffix() -> String {
-        String(UUID().uuidString.lowercased().prefix(4))
+    /// A random Entry id: 16 lowercase base32 characters (80 bits), unrelated to any date.
+    public static func randomID() -> String {
+        let alphabet = Array("0123456789abcdefghjkmnpqrstvwxyz")
+        var generator = SystemRandomNumberGenerator()
+        return String((0..<16).map { _ in alphabet[Int.random(in: 0..<32, using: &generator)] })
     }
 }

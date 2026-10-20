@@ -12,7 +12,7 @@ struct EntryFileStoreTests {
 
     private func voiceEntry(_ store: EntryFileStore, _ temp: TemporaryDirectory) throws -> Entry {
         try store.createVoiceEntry(
-            Recording(file: try temp.makeAudioFile(), durationSeconds: 5.6, startedAt: sampleDate), suffix: "a1b2")
+            Recording(file: try temp.makeAudioFile(), durationSeconds: 5.6, startedAt: sampleDate), id: "a1b2")
     }
 
     @Test("a voice entry becomes a dated folder with recording.m4a and entry.md")
@@ -22,10 +22,10 @@ struct EntryFileStoreTests {
         let audio = try temp.makeAudioFile()
 
         let entry = try store.createVoiceEntry(
-            Recording(file: audio, durationSeconds: 63.2, startedAt: sampleDate), suffix: "a1b2")
+            Recording(file: audio, durationSeconds: 63.2, startedAt: sampleDate), id: "a1b2")
 
-        #expect(entry.id == "20261019-203412-a1b2")
-        #expect(entry.folder == "entries/2026/10/20261019-203412-a1b2")
+        #expect(entry.id == "a1b2")
+        #expect(entry.folder == "entries/a1b2", "no date in the folder name (ADR 0010)")
         #expect(entry.source == .voice)
         let folder = temp.url.appendingPathComponent(entry.folder)
         #expect(FileManager.default.fileExists(atPath: folder.appendingPathComponent("recording.m4a").path))
@@ -98,7 +98,7 @@ struct EntryFileStoreTests {
         #expect(try store.loadEntry(folder: entry.folder).entry.source.rawValue == "obsidian")
     }
 
-    @Test("lists every entry folder in the Archive, oldest first")
+    @Test("lists every entry folder in the Archive")
     func listsFolders() throws {
         let temp = try TemporaryDirectory()
         let store = makeStore(temp)
@@ -107,11 +107,11 @@ struct EntryFileStoreTests {
                 Recording(
                     file: try temp.makeAudioFile(named: "\(suffix).m4a"), durationSeconds: 1,
                     startedAt: sampleDate.addingTimeInterval(Double(index) * 86_400 * 40)),
-                suffix: suffix)
+                id: suffix)
         }
         #expect(
             try store.allEntryFolders() == [
-                "entries/2026/10/20261019-203412-aaaa", "entries/2026/11/20261128-193412-bbbb",
+                "entries/aaaa", "entries/bbbb",
             ])
     }
 
@@ -177,9 +177,9 @@ struct EntryFileStoreTests {
         let temp = try TemporaryDirectory()
         let store = makeStore(temp)
         let entry = try store.createTypedEntry(
-            text: "Kurz notiert: Marleen anrufen.", createdAt: sampleDate, suffix: "t1p3")
+            text: "Kurz notiert: Marleen anrufen.", createdAt: sampleDate, id: "t1p3")
         #expect(entry.source == .typed)
-        #expect(entry.folder == "entries/2026/10/20261019-203412-t1p3")
+        #expect(entry.folder == "entries/t1p3")
         let loaded = try store.loadEntry(folder: entry.folder)
         #expect(loaded.entry.text == "Kurz notiert: Marleen anrufen.")
         #expect(!store.hasRecording(entry))

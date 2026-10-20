@@ -19,7 +19,7 @@ struct LiveExploreLibraryTests {
             germanTranscript,
             for: try files.createVoiceEntry(
                 Recording(file: try temp.makeAudioFile(), durationSeconds: 5.6, startedAt: sampleDate),
-                suffix: "ex01"))
+                id: "ex01"))
         try index.upsert(entry, transcript: germanTranscript)
         return (LiveExploreLibrary(files: files, index: index), files, entry, temp)
     }

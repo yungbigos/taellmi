@@ -142,5 +142,34 @@
     "license": "Apple system",
     "enabled": true,
     "seed_version": 1
+  },
+  {
+    "id": "qwen3-embedding-0.6b-8bit",
+    "name": "Qwen3-Embedding 0.6B, 8-bit (MLX), 512 dimensions",
+    "engine": "mlx_embedder",
+    "provider_id": "huggingface",
+    "source_ref": "mlx-community/Qwen3-Embedding-0.6B-8bit",
+    "revision": "407ad2329cd30702720aafe83f74a1ba30fdfbca",
+    "files": [
+      {"path": "config.json", "bytes": 857, "sha256": "65fb46306262bac47c6a89e5ad8a766c3d40d559057c1931e9c10976266a4fc7"},
+      {"path": "model.safetensors", "bytes": 633152041, "sha256": "fe956e8d346b4f08215a3cfc48a874354f900c20a59e965b75df0d9d77c54b28"},
+      {"path": "model.safetensors.index.json", "bytes": 49731, "sha256": "d387721e7d2dd44152b7dc9fcea8d5647e2692e1c064949c000fabad3292d1d1"},
+      {"path": "tokenizer.json", "bytes": 11423705, "sha256": "def76fb086971c7867b829c23a26261e38d9d74e02139253b38aeb9df8b4b50a"},
+      {"path": "tokenizer_config.json", "bytes": 5404, "sha256": "443bfa629eb16387a12edbf92a76f6a6f10b2af3b53d87ba1550adfcf45f7fa0"}
+    ],
+    "params": {
+      "dimensions": 512,
+      "pooling": "last",
+      "query_template": "Instruct: Given a question or keywords, find passages of a personal journal that answer or match it\nQuery:{{query}}"
+    },
+    "capabilities": [
+      "embed",
+      "lang:de",
+      "lang:en"
+    ],
+    "est_memory_mb": 900,
+    "license": "Apache-2.0",
+    "enabled": true,
+    "seed_version": 1
   }
 ]

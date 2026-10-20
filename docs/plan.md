@@ -177,6 +177,15 @@ Decisions are locked (see section 3); we fix model choices later if real use sho
 - Archive written as folders + Markdown from day one.
 - **Import of your existing notes** (see open questions).
 
+### Meaning layer, slice 1 (built 2026-10-20, [ADR 0011](decisions/0011-meaning-index.md))
+- The typed graph (node and edge kinds in config, system kinds protected).
+- Every thought is split into passages, and each passage is embedded by the `embed` model.
+- Explore search ranks by words and meaning, best match first. It falls back to words while no embedding model can run.
+- **Next:**
+  - the MLX embedding engine (needs Xcode's Metal Toolchain)
+  - extraction of points, mentions and Concepts with Apple's on-device model first, Qwen3.5-4B as fallback (#4)
+  - constellations of Concepts
+
 ### Phase 2 — Search
 - Single search field, hybrid keyword + meaning search, results highlighted, jump to the moment in the audio.
 - Filters: date range, tags, people, source.

@@ -1,0 +1,8 @@
+[
+  {"id": "contains", "name": "contains", "system": true, "derived": true, "directed": true, "from_kinds": ["entry", "fragment"], "to_kinds": ["fragment", "atom"], "style": {}, "enabled": true, "seed_version": 1},
+  {"id": "mentions", "name": "mentions", "system": true, "derived": true, "directed": true, "from_kinds": ["fragment", "atom"], "to_kinds": ["concept"], "style": {}, "enabled": true, "seed_version": 1},
+  {"id": "co_occurs", "name": "appears with", "system": true, "derived": true, "directed": false, "from_kinds": ["concept"], "to_kinds": ["concept"], "style": {}, "enabled": true, "seed_version": 1},
+  {"id": "similar", "name": "similar to", "system": true, "derived": true, "directed": false, "from_kinds": ["fragment"], "to_kinds": ["fragment"], "style": {}, "enabled": true, "seed_version": 1},
+  {"id": "member_of", "name": "member of", "system": true, "derived": true, "directed": true, "from_kinds": ["concept", "fragment"], "to_kinds": ["cluster"], "style": {}, "enabled": true, "seed_version": 1},
+  {"id": "link", "name": "connection", "system": true, "derived": false, "directed": false, "from_kinds": [], "to_kinds": [], "style": {}, "enabled": true, "seed_version": 1}
+]

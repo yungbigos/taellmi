@@ -11,7 +11,8 @@
 │   ├── Sources/
 │   │   ├── Domain/             value types + protocols (Transcriber, LanguageModel, Embedder, Reranker,
 │   │   │                       ConfigStore, EntryStore, JobQueue). No dependencies at all.
-│   │   ├── Persistence/        GRDB: schema, migrations, FTS5, sqlite-vec, records, entry files on disk
+│   │   ├── CSQLiteVec/         vendored sqlite-vec (C), compiled into the app (ADR 0011)
+│   │   ├── Persistence/        GRDB: schema, migrations, FTS5, sqlite-vec, graph nodes/edges, entry files on disk
 │   │   ├── Config/             config tables, seed JSON (Resources/Seeds), validation, model resolution
 │   │   ├── Pipeline/           durable job queue + steps (transcribe, enrich, chunk, embed), against Domain only
 │   │   ├── Search/             hybrid keyword + vector search, RRF, reranking

@@ -47,4 +47,37 @@ struct SeedBundleTests {
         bundle.assignments[0].modelID = "does-not-exist"
         #expect(bundle.validate().contains { $0.contains("does-not-exist") })
     }
+
+    @Test("every graph kind the pipeline relies on is seeded and protected as a system kind")
+    func systemKindsAreSeeded() throws {
+        let bundle = try SeedBundle.bundled()
+        let nodeKinds = Dictionary(uniqueKeysWithValues: bundle.nodeKinds.map { ($0.id, $0) })
+        let edgeKinds = Dictionary(uniqueKeysWithValues: bundle.edgeKinds.map { ($0.id, $0) })
+        for kind in GraphKinds.systemNodeKinds {
+            #expect(nodeKinds[kind]?.system == true, "node kind \(kind) must be a seeded system kind")
+        }
+        for kind in GraphKinds.systemEdgeKinds {
+            #expect(edgeKinds[kind]?.system == true, "edge kind \(kind) must be a seeded system kind")
+        }
+    }
+
+    @Test("the four Concept kinds people, places, topics and feelings are seeded under concept")
+    func conceptKindsAreSeeded() throws {
+        let children = try SeedBundle.bundled().nodeKinds.filter { $0.parentID == GraphKinds.concept }.map(\.id)
+        #expect(Set(children).isSuperset(of: ["person", "place", "topic", "emotion"]))
+    }
+
+    @Test("validation catches an edge kind that connects an unknown node kind")
+    func catchesUnknownEdgeEndpoint() throws {
+        var bundle = try SeedBundle.bundled()
+        bundle.edgeKinds[0].fromKinds = ["does-not-exist"]
+        #expect(bundle.validate().contains { $0.contains("does-not-exist") })
+    }
+
+    @Test("validation catches a missing system kind")
+    func catchesMissingSystemKind() throws {
+        var bundle = try SeedBundle.bundled()
+        bundle.nodeKinds.removeAll { $0.id == GraphKinds.fragment }
+        #expect(bundle.validate().contains { $0.contains(GraphKinds.fragment) })
+    }
 }

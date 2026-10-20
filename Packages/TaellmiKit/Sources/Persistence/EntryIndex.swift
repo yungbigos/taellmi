@@ -53,6 +53,21 @@ public struct EntryIndex: Sendable {
         }
     }
 
+    /// How well each Entry matches any of the words (three letters or more), higher is better. Entries that
+    /// match none are left out. Used to order results by relevance, not to decide what matches.
+    public func keywordScores(words: [String]) throws -> [String: Double] {
+        let terms = words.filter { $0.count >= 3 }.map { "\"" + $0.replacingOccurrences(of: "\"", with: "\"\"") + "\"" }
+        guard !terms.isEmpty else { return [:] }
+        return try database.reader.read { db in
+            let rows = try Row.fetchAll(
+                db,
+                sql: "SELECT entry_id, bm25(entry_search) AS rank FROM entry_search WHERE entry_search MATCH ?",
+                arguments: [terms.joined(separator: " OR ")])
+            // bm25 is lower for better matches; negate so higher means more relevant.
+            return Dictionary(rows.map { ($0["entry_id"], -($0["rank"] as Double)) }, uniquingKeysWith: max)
+        }
+    }
+
     public func entry(id: String) throws -> Entry? {
         try database.reader.read { db in try EntryRecord.fetchOne(db, key: id)?.entry }
     }

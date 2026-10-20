@@ -7,21 +7,25 @@ import os
 /// Runs queued work for entries, one job at a time, using whatever models the config assigns.
 public actor PipelineRunner {
     private let logger = Logger(subsystem: "app.taellmi", category: "pipeline")
-    private let jobs: JobQueue
+    let jobs: JobQueue
     private let files: EntryFileStore
-    private let index: EntryIndex
-    private let resolver: ModelResolver
+    let index: EntryIndex
+    let fragments: FragmentStore
+    let vectors: VectorStore
+    let resolver: ModelResolver
     private let engines: any TranscriberProvider
-    private let settings: SettingsStore
-    private let pipeline: PipelineConfig
+    let embedders: any EmbedderProvider
+    let settings: SettingsStore
+    let pipeline: PipelineConfig
     private let vocabulary: [any VocabularySource]
     private let classifier: any WordClassifier
-    private let now: @Sendable () -> Date
+    let now: @Sendable () -> Date
     private var isRunning = false
 
     public init(
-        jobs: JobQueue, files: EntryFileStore, index: EntryIndex, resolver: ModelResolver,
-        engines: any TranscriberProvider, settings: SettingsStore, pipeline: PipelineConfig,
+        jobs: JobQueue, files: EntryFileStore, index: EntryIndex, fragments: FragmentStore, vectors: VectorStore,
+        resolver: ModelResolver, engines: any TranscriberProvider, embedders: any EmbedderProvider,
+        settings: SettingsStore, pipeline: PipelineConfig,
         vocabulary: [any VocabularySource], classifier: any WordClassifier,
         now: @escaping @Sendable () -> Date = Date.init
     ) {
@@ -31,8 +35,11 @@ public actor PipelineRunner {
         self.jobs = jobs
         self.files = files
         self.index = index
+        self.fragments = fragments
+        self.vectors = vectors
         self.resolver = resolver
         self.engines = engines
+        self.embedders = embedders
         self.settings = settings
         self.pipeline = pipeline
     }
@@ -50,6 +57,21 @@ public actor PipelineRunner {
         guard !isRunning else { return }
         isRunning = true
         defer { isRunning = false }
+        do {
+            try scheduleMeaningWork()
+        } catch {
+            logger.error("Could not check passages and vectors: \(String(describing: error))")
+        }
+        await drainQueue()
+        // After draining, so passages that were re-created under the same id keep their vectors.
+        do {
+            try vectors.pruneOrphans()
+        } catch {
+            logger.error("Could not prune vectors: \(String(describing: error))")
+        }
+    }
+
+    private func drainQueue() async {
         while true {
             let policy: RetryPolicy
             let job: Job
@@ -69,12 +91,19 @@ public actor PipelineRunner {
         do {
             switch job.step {
             case "transcribe": try await transcribe(entryID: job.entryID)
+            case MeaningSteps.fragment: try fragment(entryID: job.entryID)
+            case MeaningSteps.embed: try await embed(entryID: job.entryID)
             default: throw PipelineError.unknownStep(job.step)
             }
             try jobs.markDone(job, now: now())
         } catch let error as ResolutionError {
             logger.info("Step \(job.step) waits for a model: \(error.description)")
             try? jobs.markWaiting(job, reason: error.description, retryAfter: policy.waitForModel, now: now())
+        } catch EngineCacheError.busy(let loadedModelID) {
+            // Another model is in use right now (e.g. search embedding a query); not this job's fault.
+            logger.info("Step \(job.step) waits, \(loadedModelID) is busy")
+            try? jobs.markWaiting(
+                job, reason: "waiting for \(loadedModelID) to finish", retryAfter: policy.backoff, now: now())
         } catch {
             logger.error("Step \(job.step) failed (attempt \(job.attempts)): \(String(describing: error))")
             try? jobs.markFailed(
@@ -149,4 +178,5 @@ struct RetryPolicy {
 public enum PipelineError: Error, Equatable {
     case unknownStep(String)
     case entryMissing(String)
+    case embeddingCountMismatch(expected: Int, got: Int)
 }

@@ -1,3 +1,4 @@
+import CSQLiteVec
 import Foundation
 import GRDB
 
@@ -16,6 +17,17 @@ public struct AppDatabase: Sendable {
     public static func open(at url: URL) throws -> AppDatabase {
         try FileManager.default.createDirectory(
             at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-        return try AppDatabase(DatabasePool(path: url.path))
+        return try AppDatabase(DatabasePool(path: url.path, configuration: configuration()))
+    }
+
+    /// Connection settings every database of the app needs, including the vector search functions.
+    public static func configuration() -> Configuration {
+        var configuration = Configuration()
+        configuration.prepareDatabase { db in
+            // sqlite-vec is compiled into the app (no extension loading), so the sandbox is no obstacle.
+            let code = sqlite3_vec_init(db.sqliteConnection, nil, nil)
+            guard code == SQLITE_OK else { throw DatabaseError(resultCode: ResultCode(rawValue: code)) }
+        }
+        return configuration
     }
 }

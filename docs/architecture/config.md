@@ -39,9 +39,16 @@ prompt            id, role, language, version, template, output_schema_json, ori
 pipeline_step     id, step, ordinal, enabled, role, conditions_json
 
 setting           key, value_json, type, origin, seed_version
-                  e.g. chunk.target_tokens=300, chunk.overlap_tokens=50, search.rrf_k=60,
-                       models.idle_unload_s=60, capture.hotkey="⌥⌘Space", embed.dimensions=512
+                  e.g. fragment.target_chars=600, fragment.max_chars=1200, search.rrf_k=60,
+                       search.min_similarity=0.45, models.idle_unload_s=60, capture.hotkey="⌥⌘Space"
+                  (a model's vector size and query phrasing are model params: params.dimensions,
+                   params.query_template)
                   brand.tokens (type json) holds the whole design-token document from Seeds/brand.json
+
+node_kind         id, name, parent_id, system, style_json, enabled, origin, seed_version
+edge_kind         id, name, system, derived, directed, from_kinds_json, to_kinds_json, style_json, enabled,
+                  origin, seed_version
+                  (the graph's kinds, ADR 0005/0011; system kinds cannot be deleted)
 ```
 
 Each embedding vector stores the `model_id` and `dimensions` that produced it. Changing the `embed` assignment therefore queues a background re-embed automatically, and search only compares vectors from the active model.

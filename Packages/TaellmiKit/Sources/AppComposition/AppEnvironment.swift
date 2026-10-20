@@ -8,6 +8,7 @@ import Foundation
 import IOKit.ps
 import Persistence
 import Pipeline
+import Search
 import SpeechAnalyzerEngine
 import Synchronization
 import SystemServices
@@ -19,6 +20,8 @@ public final class AppEnvironment {
     public static let liveEngines: [String: TranscriberFactory] = [
         ParakeetTranscriber.engineKey: ParakeetTranscriber.factory
     ]
+    /// Embedding engines, by engine key.
+    public static let liveEmbedders: [String: EmbedderFactory] = [:]
     /// Live-preview engines, by engine key.
     public static let livePreviewEngines: [String: LivePreviewFactory] = [
         AppleSpeechLivePreview.engineKey: AppleSpeechLivePreview.factory
@@ -82,7 +85,7 @@ public final class AppEnvironment {
         let storage = EncryptedStorage(root: root, key: key, decryptedCache: paths.decryptedCache)
         let environment = try AppEnvironment(
             paths: paths, archiveRoot: root, storage: storage, archiveKey: key, vault: vault, database: database,
-            engines: liveEngines, livePreviews: livePreviewEngines,
+            engines: liveEngines, embedders: liveEmbedders, livePreviews: livePreviewEngines,
             recorder: MicrophoneRecorder(scratchFolder: paths.scratch, sampleRate: sampleRate))
         environment.pendingRecoveryKey = newRecoveryKey
         return environment
@@ -98,20 +101,21 @@ public final class AppEnvironment {
     }
 
     public convenience init(
-        paths: AppPaths, engines: [String: TranscriberFactory], livePreviews: [String: LivePreviewFactory] = [:],
-        recorder: any AudioRecording
+        paths: AppPaths, engines: [String: TranscriberFactory], embedders: [String: EmbedderFactory] = [:],
+        livePreviews: [String: LivePreviewFactory] = [:], recorder: any AudioRecording
     ) throws {
         try self.init(
             paths: paths, archiveRoot: paths.archive, storage: PlainFolderStorage(root: paths.archive), archiveKey: nil,
             vault: nil,
-            database: AppDatabase.open(at: paths.database), engines: engines, livePreviews: livePreviews,
-            recorder: recorder)
+            database: AppDatabase.open(at: paths.database), engines: engines, embedders: embedders,
+            livePreviews: livePreviews, recorder: recorder)
     }
 
     init(
         paths: AppPaths, archiveRoot: URL, storage: any ArchiveStorage, archiveKey: SymmetricKey?, vault: ArchiveVault?,
         database: AppDatabase,
-        engines factories: [String: TranscriberFactory], livePreviews: [String: LivePreviewFactory],
+        engines factories: [String: TranscriberFactory], embedders: [String: EmbedderFactory],
+        livePreviews: [String: LivePreviewFactory],
         recorder: any AudioRecording
     ) throws {
         self.paths = paths
@@ -131,15 +135,17 @@ public final class AppEnvironment {
                 settings: settings, key: SettingKeys.vocabularyUseContacts, source: ContactsVocabularySource()),
         ]
         engines = EngineCache(
-            factories: factories, installation: installation, clock: ContinuousClock(),
+            factories: factories, embedders: embedders, installation: installation, clock: ContinuousClock(),
             // If the setting cannot be read, unload right away: the resource-safe choice.
             idleUnload: { (try? settings.number(SettingKeys.idleUnloadSeconds)).map { .seconds($0) } ?? .zero })
         let resolver = ModelResolver(
-            database: database, registeredEngines: Set(factories.keys).union(livePreviews.keys),
+            database: database, registeredEngines: engines.registeredEngines.union(livePreviews.keys),
             installation: installation,
             conditions: { RuntimeConditions(onBattery: PowerSource.isOnBattery) })
         runner = PipelineRunner(
-            jobs: JobQueue(database: database), files: files, index: index, resolver: resolver, engines: engines,
+            jobs: JobQueue(database: database), files: files, index: index,
+            fragments: FragmentStore(database: database), vectors: VectorStore(database: database),
+            resolver: resolver, engines: engines, embedders: engines,
             settings: settings, pipeline: PipelineConfig(database: database),
             vocabulary: [
                 CurationStore(storage: storage),
@@ -163,7 +169,13 @@ public final class AppEnvironment {
         exploreHotkeyStore = LiveHotkeyStore(
             settings: settings, editor: ConfigEditor(database: database), key: SettingKeys.exploreHotkey)
         exploreModel = ExploreViewModel(
-            library: LiveExploreLibrary(files: files, index: index),
+            library: LiveExploreLibrary(
+                files: files, index: index,
+                search: HybridSearch(
+                    index: index, fragments: FragmentStore(database: database),
+                    vectors: VectorStore(database: database), resolver: resolver, embedders: engines,
+                    settings: settings),
+                onChange: { kick.kick() }),
             autosaveDelay: .seconds((try? settings.number(SettingKeys.exploreAutosaveDelaySeconds)) ?? 0),
             capture: captureModel)
         vocabularyModel = VocabularyViewModel(

@@ -40,8 +40,27 @@ public struct JobQueue: Sendable {
         }
     }
 
+    /// Runs the steps again for an Entry whose input changed: finished steps become pending, missing steps
+    /// are added. Running jobs are left alone, and so are failed ones, so a broken step is not retried forever.
+    public func requeue(entryID: String, steps: [String], now: Date = Date()) throws {
+        try database.writer.write { db in
+            for step in steps {
+                try db.execute(
+                    sql: """
+                        INSERT INTO job (entry_id, step, state, attempts, created_at, updated_at)
+                        VALUES (?, ?, 'pending', 0, ?, ?)
+                        ON CONFLICT(entry_id, step) DO UPDATE SET state = 'pending', attempts = 0, last_error = NULL,
+                            not_before = NULL, updated_at = excluded.updated_at
+                        WHERE job.state = 'done'
+                        """,
+                    arguments: [entryID, step, now, now])
+            }
+        }
+    }
+
     /// Claims the next runnable job: pending, past its `not_before`, and every earlier step of the
-    /// same entry is done. Claiming counts as an attempt.
+    /// same entry is finished, done or failed for good. A later step then works with whatever input exists
+    /// (e.g. Text you typed into a recording that could not be transcribed). Claiming counts as an attempt.
     public func claimNext(now: Date = Date()) throws -> Job? {
         try database.writer.write { db in
             guard
@@ -52,7 +71,8 @@ public struct JobQueue: Sendable {
                         WHERE state = 'pending'
                           AND (not_before IS NULL OR not_before <= ?)
                           AND NOT EXISTS (
-                            SELECT 1 FROM job e WHERE e.entry_id = j.entry_id AND e.id < j.id AND e.state != 'done')
+                            SELECT 1 FROM job e WHERE e.entry_id = j.entry_id AND e.id < j.id
+                                AND e.state NOT IN ('done', 'failed'))
                         ORDER BY id LIMIT 1
                         """, arguments: [now])
             else { return nil }

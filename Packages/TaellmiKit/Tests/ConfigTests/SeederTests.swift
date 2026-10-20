@@ -73,4 +73,29 @@ struct SeederTests {
         let report = try Seeder(database: database).apply(bundle)
         #expect(report.inserted == 1)
     }
+
+    @Test("seeding fills the graph kind tables")
+    func seedsGraphKinds() throws {
+        let database = try makeDatabase()
+        _ = try Seeder(database: database).apply(SeedBundle.bundled())
+        let system = try database.reader.read { db in
+            try String.fetchSet(db, sql: "SELECT id FROM node_kind WHERE system")
+        }
+        #expect(system.isSuperset(of: GraphKinds.systemNodeKinds))
+    }
+
+    @Test("a kind under a kind under concept is seeded even when listed before its parent")
+    func seedsNestedKinds() throws {
+        let database = try makeDatabase()
+        var bundle = try SeedBundle.bundled()
+        var mother = try #require(bundle.nodeKinds.first { $0.id == "person" })
+        mother.id = "family"
+        mother.parentID = "person"
+        bundle.nodeKinds.insert(mother, at: 0)
+        _ = try Seeder(database: database).apply(bundle)
+        let parent = try database.reader.read { db in
+            try String.fetchOne(db, sql: "SELECT parent_id FROM node_kind WHERE id = 'family'")
+        }
+        #expect(parent == "person")
+    }
 }

@@ -7,5 +7,23 @@
     "conditions": {},
     "enabled": true,
     "seed_version": 1
+  },
+  {
+    "id": "fragment",
+    "step": "fragment",
+    "ordinal": 2,
+    "role": null,
+    "conditions": {},
+    "enabled": true,
+    "seed_version": 1
+  },
+  {
+    "id": "embed",
+    "step": "embed",
+    "ordinal": 3,
+    "role": "embed",
+    "conditions": {},
+    "enabled": true,
+    "seed_version": 1
   }
 ]

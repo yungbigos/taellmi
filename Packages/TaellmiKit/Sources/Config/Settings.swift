@@ -30,6 +30,18 @@ public enum SettingKeys {
     public static let companionFinishKey = "companion.finish_key"
     public static let companionCancelKey = "companion.cancel_key"
     public static let companionFollowSmoothing = "companion.follow_smoothing"
+    public static let fragmentTargetLength = "fragment.target_chars"
+    public static let fragmentMaxLength = "fragment.max_chars"
+    public static let embedBatchSize = "embed.batch_size"
+    public static let searchRRFK = "search.rrf_k"
+    public static let searchVectorCandidates = "search.vector_candidates"
+    public static let searchMinSimilarity = "search.min_similarity"
+
+    /// Settings of the meaning layer (passages, embeddings, search).
+    static let meaning = [
+        fragmentTargetLength, fragmentMaxLength, embedBatchSize, searchRRFK, searchVectorCandidates,
+        searchMinSimilarity,
+    ]
     /// Colours, type, tälli's look and motion (docs/brand/tokens.json), shipped as `Seeds/brand.json`.
     public static let brandTokens = "brand.tokens"
 
@@ -45,7 +57,7 @@ public enum SettingKeys {
             companionCursorOffset,
             companionSavedDisplaySeconds, companionFollowsCursor, companionFinishKey, companionCancelKey,
             companionFollowSmoothing, brandTokens,
-        ] + Commands.all.map(\.settingKey)
+        ] + meaning + Commands.all.map(\.settingKey)
 }
 
 public enum SettingsError: Error, Equatable {

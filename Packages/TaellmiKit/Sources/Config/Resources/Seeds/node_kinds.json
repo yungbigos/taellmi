@@ -1,0 +1,11 @@
+[
+  {"id": "entry", "name": "Entry", "parent_id": null, "system": true, "style": {}, "enabled": true, "seed_version": 1},
+  {"id": "fragment", "name": "Fragment", "parent_id": null, "system": true, "style": {}, "enabled": true, "seed_version": 1},
+  {"id": "atom", "name": "Atom", "parent_id": null, "system": true, "style": {}, "enabled": true, "seed_version": 1},
+  {"id": "concept", "name": "Concept", "parent_id": null, "system": true, "style": {}, "enabled": true, "seed_version": 1},
+  {"id": "cluster", "name": "Cluster", "parent_id": null, "system": true, "style": {}, "enabled": true, "seed_version": 1},
+  {"id": "person", "name": "Person", "parent_id": "concept", "system": false, "style": {}, "enabled": true, "seed_version": 1},
+  {"id": "place", "name": "Place", "parent_id": "concept", "system": false, "style": {}, "enabled": true, "seed_version": 1},
+  {"id": "topic", "name": "Topic", "parent_id": "concept", "system": false, "style": {}, "enabled": true, "seed_version": 1},
+  {"id": "emotion", "name": "Emotion", "parent_id": "concept", "system": false, "style": {}, "enabled": true, "seed_version": 1}
+]

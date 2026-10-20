@@ -2,14 +2,19 @@ import Domain
 import Features
 import Foundation
 import Persistence
+import Search
 
 /// Explore on the real Archive: Text and Recording come from the Entry folders, search from the index.
 nonisolated struct LiveExploreLibrary: ExploreLibrary {
     let files: EntryFileStore
     let index: EntryIndex
+    let search: HybridSearch
+    /// Called after a Text was written, so its passages and vectors are refreshed soon.
+    var onChange: @Sendable () -> Void = {}
 
+    /// Newest first without search words; with them, best match first by words and meaning.
     func search(_ query: EntryQuery) async throws -> [Entry] {
-        try index.search(query)
+        try await search.search(query)
     }
 
     func changes() -> AsyncStream<Void> {
@@ -27,6 +32,7 @@ nonisolated struct LiveExploreLibrary: ExploreLibrary {
     func createThought(text: String) async throws -> Entry {
         let entry = try files.createTypedEntry(text: text, createdAt: Date())
         try index.upsert(entry, transcript: nil)
+        onChange()
         return entry
     }
 
@@ -37,6 +43,7 @@ nonisolated struct LiveExploreLibrary: ExploreLibrary {
         entry.text = text
         try files.saveText(entry)
         try index.upsert(entry, transcript: loaded.transcript)
+        onChange()
     }
 
     func trash(id: String) async throws -> String {

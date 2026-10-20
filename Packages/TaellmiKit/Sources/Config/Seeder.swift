@@ -132,8 +132,47 @@ public struct Seeder: Sendable {
                     table: "setting", key: ["key": s.key], values: ["type": s.type, "value_json": json(s.value)],
                     seedVersion: s.seedVersion))
         }
+        // Parents before children, so the parent reference always resolves.
+        for k in parentsFirst(bundle.nodeKinds) {
+            rows.append(
+                Row(
+                    table: "node_kind", key: ["id": k.id],
+                    values: [
+                        "name": k.name, "parent_id": k.parentID, "system": k.system, "style_json": json(k.style),
+                        "enabled": k.enabled,
+                    ],
+                    seedVersion: k.seedVersion))
+        }
+        for k in bundle.edgeKinds {
+            rows.append(
+                Row(
+                    table: "edge_kind", key: ["id": k.id],
+                    values: [
+                        "name": k.name, "system": k.system, "derived": k.derived, "directed": k.directed,
+                        "from_kinds_json": json(k.fromKinds), "to_kinds_json": json(k.toKinds),
+                        "style_json": json(k.style), "enabled": k.enabled,
+                    ],
+                    seedVersion: k.seedVersion))
+        }
         return rows
     }
+}
+
+/// Node kinds ordered by depth below their root kind; a broken parent chain ends the walk (validation reports it).
+private func parentsFirst(_ kinds: [SeedBundle.NodeKind]) -> [SeedBundle.NodeKind] {
+    let parents = Dictionary(kinds.map { ($0.id, $0.parentID) }, uniquingKeysWith: { first, _ in first })
+    func depth(_ id: String) -> Int {
+        var depth = 0
+        var current = parents[id] ?? nil
+        var seen: Set<String> = [id]
+        while let parent = current, seen.insert(parent).inserted {
+            depth += 1
+            current = parents[parent] ?? nil
+        }
+        return depth
+    }
+    return kinds.enumerated().sorted { (depth($0.element.id), $0.offset) < (depth($1.element.id), $1.offset) }
+        .map(\.element)
 }
 
 /// Encodes a value as compact, key-sorted JSON text for a `*_json` column.

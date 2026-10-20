@@ -28,9 +28,11 @@ let package = Package(
     targets: [
         // MARK: Core (no third-party ML)
         .target(name: "Domain", swiftSettings: strict),
+        /// sqlite-vec v0.1.9 (vendored amalgamation), compiled against the system SQLite that GRDB uses.
+        .target(name: "CSQLiteVec", cSettings: [.define("SQLITE_CORE")], linkerSettings: [.linkedLibrary("sqlite3")]),
         .target(
             name: "Persistence",
-            dependencies: ["Domain", .product(name: "GRDB", package: "GRDB.swift")],
+            dependencies: ["Domain", "CSQLiteVec", .product(name: "GRDB", package: "GRDB.swift")],
             swiftSettings: strict
         ),
         .target(
@@ -46,6 +48,7 @@ let package = Package(
             ],
             swiftSettings: strict
         ),
+        .target(name: "Search", dependencies: ["Domain", "Persistence", "Config"], swiftSettings: strict),
         .target(name: "Audio", dependencies: ["Domain"], swiftSettings: strict),
         .target(name: "Features", dependencies: ["Domain"], swiftSettings: ui),
         /// Apple system frameworks used as data sources (NaturalLanguage, Contacts).
@@ -67,7 +70,7 @@ let package = Package(
         .target(
             name: "AppComposition",
             dependencies: [
-                "Domain", "Persistence", "Config", "Pipeline", "Audio", "Features", "SystemServices",
+                "Domain", "Persistence", "Config", "Pipeline", "Search", "Audio", "Features", "SystemServices",
                 "FluidAudioEngine", "SpeechAnalyzerEngine",
             ],
             swiftSettings: ui
@@ -105,6 +108,9 @@ let package = Package(
             ],
             swiftSettings: strict
         ),
+        .testTarget(
+            name: "SearchTests", dependencies: ["Search", "Config", "Persistence", "Domain", "TestSupport"],
+            swiftSettings: strict),
         .testTarget(
             name: "FeaturesTests", dependencies: ["Features", "Domain", "TestSupport"], swiftSettings: ui),
 

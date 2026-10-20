@@ -59,3 +59,11 @@ public struct ModelConfig: Sendable, Equatable, Identifiable {
         self.estimatedMemoryMB = estimatedMemoryMB
     }
 }
+
+extension ModelConfig {
+    /// Which vectors can be compared with each other: the same model at the same configured size. Changing
+    /// `params.dimensions` makes a new space, so every passage is embedded again.
+    public var vectorSpace: String {
+        "\(id)@\(params["dimensions"]?.doubleValue.map { String(Int($0)) } ?? "native")"
+    }
+}

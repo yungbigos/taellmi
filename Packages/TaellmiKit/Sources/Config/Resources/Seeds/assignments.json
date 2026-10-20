@@ -16,5 +16,14 @@
     "conditions": {},
     "enabled": true,
     "seed_version": 1
+  },
+  {
+    "id": "embed-1",
+    "role": "embed",
+    "priority": 1,
+    "model_id": "qwen3-embedding-0.6b-8bit",
+    "conditions": {},
+    "enabled": true,
+    "seed_version": 1
   }
 ]

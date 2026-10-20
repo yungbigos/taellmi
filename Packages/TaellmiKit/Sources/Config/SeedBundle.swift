@@ -151,18 +151,60 @@ public struct SeedBundle: Sendable, Equatable {
         }
     }
 
+    /// A kind of graph node (ADR 0005). Kinds with a parent are specialisations, e.g. person under concept.
+    public struct NodeKind: Sendable, Equatable, Codable {
+        public var id: String
+        public var name: String
+        public var parentID: String?
+        public var system: Bool
+        public var style: [String: JSONValue]
+        public var enabled: Bool
+        public var seedVersion: Int
+
+        enum CodingKeys: String, CodingKey {
+            case id, name, system, style, enabled
+            case parentID = "parent_id"
+            case seedVersion = "seed_version"
+        }
+    }
+
+    /// A kind of graph edge. Empty `fromKinds`/`toKinds` mean any node kind.
+    public struct EdgeKind: Sendable, Equatable, Codable {
+        public var id: String
+        public var name: String
+        public var system: Bool
+        public var derived: Bool
+        public var directed: Bool
+        public var fromKinds: [String]
+        public var toKinds: [String]
+        public var style: [String: JSONValue]
+        public var enabled: Bool
+        public var seedVersion: Int
+
+        enum CodingKeys: String, CodingKey {
+            case id, name, system, derived, directed, style, enabled
+            case fromKinds = "from_kinds"
+            case toKinds = "to_kinds"
+            case seedVersion = "seed_version"
+        }
+    }
+
     public var providers: [Provider]
     public var models: [Model]
     public var assignments: [Assignment]
     public var pipeline: [PipelineStep]
     public var prompts: [Prompt]
     public var settings: [Setting]
+    public var nodeKinds: [NodeKind]
+    public var edgeKinds: [EdgeKind]
 
     public static let empty = SeedBundle(
-        providers: [], models: [], assignments: [], pipeline: [], prompts: [], settings: [])
+        providers: [], models: [], assignments: [], pipeline: [], prompts: [], settings: [], nodeKinds: [],
+        edgeKinds: [])
 
     public var rowCount: Int {
         providers.count + models.count + assignments.count + pipeline.count + prompts.count + settings.count
+            + nodeKinds.count + edgeKinds.count
     }
 
     /// Loads the seed files shipped inside the Config module.
@@ -181,7 +223,8 @@ public struct SeedBundle: Sendable, Equatable {
         return SeedBundle(
             providers: try read("providers"), models: try read("models"), assignments: try read("assignments"),
             pipeline: try read("pipeline"), prompts: try read("prompts"),
-            settings: try read("settings") + [try brandSetting(folder: folder)])
+            settings: try read("settings") + [try brandSetting(folder: folder)],
+            nodeKinds: try read("node_kinds"), edgeKinds: try read("edge_kinds"))
     }
 
     /// The brand tokens live in their own file, since they are one large document; they are stored as one setting.
@@ -232,6 +275,31 @@ public struct SeedBundle: Sendable, Equatable {
         }
         for (key, count) in Dictionary(settings.map { ($0.key, 1) }, uniquingKeysWith: +) where count > 1 {
             problems.append("setting \(key) is defined \(count) times")
+        }
+        problems += validateGraphKinds()
+        return problems
+    }
+
+    private func validateGraphKinds() -> [String] {
+        var problems: [String] = []
+        let nodeKindIDs = Set(nodeKinds.map(\.id))
+        for kind in nodeKinds {
+            if let parent = kind.parentID, !nodeKindIDs.contains(parent) {
+                problems.append("node kind \(kind.id): unknown parent \(parent)")
+            }
+        }
+        for kind in edgeKinds {
+            for endpoint in kind.fromKinds + kind.toKinds where !nodeKindIDs.contains(endpoint) {
+                problems.append("edge kind \(kind.id): unknown node kind \(endpoint)")
+            }
+        }
+        let systemNodes = Set(nodeKinds.filter(\.system).map(\.id))
+        for missing in GraphKinds.systemNodeKinds.subtracting(systemNodes).sorted() {
+            problems.append("system node kind \(missing) is missing")
+        }
+        let systemEdges = Set(edgeKinds.filter(\.system).map(\.id))
+        for missing in GraphKinds.systemEdgeKinds.subtracting(systemEdges).sorted() {
+            problems.append("system edge kind \(missing) is missing")
         }
         return problems
     }

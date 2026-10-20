@@ -1,7 +1,10 @@
+import Config
 import Domain
 import Features
 import Foundation
 import Persistence
+import Search
+import Synchronization
 import TestSupport
 import Testing
 
@@ -9,19 +12,65 @@ import Testing
 
 @Suite("Explore working on the real Archive")
 struct LiveExploreLibraryTests {
-    private func setUp() throws -> (LiveExploreLibrary, EntryFileStore, Entry, TemporaryDirectory) {
+    private func setUp(onChange: @escaping @Sendable () -> Void = {}) throws -> (
+        LiveExploreLibrary, EntryFileStore, Entry, TemporaryDirectory
+    ) {
+        let (library, files, entry, temp, _) = try setUpWithDatabase(onChange: onChange)
+        return (library, files, entry, temp)
+    }
+
+    private func setUpWithDatabase(onChange: @escaping @Sendable () -> Void = {}) throws -> (
+        LiveExploreLibrary, EntryFileStore, Entry, TemporaryDirectory, AppDatabase
+    ) {
         let temp = try TemporaryDirectory()
         let files = EntryFileStore(
             storage: PlainFolderStorage(root: temp.url, systemTrash: { try FileManager.default.removeItem(at: $0) }),
             calendar: berlinCalendar)
-        let index = EntryIndex(database: try makeDatabase())
+        let database = try makeDatabase()
+        _ = try seedFakeTranscription(database, modelsRoot: temp.url.appendingPathComponent("models"))
+        let index = EntryIndex(database: database)
+        let search = HybridSearch(
+            index: index, fragments: FragmentStore(database: database), vectors: VectorStore(database: database),
+            resolver: ModelResolver(
+                database: database, registeredEngines: ["fake_engine", "fake_embedder"],
+                installation: ModelInstallation(root: temp.url.appendingPathComponent("models")),
+                conditions: { RuntimeConditions(onBattery: false) }),
+            embedders: FakeEmbedderProvider(), settings: SettingsStore(database: database))
         let entry = try files.saveTranscript(
             germanTranscript,
             for: try files.createVoiceEntry(
                 Recording(file: try temp.makeAudioFile(), durationSeconds: 5.6, startedAt: sampleDate),
                 id: "ex01"))
         try index.upsert(entry, transcript: germanTranscript)
-        return (LiveExploreLibrary(files: files, index: index), files, entry, temp)
+        return (
+            LiveExploreLibrary(files: files, index: index, search: search, onChange: onChange), files, entry, temp,
+            database
+        )
+    }
+
+    @Test("search finds a thought by meaning even without its exact words")
+    func searchByMeaning() async throws {
+        let (library, files, entry, temp, database) = try setUpWithDatabase()
+        // The Entry's passages are embedded by the pipeline in the app; here they are stored directly.
+        let fragments = try FragmentStore(database: database).replace(
+            entryID: entry.id, spans: PassageSplitter(targetLength: 600, maxLength: 1200).passages(in: entry.text),
+            sourceText: "test", method: "test@1")
+        try VectorStore(database: database).upsert(
+            fragments.map { ($0.id, FakeEmbedder.vector($0.text)) }, space: fakeEmbeddingModel.vectorSpace)
+        try ConfigEditor(database: database).setSetting(SettingKeys.searchMinSimilarity, to: .number(0.3))
+
+        #expect(try await library.search(EntryQuery(text: "Zukunftsängste")).map(\.id) == [entry.id])
+        withExtendedLifetime((temp, files)) {}
+    }
+
+    @Test("writing or editing a thought asks for its passages to be refreshed")
+    func editsTriggerRefresh() async throws {
+        let calls = Mutex(0)
+        let (library, _, entry, temp) = try setUp(onChange: { calls.withLock { $0 += 1 } })
+        try await library.saveText(id: entry.id, text: "Neuer Gedanke.")
+        _ = try await library.createThought(text: "Noch einer.")
+        #expect(calls.withLock { $0 } == 2)
+        withExtendedLifetime(temp) {}
     }
 
     @Test("the detail has the Text from disk, the Transcript segments and the recording")

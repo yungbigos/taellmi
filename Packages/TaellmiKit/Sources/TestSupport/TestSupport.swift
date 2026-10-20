@@ -1,3 +1,4 @@
+import Config
 import Domain
 import Foundation
 import GRDB
@@ -5,7 +6,7 @@ import Persistence
 
 /// A fresh in-memory database with the real migrations applied.
 public func makeDatabase() throws -> AppDatabase {
-    try AppDatabase(DatabaseQueue())
+    try AppDatabase(DatabaseQueue(configuration: AppDatabase.configuration()))
 }
 
 /// A temporary folder that is removed when the value is deinitialised.
@@ -50,3 +51,10 @@ public let germanTranscript = Transcript(
     modelID: "fake-transcriber",
     durationSeconds: 5.6
 )
+
+/// A fresh in-memory database with the real migrations and the bundled default config.
+public func makeSeededDatabase() throws -> AppDatabase {
+    let database = try makeDatabase()
+    _ = try Seeder(database: database).apply(SeedBundle.bundled())
+    return database
+}

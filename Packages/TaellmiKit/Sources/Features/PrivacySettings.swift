@@ -71,7 +71,7 @@ struct PrivacySettingsView: View {
         Form {
             Section {
                 LabeledContent("where your thoughts are stored") {
-                    Text(model.location).lineLimit(1).truncationMode(.middle).foregroundStyle(.secondary)
+                    Text(model.location).lineLimit(1).truncationMode(.middle).brandForeground(.quiet)
                 }
                 Button("change …") {
                     if let folder = Self.chooseFolder(prompt: "store here") {
@@ -88,7 +88,7 @@ struct PrivacySettingsView: View {
                     if model.hasPendingRecoveryKey {
                         Button("show and confirm", action: showRecoveryKey)
                     } else {
-                        Text("saved").foregroundStyle(.secondary)
+                        Text("saved").brandForeground(.quiet)
                     }
                 }
                 Toggle(
@@ -102,9 +102,10 @@ struct PrivacySettingsView: View {
             } footer: {
                 Text("writes every thought as readable files, for example for obsidian. they are not encrypted there.")
             }
-            if let message = model.message { Text(message).foregroundStyle(.secondary) }
+            if let message = model.message { Text(message).brandForeground(.quiet) }
         }
         .formStyle(.grouped)
+        .scrollContentBackground(.hidden)
         .frame(width: 460, height: 420)
         .task { await model.load() }
     }

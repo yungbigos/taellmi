@@ -11,6 +11,11 @@ public struct BrandTokens: Sendable, Equatable, Codable {
     public var menuBar: MenuBar
     /// Named curves and springs, e.g. `soft`, `enter`, `spring.appear`.
     public var easing: [String: Easing]
+    /// How see-through each window and panel is, and what it turns into for accessibility.
+    public var surface: Surfaces
+    /// Quiet fills on top of a surface, by name (e.g. `field`, `selection`, `mark.spoken`).
+    public var fill: [String: Fill]
+    public var shape: Shape
 
     /// Decodes the tokens from their JSON config value.
     public init(json: JSONValue) throws {
@@ -168,12 +173,13 @@ public struct BrandTokens: Sendable, Equatable, Codable {
         public var saving: Saving
         public var blink: Blink
         public var crossfade: Crossfade
+        public var scroll: Crossfade
         public var timeOfDay: TimeOfDay
 
         enum CodingKeys: String, CodingKey {
             case appearCursor = "appear.cursor"
             case appearLaunch = "appear.launch"
-            case breath, voice, pause, thinking, saving, blink, crossfade, timeOfDay
+            case breath, voice, pause, thinking, saving, blink, crossfade, scroll, timeOfDay
         }
 
         public struct Appear: Sendable, Equatable, Codable {
@@ -248,8 +254,10 @@ public struct BrandTokens: Sendable, Equatable, Codable {
             public var morningMore: Double
         }
 
+        /// A timed transition: a duration and the name of its curve in `easing`.
         public struct Crossfade: Sendable, Equatable, Codable {
             public var duration: Double
+            public var easing: String
         }
 
         public struct TimeOfDay: Sendable, Equatable, Codable {
@@ -259,6 +267,45 @@ public struct BrandTokens: Sendable, Equatable, Codable {
             public var morningWidthH: Double
             public var nightFalloffH: Double
         }
+    }
+
+    public struct Surfaces: Sendable, Equatable, Codable {
+        public var window: Surface
+        public var reading: Surface
+        public var panel: Surface
+        public var bubble: Surface
+        public var outline: Outline
+    }
+
+    public struct Surface: Sendable, Equatable, Codable {
+        /// A macOS material by name (`popover`, `under_window_background`, …) or `glass`.
+        public var material: String
+        /// A colour role (`paper`, `mist`, …) laid over the material.
+        public var tint: String
+        public var tintOpacity: Pair
+        /// The solid colour role used when transparency is off or contrast is increased.
+        public var fallback: String
+    }
+
+    public struct Pair: Sendable, Equatable, Codable {
+        public var light: Double
+        public var dark: Double
+    }
+
+    public struct Outline: Sendable, Equatable, Codable {
+        public var color: String
+        public var widthPt: Double
+    }
+
+    public struct Fill: Sendable, Equatable, Codable {
+        public var color: String
+        public var opacity: Double
+        public var contrastOpacity: Double
+    }
+
+    public struct Shape: Sendable, Equatable, Codable {
+        /// Corner radii in points, by name (`field`, `panel`, `bubble`, `mark`).
+        public var radiusPt: [String: Double]
     }
 
     public struct MenuBar: Sendable, Equatable, Codable {

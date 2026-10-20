@@ -1,4 +1,5 @@
 import AppKit
+import Domain
 import Observation
 import SwiftUI
 
@@ -64,17 +65,18 @@ public struct RecoveryKeyView: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("your recovery key").font(.title2)
+            Text("your recovery key").brandFont("display.heading")
             Text(
                 "your thoughts are encrypted. with this key you can open them on another mac, or if this mac's keychain is lost. keep it somewhere safe, for example in your password manager or on paper."
             )
-            .foregroundStyle(.secondary)
+            .brandForeground(.quiet)
             Text(model.recoveryKey)
+                // Monospaced on purpose: every character of the key must be told apart (0 and O, 1 and l).
                 .font(.title3.monospaced())
                 .textSelection(.enabled)
                 .padding(12)
                 .frame(maxWidth: .infinity)
-                .background(.quaternary, in: RoundedRectangle(cornerRadius: 8))
+                .brandFill(.field)
             HStack {
                 Button("copy") {
                     NSPasteboard.general.clearContents()
@@ -91,7 +93,7 @@ public struct RecoveryKeyView: View {
                 Button("done") { Task { await model.confirm() } }
                     .keyboardShortcut(.defaultAction)
             }
-            if let message = model.message { Text(message).foregroundStyle(.orange) }
+            if let message = model.message { Text(message).brandStatus(.warning) }
         }
         .padding(24)
         .frame(width: 520)
@@ -117,9 +119,9 @@ public struct UnlockArchiveView: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("unlock your thoughts").font(.title2)
+            Text("unlock your thoughts").brandFont("display.heading")
             Text("this mac doesn't know the key to your thoughts yet. enter your recovery key.")
-                .foregroundStyle(.secondary)
+                .brandForeground(.quiet)
             HStack {
                 TextField("recovery key", text: $model.typed)
                     .textFieldStyle(.roundedBorder)
@@ -128,7 +130,7 @@ public struct UnlockArchiveView: View {
                 Button("unlock") { Task { await model.unlock() } }
                     .keyboardShortcut(.defaultAction)
             }
-            if let message = model.message { Text(message).foregroundStyle(.orange) }
+            if let message = model.message { Text(message).brandStatus(.warning) }
         }
         .padding(24)
         .frame(width: 520)
@@ -139,12 +141,19 @@ public struct UnlockArchiveView: View {
 /// A small standalone window for one-off panels (recovery key, unlock).
 public enum PanelWindow {
     @discardableResult
-    public static func show(title: String, @ViewBuilder content: () -> some View) -> NSWindow {
+    public static func show(
+        title: String, brand: BrandTokens?, @ViewBuilder content: () -> some View
+    ) -> NSWindow {
         let window = NSWindow(
-            contentRect: .zero, styleMask: [.titled, .closable], backing: .buffered, defer: false)
+            contentRect: .zero, styleMask: [.titled, .closable, .fullSizeContentView], backing: .buffered,
+            defer: false)
         window.title = title
+        window.titlebarAppearsTransparent = true
         window.isReleasedWhenClosed = false
-        window.contentView = NSHostingView(rootView: content())
+        window.contentView = NSHostingView(
+            rootView: content()
+                .background { BrandSurfaceBackground(kind: .panel, radius: nil).ignoresSafeArea() }
+                .brandStyle(brand))
         window.center()
         NSApplication.shared.activate()
         window.makeKeyAndOrderFront(nil)

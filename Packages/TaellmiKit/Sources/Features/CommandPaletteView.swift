@@ -48,6 +48,7 @@ struct CommandPaletteView: View {
             .frame(height: 300)
         }
         .frame(width: 520)
+        .presentationBackground { BrandSurfaceBackground(kind: .panel, radius: .panel) }
         .task {
             focused = true
             await palette.update(query: palette.query)
@@ -56,16 +57,16 @@ struct CommandPaletteView: View {
 
     private func row(_ item: PaletteItem, highlighted: Bool) -> some View {
         HStack {
-            Image(systemName: icon(for: item)).foregroundStyle(.secondary).frame(width: 18)
+            Image(systemName: icon(for: item)).brandForeground(.quiet).frame(width: 18)
             Text(item.title).lineLimit(1)
             Spacer()
             if let shortcut = item.shortcut {
-                Text(shortcut).font(.callout.monospaced()).foregroundStyle(.secondary)
+                Text(shortcut).brandFont("text.label").brandForeground(.quiet)
             }
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 7)
-        .background(highlighted ? AnyShapeStyle(.tint.opacity(0.18)) : AnyShapeStyle(.clear))
+        .background { if highlighted { BrandFillBackground(name: .selection, radius: nil) } }
         .contentShape(Rectangle())
     }
 

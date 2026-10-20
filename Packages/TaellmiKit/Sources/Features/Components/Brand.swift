@@ -8,7 +8,7 @@ extension EnvironmentValues {
 }
 
 /// The colour roles of the brand. Pink is only ever used for the dots.
-public enum BrandColorRole: Sendable {
+public enum BrandColorRole: String, Sendable {
     case paper, ink, blue, mist, pink, quiet
 
     func swatch(in palette: BrandTokens.Palette) -> BrandTokens.Swatch {

@@ -37,6 +37,7 @@ public struct SettingsView: View {
             PrivacySettingsView(model: privacy, showRecoveryKey: showRecoveryKey)
                 .tabItem { Label("privacy", systemImage: "lock") }
         }
+        .containerBackground(for: .window) { BrandSurfaceBackground(kind: .panel, radius: nil) }
         .textCase(appearance.swiftUICase)
     }
 }
@@ -54,7 +55,7 @@ struct GeneralSettingsView: View {
                 }
                 if let warning = hotkey.warning {
                     Label(warning, systemImage: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.orange)
+                        .brandStatus(.warning)
                 }
             } header: {
                 Text("call tälli")
@@ -67,7 +68,7 @@ struct GeneralSettingsView: View {
                 }
                 if let warning = exploreHotkey.warning {
                     Label(warning, systemImage: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.orange)
+                        .brandStatus(.warning)
                 }
             }
             Section("appearance") {
@@ -84,6 +85,7 @@ struct GeneralSettingsView: View {
             }
         }
         .formStyle(.grouped)
+        .scrollContentBackground(.hidden)
         .frame(width: 460, height: 400)
         .task {
             await hotkey.load()
@@ -161,6 +163,7 @@ struct ShortcutSettingsView: View {
             }
         }
         .formStyle(.grouped)
+        .scrollContentBackground(.hidden)
         .frame(width: 460, height: 420)
     }
 }
@@ -176,8 +179,8 @@ private struct ShortcutRow: View {
             }
             if let warning = model.warning {
                 Label(warning, systemImage: "exclamationmark.triangle.fill")
-                    .font(.caption)
-                    .foregroundStyle(.orange)
+                    .brandFont("text.label")
+                    .brandStatus(.warning)
             }
         }
         .task { await model.load() }

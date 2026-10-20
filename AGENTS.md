@@ -32,14 +32,16 @@ tällmi is a local-only, privacy-first macOS voice journal. You talk into it in 
 scripts/check.sh               # the gate: format lint → build → fast tests (run before saying "done")
 scripts/check.sh --fix         # same, but auto-format first
 scripts/test-integration.sh    # real models on audio fixtures (slow, needs downloaded models)
-scripts/run-app.sh             # build, install to ~/Applications/taellmi.app, launch (--build: build only)
+scripts/run-app.sh             # build and launch; from the main checkout it installs to ~/Applications/taellmi.app (--build: build only)
 scripts/run-app.sh --demo      # same, as a separate "taellmi-demo" app with its own data and Keychain entry
+scripts/run-app.sh --install   # from a worktree: install to ~/Applications anyway (replaces the owner's copy)
 scripts/make-demo-archive.sh <dir> <thoughts.jsonl>...  # encrypted demo Archive of test thoughts for the demo app
 scripts/download-model.sh <id> # the one user-started network step: fetch a seed model, verify SHA-256
 scripts/download-eval-data.sh  # developer step: the German and English search-evaluation controls (pinned, SHA-256)
 scripts/eval-search.sh         # measure search on eval/ and the controls with the real model (see docs/research)
 ```
 
+- Run from a git worktree, `scripts/run-app.sh` launches the worktree's own copy at `build/run/taellmi.app` (`build/demo/run/taellmi-demo.app` with `--demo`) and leaves `~/Applications` alone, so parallel sessions never replace the owner's installed app. All copies share one data folder, so a run stops whichever copy of the same app is running. Tell the owner which copy you launched.
 - Where the running app keeps its data: `~/Library/Containers/app.taellmi/Data/Library/Application Support/taellmi/` (`Archive/`, `taellmi.sqlite`, `models/`, `Scratch/`).
 - Inspect config or the index with `sqlite3` on `taellmi.sqlite`.
 

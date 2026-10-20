@@ -178,6 +178,7 @@ public final class AppEnvironment {
                     settings: settings),
                 onChange: { kick.kick() }),
             autosaveDelay: .seconds((try? settings.number(SettingKeys.exploreAutosaveDelaySeconds)) ?? 0),
+            startView: (try? settings.string(SettingKeys.exploreStartView)).flatMap(ExploreViewKind.init) ?? .stack,
             capture: captureModel)
         vocabularyModel = VocabularyViewModel(
             settings: LiveVocabularySettings(

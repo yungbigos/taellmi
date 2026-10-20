@@ -18,11 +18,11 @@ struct BrandSurfaceTests {
         let tokens = try shippedTokens()
         let light = tokens.rendering(of: .window, dark: false, reduceTransparency: false, increaseContrast: false)
         let dark = tokens.rendering(of: .window, dark: true, reduceTransparency: false, increaseContrast: false)
-        #expect(light == .material(.underWindowBackground, tint: .paper, tintOpacity: 0.4))
-        #expect(dark == .material(.underWindowBackground, tint: .paper, tintOpacity: 0.45))
+        #expect(light == .material(.underWindowBackground, tint: .paper, tintOpacity: 0.2))
+        #expect(dark == .material(.underWindowBackground, tint: .paper, tintOpacity: 0.25))
     }
 
-    @Test("under your thoughts the surface is nearly solid paper, never glass")
+    @Test("under your thoughts the surface is mostly paper, never glass")
     func readingIsNearlySolid() throws {
         let tokens = try shippedTokens()
         for dark in [false, true] {
@@ -32,7 +32,7 @@ struct BrandSurfaceTests {
                 continue
             }
             #expect(tint == .paper)
-            #expect(opacity >= 0.8)
+            #expect(opacity >= 0.6)
         }
     }
 

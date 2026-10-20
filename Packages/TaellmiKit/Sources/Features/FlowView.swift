@@ -71,7 +71,6 @@ private struct FlowBlock: View {
             TextField("", text: $text, axis: .vertical)
                 .textFieldStyle(.plain)
                 .brandFont("text.thought")
-                .lineSpacing(4)
                 .onChange(of: text) { _, newText in
                     guard newText != entry.text else { return }
                     saveTask?.cancel()

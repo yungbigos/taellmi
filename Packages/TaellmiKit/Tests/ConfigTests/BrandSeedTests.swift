@@ -42,6 +42,8 @@ struct BrandSeedTests {
         let pinned: [Int: String] = [
             1: "c561ef1150f6432f190a94c004dcc95cfe505818750a1af934e2c0dbf75dcde5",
             2: "19dd482f2cb68801e55bbeb920a9876ad0cd489697b094da4870777eed0176f6",
+            3: "8cc46fcf050a0b4d572ff92e0d2b88835c08376342d3cec84b13fb62cb65484e",
+            4: "be657bdb66b9040c58372f6ff088cdab661e72b3b8522f1d20660442165c6d9a",
         ]
         #expect(
             pinned[setting.seedVersion] == hash,

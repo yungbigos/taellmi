@@ -16,6 +16,8 @@ public struct BrandTokens: Sendable, Equatable, Codable {
     /// Quiet fills on top of a surface, by name (e.g. `field`, `selection`, `mark.spoken`).
     public var fill: [String: Fill]
     public var shape: Shape
+    /// Spacing steps and layout widths, in points.
+    public var space: Space
 
     /// Decodes the tokens from their JSON config value.
     public init(json: JSONValue) throws {
@@ -306,6 +308,22 @@ public struct BrandTokens: Sendable, Equatable, Codable {
     public struct Shape: Sendable, Equatable, Codable {
         /// Corner radii in points, by name (`field`, `panel`, `bubble`, `mark`).
         public var radiusPt: [String: Double]
+    }
+
+    public struct Space: Sendable, Equatable, Codable {
+        /// Spacing steps by name (`xs` … `xxxl`).
+        public var scale: [String: Double]
+        /// The widest a column of your text gets, so lines stay readable.
+        public var readingWidthPt: Double
+        public var inspectorWidthPt: Width
+        public var listWidthPt: Width
+        public var sidebarWidthPt: Width
+
+        public struct Width: Sendable, Equatable, Codable {
+            public var min: Double
+            public var ideal: Double
+            public var max: Double?
+        }
     }
 
     public struct MenuBar: Sendable, Equatable, Codable {

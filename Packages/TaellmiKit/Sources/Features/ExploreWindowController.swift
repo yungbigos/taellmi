@@ -53,6 +53,9 @@ public final class ExploreWindowController: NSObject, NSWindowDelegate {
             styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView], backing: .buffered,
             defer: false)
         window.title = "tällmi"
+        // The toolbar floats over the content instead of sitting on its own grey band.
+        window.titlebarAppearsTransparent = true
+        window.toolbarStyle = .unified
         window.isReleasedWhenClosed = false
         window.contentView = NSHostingView(rootView: ExploreView(model: model).brandStyle(brand))
         window.setFrameAutosaveName("ExploreWindow")

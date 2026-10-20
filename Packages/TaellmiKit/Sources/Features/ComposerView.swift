@@ -18,7 +18,6 @@ struct ComposerView: View {
                     Text(spoken)
                         .brandFont("text.thought")
                         .brandForeground(spoken == Self.listening ? .quiet : .ink)
-                        .lineSpacing(6)
                         .padding(.top, 8)
                         .padding(.leading, 5)
                         .allowsHitTesting(false)
@@ -26,7 +25,6 @@ struct ComposerView: View {
                 }
                 TextEditor(text: $model.composerText)
                     .brandFont("text.thought")
-                    .lineSpacing(6)
                     .scrollContentBackground(.hidden)
                     .focused($focused)
                     .onChange(of: model.composerText) { Task { await model.typingStarted() } }

@@ -24,6 +24,8 @@ public enum SettingKeys {
     public static let lockWindow = "privacy.lock_window"
     public static let exploreHotkey = "explore.hotkey"
     public static let exploreAutosaveDelaySeconds = "explore.autosave_delay_s"
+    /// The view the tällmi window opens in: `stack`, `flow` or `time`.
+    public static let exploreStartView = "explore.start_view"
     public static let companionCursorOffset = "companion.cursor_offset"
     public static let companionSavedDisplaySeconds = "companion.saved_display_s"
     public static let companionFollowsCursor = "companion.follows_cursor"
@@ -55,7 +57,7 @@ public enum SettingKeys {
             waitForModelSeconds, maintenanceIntervalSeconds, vocabularyMinSimilarityNames, vocabularyMinSimilarityOther,
             vocabularyUseContacts, textCase, archiveLocationBookmark, archivePendingMoveBookmark, lockWindow,
             exploreHotkey,
-            exploreAutosaveDelaySeconds,
+            exploreAutosaveDelaySeconds, exploreStartView,
             companionCursorOffset,
             companionSavedDisplaySeconds, companionFollowsCursor, companionFinishKey, companionCancelKey,
             companionFollowSmoothing, brandTokens,

@@ -90,8 +90,14 @@ public final class ExploreViewModel {
     @ObservationIgnored private var lastTrashed: String?
     @ObservationIgnored private var observation: Task<Void, Never>?
 
-    /// - Parameter autosaveDelay: pause after the last keystroke before saving (from config).
-    public init(library: any ExploreLibrary, autosaveDelay: Duration, capture: CaptureViewModel? = nil) {
+    /// - Parameters:
+    ///   - autosaveDelay: pause after the last keystroke before saving (from config).
+    ///   - startView: the view the window opens in (from config).
+    public init(
+        library: any ExploreLibrary, autosaveDelay: Duration, startView: ExploreViewKind = .stack,
+        capture: CaptureViewModel? = nil
+    ) {
+        self.view = startView
         self.capture = capture
         self.library = library
         self.autosaveDelay = autosaveDelay

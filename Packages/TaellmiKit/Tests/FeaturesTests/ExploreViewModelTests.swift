@@ -20,6 +20,12 @@ struct ExploreViewModelTests {
         return (ExploreViewModel(library: library, autosaveDelay: .zero), library)
     }
 
+    @Test("the window opens in the view it is given", arguments: ExploreViewKind.allCases)
+    func startsInGivenView(view: ExploreViewKind) {
+        let model = ExploreViewModel(library: FakeLibrary(entries: []), autosaveDelay: .zero, startView: view)
+        #expect(model.view == view)
+    }
+
     @Test("shows all Entries newest first, and narrows them while you type a search")
     func listAndSearch() async {
         let (model, _) = makeModel()

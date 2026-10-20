@@ -8,6 +8,7 @@ public struct ExploreView: View {
     @State private var palette: CommandPaletteModel
     @State private var searchFocused = false
     @Environment(\.undoManager) private var undoManager
+    @Environment(\.brand) private var brand
 
     public init(model: ExploreViewModel) {
         self.model = model
@@ -19,6 +20,7 @@ public struct ExploreView: View {
             .brandAnimation(\.crossfade, value: model.view)
             .background { BrandSurfaceBackground(kind: .window, radius: nil).ignoresSafeArea() }
             .toolbar { ToolbarItem(placement: .principal) { viewPicker } }
+            .toolbarBackgroundVisibility(.hidden, for: .windowToolbar)
             .background(CommandShortcutButtons(model: model))
             .sheet(isPresented: $model.isPaletteOpen) { CommandPaletteView(palette: palette) }
             .onChange(of: model.searchFocusRequest) { searchFocused = true }
@@ -42,7 +44,7 @@ public struct ExploreView: View {
             Group {
                 if model.view == .flow { FlowView(model: model) } else { TimeView(model: model) }
             }
-            .brandSurface(.reading)
+            .background { readingGround }
         }
         .searchable(text: $model.query.text, isPresented: $searchFocused, prompt: "search")
         .onChange(of: model.query.text) { Task { await model.refresh() } }
@@ -83,13 +85,20 @@ public struct ExploreView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .brandSurface(.reading)
+            .background { readingGround }
         }
         .frame(minWidth: 900, minHeight: 560)
         .task {
             model.startObserving()
             await model.refresh()
         }
+    }
+
+    /// The page under your thoughts. It runs on under the toolbar and the sidebar, so both float over it as glass.
+    private var readingGround: some View {
+        BrandSurfaceBackground(kind: .reading, radius: nil)
+            .backgroundExtensionEffect()
+            .ignoresSafeArea()
     }
 
     private var sidebar: some View {
@@ -122,7 +131,8 @@ public struct ExploreView: View {
         }
         .listStyle(.sidebar)
         .scrollContentBackground(.hidden)
-        .navigationSplitViewColumnWidth(min: 170, ideal: 190)
+        .navigationSplitViewColumnWidth(
+            min: brand?.space.sidebarWidthPt.min ?? 170, ideal: brand?.space.sidebarWidthPt.ideal ?? 190)
     }
 
     private func sidebarRow(_ title: String, icon: String, selected: Bool, action: @escaping () -> Void) -> some View {
@@ -133,9 +143,18 @@ public struct ExploreView: View {
                 await model.refresh()
             }
         } label: {
-            Label(title, systemImage: icon).fontWeight(selected ? .semibold : .regular)
+            Label(title, systemImage: icon)
+                .fontWeight(selected ? .medium : .regular)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .listRowBackground(
+            Group {
+                if selected {
+                    BrandFillBackground(name: .selection, radius: .field).padding(.horizontal, brand.space(.s))
+                }
+            })
     }
 
     private var entryList: some View {
@@ -143,17 +162,17 @@ public struct ExploreView: View {
             model.entries,
             selection: Binding(get: { model.detail?.entry.id }, set: { id in Task { await model.select(id) } })
         ) { entry in
-            VStack(alignment: .leading, spacing: 3) {
-                HStack {
-                    Image(systemName: entry.source == .typed ? "keyboard" : "waveform").brandForeground(.quiet)
-                    Text(entry.createdAt, format: .dateTime.weekday().day().month().hour().minute())
-                        .brandFont("text.label").brandForeground(.quiet)
-                }
-                Text(entry.text.isEmpty ? "transcribing …" : entry.text)
-                    .lineLimit(2)
+            // One line per thought: what it says, and when. Everything else is in the open thought's details.
+            HStack(alignment: .firstTextBaseline, spacing: brand.space(.s)) {
+                Text(entry.text.isEmpty ? "transcribing …" : CaptureViewModel.preview(of: entry))
+                    .lineLimit(1)
                     .brandForeground(entry.text.isEmpty ? .quiet : .ink)
+                Spacer(minLength: brand.space(.s))
+                Text(ThoughtMeta.short(entry.createdAt))
+                    .brandFont("text.label").monospacedDigit().brandForeground(.quiet)
             }
-            .padding(.vertical, 2)
+            .padding(.vertical, brand.space(.xs))
+            .listRowSeparator(.hidden)
             .tag(entry.id)
         }
         .scrollContentBackground(.hidden)
@@ -166,22 +185,23 @@ public struct ExploreView: View {
                 )
             }
         }
-        .navigationSplitViewColumnWidth(min: 260, ideal: 320)
+        .navigationSplitViewColumnWidth(
+            min: brand?.space.listWidthPt.min ?? 240, ideal: brand?.space.listWidthPt.ideal ?? 300)
     }
 
     private var trashList: some View {
         List(model.trashedEntries) { item in
-            HStack {
-                VStack(alignment: .leading) {
-                    Text(item.entry.createdAt, format: .dateTime.day().month().hour().minute())
-                        .brandFont("text.label").brandForeground(.quiet)
-                    Text(item.entry.text).lineLimit(2)
-                }
-                Spacer()
+            HStack(alignment: .firstTextBaseline, spacing: brand.space(.s)) {
+                Text(item.entry.text).lineLimit(1)
+                Spacer(minLength: brand.space(.s))
+                Text(ThoughtMeta.short(item.entry.createdAt))
+                    .brandFont("text.label").monospacedDigit().brandForeground(.quiet)
                 Button("restore") { Task { await model.restore(item) } }
                 Button("delete for good", role: .destructive) { Task { await model.deleteForever(item) } }
                     .help("moves the thought to the macOS Trash.")
             }
+            .padding(.vertical, brand.space(.xs))
+            .listRowSeparator(.hidden)
         }
         .scrollContentBackground(.hidden)
         .overlay {
@@ -200,18 +220,36 @@ public struct ExploreView: View {
     }
 }
 
-/// The open Entry: its Text (editable, saved automatically) and, if still kept, its Recording.
+/// The open Entry: only your text, in a calm reading column, under one quiet line of when and how. Its details
+/// (recording, transcript, spellings) live in the inspector on the right.
 struct EntryDetailView: View {
     @Bindable var model: ExploreViewModel
     let detail: EntryDetail
     @Environment(\.undoManager) private var undoManager
+    @Environment(\.brand) private var brand
+    @AppStorage("explore.showsDetails") private var showsDetails = true
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text(detail.entry.createdAt, format: .dateTime.weekday(.wide).day().month(.wide).year().hour().minute())
-                    .brandFont("display.heading")
-                Spacer()
+        VStack(alignment: .leading, spacing: brand.space(.l)) {
+            Text(
+                ThoughtMeta.line(
+                    createdAt: detail.entry.createdAt, source: detail.entry.source,
+                    durationSeconds: detail.entry.durationSeconds)
+            )
+            .brandFont("text.label")
+            .brandForeground(.quiet)
+            TextEditor(text: $model.editorText)
+                .brandFont("text.thought")
+                .scrollContentBackground(.hidden)
+                .scrollIndicators(.automatic)
+        }
+        .frame(maxWidth: brand.map { CGFloat($0.space.readingWidthPt) } ?? .infinity, alignment: .leading)
+        .padding(.horizontal, brand.space(.xxxl))
+        .padding(.top, brand.space(.xl))
+        .padding(.bottom, brand.space(.l))
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .toolbar {
+            ToolbarItemGroup(placement: .primaryAction) {
                 Button(role: .destructive) {
                     Task {
                         await model.trashSelected()
@@ -223,22 +261,68 @@ struct EntryDetailView: View {
                 } label: {
                     Label("delete thought", systemImage: "trash")
                 }
-            }
-            TextEditor(text: $model.editorText)
-                .brandFont("text.thought")
-                .scrollContentBackground(.hidden)
-                .padding(8)
-                .brandFill(.field)
-            if !detail.corrections.isEmpty {
-                Text("spellings: " + detail.corrections.map { "\($0.from) → \($0.to)" }.joined(separator: ", "))
-                    .brandFont("text.label").brandForeground(.quiet)
-            }
-            if detail.entry.source == .voice {
-                RecordingSection(detail: detail, playbackRequest: model.playbackRequest)
+                .help("delete thought")
+                Button {
+                    showsDetails.toggle()
+                } label: {
+                    Label("details", systemImage: "sidebar.right")
+                }
+                .help(showsDetails ? "hide details" : "show details")
             }
         }
-        .padding()
+        .inspector(isPresented: $showsDetails) {
+            ThoughtDetailsView(detail: detail, playbackRequest: model.playbackRequest)
+                .inspectorColumnWidth(
+                    min: brand?.space.inspectorWidthPt.min ?? 220, ideal: brand?.space.inspectorWidthPt.ideal ?? 260,
+                    max: brand?.space.inspectorWidthPt.max ?? 340)
+        }
         .onDisappear { Task { await model.saveIfNeeded() } }
+    }
+}
+
+/// The inspector next to an open thought. People, places, topics and connections join here once tällmi
+/// finds them.
+struct ThoughtDetailsView: View {
+    let detail: EntryDetail
+    let playbackRequest: Int
+    @Environment(\.brand) private var brand
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: brand.space(.xl)) {
+                section("about") {
+                    row(ThoughtMeta.sourceWord(detail.entry.source))
+                    row(detail.entry.createdAt.formatted(.dateTime.weekday(.wide).day().month(.wide).year()))
+                    row(detail.entry.createdAt.formatted(date: .omitted, time: .shortened))
+                    row("\(detail.entry.text.split(whereSeparator: \.isWhitespace).count) words")
+                }
+                if !detail.corrections.isEmpty {
+                    section("spellings") {
+                        ForEach(Array(detail.corrections.enumerated()), id: \.offset) { _, correction in
+                            row("\(correction.from) → \(correction.to)")
+                        }
+                    }
+                }
+                if detail.entry.source == .voice {
+                    section("recording") {
+                        RecordingSection(detail: detail, playbackRequest: playbackRequest)
+                    }
+                }
+            }
+            .padding(.all, brand.space(.l))
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    private func section(_ title: String, @ViewBuilder content: () -> some View) -> some View {
+        VStack(alignment: .leading, spacing: brand.space(.s)) {
+            Text(title).brandFont("text.label").brandForeground(.quiet)
+            content()
+        }
+    }
+
+    private func row(_ text: String) -> some View {
+        Text(text.lowercased())
     }
 }
 
@@ -248,13 +332,13 @@ struct RecordingSection: View {
     /// Changes when the "play or pause recording" command runs.
     let playbackRequest: Int
     @State private var player: AVPlayer?
-    @State private var isExpanded = false
+    @Environment(\.brand) private var brand
 
     var body: some View {
-        DisclosureGroup("recording", isExpanded: $isExpanded) {
+        Group {
             if let url = detail.recordingURL {
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack {
+                VStack(alignment: .leading, spacing: brand.space(.m)) {
+                    HStack(spacing: brand.space(.s)) {
                         Button {
                             togglePlayback(url: url)
                         } label: {
@@ -265,26 +349,24 @@ struct RecordingSection: View {
                                 .monospacedDigit().brandForeground(.quiet)
                         }
                     }
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 4) {
-                            ForEach(Array(detail.segments.enumerated()), id: \.offset) { _, segment in
-                                Button {
-                                    jump(to: segment, url: url)
-                                } label: {
-                                    HStack(alignment: .firstTextBaseline) {
-                                        Text(
-                                            Duration.milliseconds(segment.startMs),
-                                            format: .time(pattern: .minuteSecond)
-                                        )
-                                        .brandFont("text.label").monospacedDigit().brandForeground(.quiet)
-                                        Text(segment.text).multilineTextAlignment(.leading)
-                                    }
+                    VStack(alignment: .leading, spacing: brand.space(.s)) {
+                        ForEach(Array(detail.segments.enumerated()), id: \.offset) { _, segment in
+                            Button {
+                                jump(to: segment, url: url)
+                            } label: {
+                                HStack(alignment: .firstTextBaseline, spacing: brand.space(.s)) {
+                                    Text(
+                                        Duration.milliseconds(segment.startMs),
+                                        format: .time(pattern: .minuteSecond)
+                                    )
+                                    .brandFont("text.label").monospacedDigit().brandForeground(.quiet)
+                                    Text(segment.text).multilineTextAlignment(.leading)
                                 }
-                                .buttonStyle(.plain)
+                                .contentShape(Rectangle())
                             }
+                            .buttonStyle(.plain)
                         }
                     }
-                    .frame(maxHeight: 160)
                 }
             } else {
                 Text("recording deleted.").brandForeground(.quiet)
@@ -296,11 +378,9 @@ struct RecordingSection: View {
         }
         .onChange(of: playbackRequest) {
             guard let url = detail.recordingURL else { return }
-            isExpanded = true
             togglePlayback(url: url)
         }
     }
-
     private func preparedPlayer(url: URL) -> AVPlayer {
         if let player { return player }
         let fresh = AVPlayer(url: url)

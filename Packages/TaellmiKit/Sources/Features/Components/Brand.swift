@@ -124,7 +124,7 @@ private struct BrandFont: ViewModifier {
 
     func body(content: Content) -> some View {
         if let brand {
-            content.font(brand.font(token)).tracking(brand.tracking(token))
+            content.font(brand.font(token)).tracking(brand.tracking(token)).lineSpacing(brand.lineSpacing(token))
         } else {
             content
         }

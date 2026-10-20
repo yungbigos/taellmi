@@ -30,6 +30,11 @@ Where an Entry came from: spoken, typed, or the app it was imported from (e.g. A
 _In the app_: spoken, typed, or the app's name
 _Avoid_: Input mode, origin, type
 
+**Import fingerprint**:
+The SHA-256 of the file an imported Entry came from, kept in its `entry.md` (`import_fingerprint`). Importing the same file again finds it and skips it (ADR 0013).
+_In the app_: (not shown; the import report says "already here")
+_Avoid_: Hash, checksum
+
 **Archive**:
 The folder holding every Entry. It is encrypted by default, lives in the app's Library folder by default, or in a folder you choose.
 _In the app_: not shown; the window is just tällmi

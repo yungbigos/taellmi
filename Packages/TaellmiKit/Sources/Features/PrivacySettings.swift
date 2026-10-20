@@ -1,4 +1,5 @@
 import AppKit
+import Domain
 import Foundation
 import Observation
 import SwiftUI
@@ -11,6 +12,7 @@ public protocol PrivacySettings: Sendable {
     func isWindowLocked() async -> Bool
     func setWindowLocked(_ on: Bool) async throws
     func pendingRecoveryKey() async -> String?
+    func importNotes(from urls: [URL]) async throws -> NoteImportReport
 }
 
 @Observable
@@ -50,6 +52,15 @@ public final class PrivacyViewModel {
             message = "exported \(count) thoughts."
         } catch {
             message = "couldn't export. try another folder."
+        }
+    }
+
+    public func importNotes(from urls: [URL]) async {
+        message = "importing notes …"
+        do {
+            message = NoteImportMessage.text(for: try await settings.importNotes(from: urls))
+        } catch {
+            message = "couldn't import the notes. try again."
         }
     }
 
@@ -101,6 +112,14 @@ struct PrivacySettingsView: View {
                 }
             } footer: {
                 Text("writes every thought as readable files, for example for obsidian. they are not encrypted there.")
+            }
+            Section {
+                Button("import from apple notes …") {
+                    let chosen = NoteFilePicker.choose()
+                    if !chosen.isEmpty { Task { await model.importNotes(from: chosen) } }
+                }
+            } footer: {
+                Text(NoteFilePicker.explanation)
             }
             if let message = model.message { Text(message).brandForeground(.quiet) }
         }

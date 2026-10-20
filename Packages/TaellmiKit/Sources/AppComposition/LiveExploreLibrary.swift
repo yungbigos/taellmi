@@ -16,6 +16,8 @@ nonisolated struct LiveExploreLibrary: ExploreLibrary {
     var understandings: UnderstandingStore?
     var related: RelatedThoughts?
     var curation: CurationStore?
+    /// File extensions that count as notes when importing (config: `import.note_extensions`).
+    var noteExtensions: Set<String> = []
 
     // These read the database and search vectors, so they run off the main actor.
 
@@ -90,6 +92,31 @@ nonisolated struct LiveExploreLibrary: ExploreLibrary {
         try index.upsert(entry, transcript: nil)
         onChange()
         return entry
+    }
+
+    func importNotes(from urls: [URL]) async throws -> NoteImportReport {
+        let library = self
+        return try await Task.detached(priority: .userInitiated) {
+            // Files the panel handed over are readable while tällmi runs; folders kept in a bookmark need this.
+            let scoped = urls.filter { $0.startAccessingSecurityScopedResource() }
+            defer { for url in scoped { url.stopAccessingSecurityScopedResource() } }
+            let report = try NoteImport(
+                files: library.files, source: .appleNotes, extensions: library.noteExtensions
+            ).run(urls)
+            // The thoughts are written either way; one that can't be indexed now is indexed on the next start.
+            for entry in report.imported { try? library.index.upsert(entry, transcript: nil) }
+            if !report.imported.isEmpty { library.onChange() }
+            return report
+        }.value
+    }
+
+    func setDate(id: String, to date: Date) async throws {
+        guard let indexed = try index.entry(id: id) else { throw CocoaError(.fileNoSuchFile) }
+        let loaded = try files.loadEntry(folder: indexed.folder)
+        var entry = loaded.entry
+        entry.createdAt = Date(timeIntervalSince1970: date.timeIntervalSince1970.rounded(.down))
+        try files.saveText(entry)
+        try index.upsert(entry, transcript: loaded.transcript)
     }
 
     func saveText(id: String, text: String) async throws {

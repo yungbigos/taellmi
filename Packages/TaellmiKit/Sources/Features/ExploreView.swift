@@ -39,6 +39,26 @@ public struct ExploreView: View {
             .toolbarBackgroundVisibility(.hidden, for: .windowToolbar)
             .background(CommandShortcutButtons(model: model))
             .sheet(isPresented: $model.isPaletteOpen) { CommandPaletteView(palette: palette) }
+            .onChange(of: model.noteImportRequest) {
+                // After this view update (the ⌘K sheet may still be closing), so the picker doesn't block it.
+                Task { @MainActor in
+                    await Task.yield()
+                    let chosen = NoteFilePicker.choose()
+                    if !chosen.isEmpty { await model.importNotes(from: chosen) }
+                }
+            }
+            .overlay(alignment: .top) {
+                if model.isImportingNotes {
+                    Text("importing notes …").brandForeground(.quiet).padding()
+                }
+            }
+            .alert(
+                model.noteImportMessage ?? "",
+                isPresented: Binding(
+                    get: { model.noteImportMessage != nil }, set: { if !$0 { model.noteImportMessage = nil } })
+            ) {
+                Button("ok") {}
+            }
             .onChange(of: model.query.text) { Task { await model.refresh() } }
             .frame(minWidth: 900, minHeight: 560)
     }
@@ -245,10 +265,13 @@ struct EntryDetailView: View {
             }
         }
         .inspector(isPresented: $showsDetails) {
-            ThoughtDetailsView(detail: detail, playbackRequest: model.playbackRequest)
-                .inspectorColumnWidth(
-                    min: brand?.space.inspectorWidthPt.min ?? 220, ideal: brand?.space.inspectorWidthPt.ideal ?? 260,
-                    max: brand?.space.inspectorWidthPt.max ?? 340)
+            ThoughtDetailsView(
+                detail: detail, playbackRequest: model.playbackRequest,
+                changeDate: model.canChangeDate ? { date in Task { await model.changeDate(to: date) } } : nil
+            )
+            .inspectorColumnWidth(
+                min: brand?.space.inspectorWidthPt.min ?? 220, ideal: brand?.space.inspectorWidthPt.ideal ?? 260,
+                max: brand?.space.inspectorWidthPt.max ?? 340)
         }
         .onDisappear { Task { await model.saveIfNeeded() } }
     }
@@ -259,6 +282,8 @@ struct EntryDetailView: View {
 struct ThoughtDetailsView: View {
     let detail: EntryDetail
     let playbackRequest: Int
+    /// Set for imported thoughts, whose date can be changed.
+    var changeDate: ((Date) -> Void)?
     @Environment(\.brand) private var brand
 
     var body: some View {
@@ -268,6 +293,13 @@ struct ThoughtDetailsView: View {
                     row(ThoughtMeta.sourceWord(detail.entry.source))
                     row(detail.entry.createdAt.formatted(.dateTime.weekday(.wide).day().month(.wide).year()))
                     row(detail.entry.createdAt.formatted(date: .omitted, time: .shortened))
+                    if let changeDate {
+                        ChangeDateButton(date: detail.entry.createdAt, save: changeDate) {
+                            Text("change date …").underline()
+                        }
+                        Text("imported notes are dated by their file. set when you wrote it.")
+                            .brandFont("text.label").brandForeground(.quiet)
+                    }
                     row("\(detail.entry.text.split(whereSeparator: \.isWhitespace).count) words")
                 }
                 if !detail.corrections.isEmpty {

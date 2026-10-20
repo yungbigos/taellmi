@@ -117,6 +117,47 @@ struct LiveExploreLibraryTests {
         #expect(try await library.search(EntryQuery(text: "ruhe")).map(\.id) == [created.id])
         withExtendedLifetime(temp) {}
     }
+
+    @Test("changing a thought's date writes it to entry.md and the index, and keeps its Text")
+    func changeDate() async throws {
+        let (library, files, entry, temp) = try setUp()
+        let written = sampleDate.addingTimeInterval(-86_400 * 200)
+
+        try await library.setDate(id: entry.id, to: written)
+
+        #expect(try files.loadEntry(folder: entry.folder).entry.createdAt == written)
+        #expect(try files.loadEntry(folder: entry.folder).entry.text == entry.text)
+        #expect(try await library.detail(id: entry.id).entry.createdAt == written)
+        let listed = try await library.search(EntryQuery())
+        #expect(listed.first { $0.id == entry.id }?.entry.createdAt == written, "the index has the new date")
+        withExtendedLifetime(temp) {}
+    }
+
+    @Test("importing treats .md, .markdown and .txt files as notes by default (config)")
+    func seededNoteExtensions() throws {
+        let seeded = try SettingsStore(database: makeSeededDatabase()).string(SettingKeys.importNoteExtensions)
+        #expect(NoteImport.extensions(fromSetting: seeded) == ["md", "markdown", "txt"])
+    }
+
+    @Test("imported notes are indexed right away, and their passages are refreshed once for the whole import")
+    func importNotes() async throws {
+        let calls = Mutex(0)
+        var (library, _, _, temp) = try setUp(onChange: { calls.withLock { $0 += 1 } })
+        library.noteExtensions = ["md"]
+        let notes = temp.url.appendingPathComponent("export")
+        try FileManager.default.createDirectory(at: notes, withIntermediateDirectories: true)
+        try Data("# Wohnung\nBesichtigung in Kreuzberg am Samstag".utf8).write(
+            to: notes.appendingPathComponent("wohnung.md"))
+        try Data("# Laufen\nZehn Kilometer an der Spree".utf8).write(to: notes.appendingPathComponent("laufen.md"))
+
+        let report = try await library.importNotes(from: [notes])
+
+        #expect(report.imported.count == 2)
+        #expect(calls.withLock { $0 } == 1)
+        let found = try await library.search(EntryQuery(text: "Kreuzberg"))
+        #expect(found.map { $0.entry.source } == [.appleNotes])
+        #expect(try await library.importNotes(from: [notes]).alreadyHere.count == 2)
+    }
 }
 
 @Suite("A thought's concepts and summary in Explore")

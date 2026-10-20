@@ -69,6 +69,19 @@ enum ThoughtMeta {
     }
 
     static func sourceWord(_ source: EntrySource) -> String {
-        source == .typed ? "typed" : "spoken"
+        switch source {
+        case .typed: "typed"
+        case .voice: "spoken"
+        default: "from " + source.rawValue.replacingOccurrences(of: "_", with: " ")
+        }
+    }
+
+    /// The symbol that stands for how a thought came in.
+    static func sourceSymbol(_ source: EntrySource) -> String {
+        switch source {
+        case .typed: "keyboard"
+        case .voice: "waveform"
+        default: "note.text"
+        }
     }
 }

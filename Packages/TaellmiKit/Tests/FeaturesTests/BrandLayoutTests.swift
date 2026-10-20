@@ -47,6 +47,10 @@ struct BrandLayoutTests {
             createdAt: date, source: .typed, durationSeconds: nil, locale: Locale(identifier: "en_GB"),
             calendar: calendar)
         #expect(typed == "tue, 20 oct 2026 · 15:28 · typed")
+        let imported = ThoughtMeta.line(
+            createdAt: date, source: .appleNotes, durationSeconds: nil, locale: Locale(identifier: "en_GB"),
+            calendar: calendar)
+        #expect(imported == "tue, 20 oct 2026 · 15:28 · from apple notes")
     }
 
     @Test("a row in the list ends in a short date: the time today, day and month this year, else the year too")

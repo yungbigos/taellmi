@@ -94,6 +94,10 @@ public protocol ExploreLibrary: Sendable {
     func conceptDetail(id: String) async throws -> ConceptDetail
     /// Your own summary for a thought; `nil` brings back the generated one.
     func saveSummary(id: String, text: String?) async throws
+    /// Gives a thought another date and time; its Text stays as it is.
+    func setDate(id: String, to date: Date) async throws
+    /// Turns the chosen note files and folders into thoughts from Apple Notes, skipping notes already here.
+    func importNotes(from urls: [URL]) async throws -> NoteImportReport
 }
 
 /// State and actions of the Explore window.
@@ -131,6 +135,12 @@ public final class ExploreViewModel {
     public var isPaletteOpen = false
     /// Bumped when the recording should play or pause.
     public private(set) var playbackRequest = 0
+    /// Bumped when the window should ask which notes to import.
+    public private(set) var noteImportRequest = 0
+    /// What the last import of notes did, until you dismiss it.
+    public var noteImportMessage: String?
+    /// True while chosen notes are being imported.
+    public private(set) var isImportingNotes = false
     /// Writing a new thought in the full-window composer.
     public private(set) var isComposing = false
     public var composerText = "" {
@@ -222,7 +232,20 @@ public final class ExploreViewModel {
         case .showLater: timeRange.moveLater()
         case .showTrash: await show(trash: true)
         case .playRecording: playbackRequest += 1
+        case .importNotes: noteImportRequest += 1
         }
+    }
+
+    /// Imports the note files and folders you chose and reports what happened.
+    public func importNotes(from urls: [URL]) async {
+        isImportingNotes = true
+        defer { isImportingNotes = false }
+        do {
+            noteImportMessage = NoteImportMessage.text(for: try await library.importNotes(from: urls))
+        } catch {
+            noteImportMessage = "couldn't import the notes. try again."
+        }
+        await refresh()
     }
 
     /// Opens the composer for a new typed thought.
@@ -652,6 +675,32 @@ public final class ExploreViewModel {
             savedText = text
         } catch {
             errorMessage = "couldn't save the thought. your text is still here, so try again."
+        }
+    }
+
+    /// Only imported thoughts: a spoken or typed thought's date is when you said or wrote it.
+    public var canChangeDate: Bool { detail?.entry.source.isImported ?? false }
+
+    /// Gives the open imported thought the date you wrote it.
+    public func changeDate(to date: Date) async {
+        guard let id = detail?.entry.id else { return }
+        await changeDate(of: id, to: date)
+    }
+
+    /// Gives an imported thought (open, or in flow) the date you wrote it. Other thoughts keep theirs.
+    public func changeDate(of id: String, to date: Date) async {
+        let source = detail?.entry.id == id ? detail?.entry.source : entries.first { $0.id == id }?.source
+        guard source?.isImported == true else { return }
+        if detail?.entry.id == id { await saveIfNeeded() }
+        do {
+            try await library.setDate(id: id, to: date)
+            if var changed = detail, changed.entry.id == id {
+                changed.entry = try await library.detail(id: id).entry
+                detail = changed
+            }
+            await refresh()
+        } catch {
+            errorMessage = "couldn't change the date. try again."
         }
     }
 

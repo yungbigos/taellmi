@@ -64,6 +64,7 @@ public final class AppEnvironment {
     private let runner: PipelineRunner
     private let engines: EngineCache<ContinuousClock>
     private let pipelineKick: PipelineKick
+    private let library: LiveExploreLibrary
     private let logger = Logger(subsystem: "app.taellmi", category: "app")
     private var maintenanceTask: Task<Void, Never>?
     private var memoryPressure: (any DispatchSourceMemoryPressure)?
@@ -183,19 +184,22 @@ public final class AppEnvironment {
             settings: settings, editor: ConfigEditor(database: database), key: SettingKeys.hotkey)
         exploreHotkeyStore = LiveHotkeyStore(
             settings: settings, editor: ConfigEditor(database: database), key: SettingKeys.exploreHotkey)
+        library = LiveExploreLibrary(
+            files: files, index: index,
+            search: HybridSearch(
+                index: index, fragments: FragmentStore(database: database),
+                vectors: VectorStore(database: database), resolver: resolver, embedders: engines,
+                settings: settings),
+            onChange: { kick.kick() },
+            understandings: UnderstandingStore(database: database),
+            related: RelatedThoughts(
+                index: index, fragments: FragmentStore(database: database),
+                vectors: VectorStore(database: database), resolver: resolver, settings: settings),
+            curation: CurationStore(storage: storage),
+            noteExtensions: NoteImport.extensions(
+                fromSetting: (try? settings.string(SettingKeys.importNoteExtensions)) ?? ""))
         exploreModel = ExploreViewModel(
-            library: LiveExploreLibrary(
-                files: files, index: index,
-                search: HybridSearch(
-                    index: index, fragments: FragmentStore(database: database),
-                    vectors: VectorStore(database: database), resolver: resolver, embedders: engines,
-                    settings: settings),
-                onChange: { kick.kick() },
-                understandings: UnderstandingStore(database: database),
-                related: RelatedThoughts(
-                    index: index, fragments: FragmentStore(database: database),
-                    vectors: VectorStore(database: database), resolver: resolver, settings: settings),
-                curation: CurationStore(storage: storage)),
+            library: library,
             autosaveDelay: .seconds((try? settings.number(SettingKeys.exploreAutosaveDelaySeconds)) ?? 0),
             startView: (try? settings.string(SettingKeys.exploreStartView)).flatMap(ExploreViewKind.init) ?? .stack,
             capture: captureModel)
@@ -226,7 +230,7 @@ public final class AppEnvironment {
         return PrivacyViewModel(
             settings: LivePrivacySettings(
                 archiveRoot: archiveRoot, files: files, settings: settings, editor: ConfigEditor(database: database),
-                pending: { pending.value.withLock { $0 } }),
+                pending: { pending.value.withLock { $0 } }, library: library),
             restart: restart)
     }
 

@@ -17,6 +17,9 @@ public actor FakeLibrary: ExploreLibrary {
     private var heldTexts: Set<String> = []
     private var held: [CheckedContinuation<Void, Never>] = []
     private var heldWaiters: [CheckedContinuation<Void, Never>] = []
+    private var importReport = NoteImportReport()
+    private var importsFail = false
+    public private(set) var importedFrom: [URL]?
 
     public init(entries: [Entry]) {
         self.entries = entries
@@ -137,6 +140,12 @@ public actor FakeLibrary: ExploreLibrary {
         return entry
     }
 
+    public func setDate(id: String, to date: Date) async throws {
+        guard let index = entries.firstIndex(where: { $0.id == id }) else { throw CocoaError(.fileNoSuchFile) }
+        entries[index].createdAt = date
+        publish()
+    }
+
     public func saveText(id: String, text: String) async throws {
         savedTexts[id] = text
         if let index = entries.firstIndex(where: { $0.id == id }) { entries[index].text = text }
@@ -176,6 +185,23 @@ public actor FakeLibrary: ExploreLibrary {
     public func deleteForever(trashedFolder: String) async throws {
         trash[trashedFolder] = nil
         publish()
+    }
+
+    /// What the next import returns; its thoughts join the Archive.
+    public func setImportReport(_ report: NoteImportReport) {
+        importReport = report
+    }
+
+    public func failImports() {
+        importsFail = true
+    }
+
+    public func importNotes(from urls: [URL]) async throws -> NoteImportReport {
+        importedFrom = urls
+        if importsFail { throw CocoaError(.fileReadNoPermission) }
+        entries += importReport.imported
+        publish()
+        return importReport
     }
 
     private func subscribe(_ continuation: AsyncStream<Void>.Continuation) { continuations.append(continuation) }

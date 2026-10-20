@@ -30,6 +30,8 @@ public enum SettingKeys {
     public static let exploreAutosaveDelaySeconds = "explore.autosave_delay_s"
     /// The view the tällmi window opens in: `stack`, `flow` or `time`.
     public static let exploreStartView = "explore.start_view"
+    /// File extensions "import from apple notes" treats as notes, comma-separated.
+    public static let importNoteExtensions = "import.note_extensions"
     public static let companionCursorOffset = "companion.cursor_offset"
     public static let companionSavedDisplaySeconds = "companion.saved_display_s"
     /// How big tälli is in its panel, in points.
@@ -65,7 +67,7 @@ public enum SettingKeys {
             archivePendingMoveBookmark,
             lockWindow,
             exploreHotkey,
-            exploreAutosaveDelaySeconds, exploreStartView,
+            exploreAutosaveDelaySeconds, exploreStartView, importNoteExtensions,
             companionCursorOffset,
             companionSavedDisplaySeconds, companionTalliSize, companionFinishKey, companionCancelKey, brandTokens,
         ] + meaning + Commands.all.map(\.settingKey)

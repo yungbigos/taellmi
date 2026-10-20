@@ -19,6 +19,7 @@ public enum Command: String, Sendable, CaseIterable, Hashable {
     case showLater = "time.later"
     case showTrash = "trash.show"
     case playRecording = "recording.toggle"
+    case importNotes = "notes.import"
 
     public var id: String { rawValue }
 
@@ -41,6 +42,7 @@ public enum Command: String, Sendable, CaseIterable, Hashable {
         case .showLater: "show later"
         case .showTrash: "show trash"
         case .playRecording: "play or pause recording"
+        case .importNotes: "import from apple notes …"
         }
     }
 

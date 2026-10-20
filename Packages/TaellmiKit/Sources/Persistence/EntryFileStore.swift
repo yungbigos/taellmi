@@ -57,6 +57,29 @@ public struct EntryFileStore: Sendable {
         return entry
     }
 
+    static let importFingerprintKey = "import_fingerprint"
+
+    /// Writes a new Entry imported from another app. It keeps its original date, and the fingerprint of the
+    /// file it came from, so importing that file again finds it.
+    public func createImportedEntry(
+        text: String, createdAt: Date, source: EntrySource, fingerprint: String, id: String = Self.randomID()
+    ) throws -> Entry {
+        let (folder, created) = identity(for: createdAt, id: id)
+        let entry = Entry(id: id, createdAt: created, durationSeconds: nil, source: source, folder: folder, text: text)
+        // One write, so there is never an entry.md with the fingerprint but without the thought.
+        try saveText(entry, extra: [Self.importFingerprintKey: .string(fingerprint)])
+        return entry
+    }
+
+    /// Fingerprints of every imported Entry, also those in the Trash.
+    public func importFingerprints() throws -> Set<String> {
+        let folders = try allEntryFolders() + trashedFolders()
+        return Set(
+            folders.compactMap { folder in
+                try? document(at: "\(folder)/\(Self.documentName)").metadata[Self.importFingerprintKey]?.stringValue
+            })
+    }
+
     /// Folder and second-precise creation time for a new Entry. Folder names carry no date (ADR 0010):
     /// a synced Archive must not reveal when you recorded.
     private func identity(for date: Date, id: String) -> (folder: String, createdAt: Date) {
@@ -89,10 +112,13 @@ public struct EntryFileStore: Sendable {
         try saveText(entry, corrections: [])
     }
 
-    private func saveText(_ entry: Entry, corrections: [VocabularyCorrection]) throws {
+    private func saveText(
+        _ entry: Entry, corrections: [VocabularyCorrection] = [], extra: [String: JSONValue] = [:]
+    ) throws {
         let path = "\(entry.folder)/\(Self.documentName)"
         var metadata: [String: JSONValue] = [:]
         if storage.exists(path), let existing = try? document(at: path) { metadata = existing.metadata }
+        metadata.merge(extra) { _, new in new }
         if !corrections.isEmpty {
             metadata[Self.correctionsKey] = .array(corrections.map { .string("\($0.from) → \($0.to)") })
         }

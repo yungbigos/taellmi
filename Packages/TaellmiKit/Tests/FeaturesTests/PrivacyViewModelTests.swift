@@ -1,3 +1,4 @@
+import Domain
 import Features
 import Foundation
 import Testing
@@ -13,6 +14,11 @@ struct PrivacyViewModelTests {
         func isWindowLocked() async -> Bool { locked }
         func setWindowLocked(_ on: Bool) async throws { locked = on }
         func pendingRecoveryKey() async -> String? { nil }
+        var importedFrom: [URL] = []
+        func importNotes(from urls: [URL]) async throws -> NoteImportReport {
+            importedFrom = urls
+            return NoteImportReport(alreadyHere: ["getting active.md"])
+        }
     }
 
     @Test("moving the Archive restarts tällmi afterwards; export reports how many thoughts were written")
@@ -36,5 +42,14 @@ struct PrivacyViewModelTests {
         await model.setLocked(true)
         #expect(await privacy.locked)
         #expect(model.isLocked)
+    }
+
+    @Test("importing notes from settings tells you what happened")
+    func importNotes() async {
+        let privacy = FakePrivacy()
+        let model = PrivacyViewModel(settings: privacy) {}
+        await model.importNotes(from: [URL(fileURLWithPath: "/tmp/notes")])
+        #expect(await privacy.importedFrom.map(\.path) == ["/tmp/notes"])
+        #expect(model.message == "imported 0 notes. 1 was already here.")
     }
 }

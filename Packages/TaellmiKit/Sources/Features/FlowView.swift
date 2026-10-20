@@ -26,7 +26,9 @@ struct FlowView: View {
                                 meaning: model.meanings[entry.id], kinds: model.conceptKinds,
                                 openConcept: { id in Task { await model.openConcept(id) } },
                                 reveal: { id in Task { await model.reveal(id) } },
-                                saveSummary: { text in Task { await model.saveSummary(text, for: entry.id) } }
+                                saveSummary: { text in Task { await model.saveSummary(text, for: entry.id) } },
+                                changeDate: entry.source.isImported
+                                    ? { date in Task { await model.changeDate(of: entry.id, to: date) } } : nil
                             ) { text in
                                 await model.saveFlowText(id: entry.id, text: text)
                             }
@@ -74,17 +76,29 @@ private struct FlowBlock: View {
     let openConcept: (String) -> Void
     let reveal: (String) -> Void
     let saveSummary: (String?) -> Void
+    /// Set for imported thoughts: clicking the time changes their date.
+    let changeDate: ((Date) -> Void)?
     let save: (String) async -> Void
     @State private var text = ""
     /// The text last handed to save; a newer text from the Archive is only taken while nothing newer is typed.
     @State private var lastSaved = ""
     @State private var saveTask: Task<Void, Never>?
 
+    private var when: some View {
+        VStack(spacing: 4) {
+            Image(systemName: ThoughtMeta.sourceSymbol(entry.source))
+            Text(entry.createdAt, format: .dateTime.hour().minute())
+        }
+    }
+
     var body: some View {
         HStack(alignment: .top, spacing: 10) {
-            VStack(spacing: 4) {
-                Image(systemName: entry.source == .typed ? "keyboard" : "waveform")
-                Text(entry.createdAt, format: .dateTime.hour().minute())
+            Group {
+                if let changeDate {
+                    ChangeDateButton(date: entry.createdAt, save: changeDate) { when }
+                } else {
+                    when
+                }
             }
             .brandFont("text.label")
             .brandForeground(.quiet)

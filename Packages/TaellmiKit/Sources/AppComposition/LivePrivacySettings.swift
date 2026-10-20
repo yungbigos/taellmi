@@ -1,4 +1,5 @@
 import Config
+import Domain
 import Features
 import Foundation
 import LocalAuthentication
@@ -11,6 +12,7 @@ nonisolated struct LivePrivacySettings: PrivacySettings {
     let settings: SettingsStore
     let editor: ConfigEditor
     let pending: @Sendable () -> String?
+    let library: LiveExploreLibrary
 
     func locationDescription() async -> String {
         archiveRoot.path.replacingOccurrences(of: FileManager.default.homeDirectoryForCurrentUser.path, with: "~")
@@ -22,6 +24,10 @@ nonisolated struct LivePrivacySettings: PrivacySettings {
 
     func exportPlain(to folder: URL) async throws -> Int {
         try PlainExport.export(files, to: folder)
+    }
+
+    func importNotes(from urls: [URL]) async throws -> NoteImportReport {
+        try await library.importNotes(from: urls)
     }
 
     func isWindowLocked() async -> Bool { (try? settings.bool(SettingKeys.lockWindow)) ?? false }

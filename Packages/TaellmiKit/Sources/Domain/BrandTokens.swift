@@ -333,7 +333,7 @@ public struct BrandTokens: Sendable, Equatable, Codable {
     }
 
     public struct Surface: Sendable, Equatable, Codable {
-        /// A macOS material by name (`popover`, `under_window_background`, …) or `glass`.
+        /// A macOS material by name (`popover`, `under_window_background`, …), `glass` or `glass_clear`.
         public var material: String
         /// A colour role (`paper`, `mist`, …) laid over the material.
         public var tint: String

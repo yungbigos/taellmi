@@ -42,7 +42,8 @@ struct BrandSurfaceTests {
     func bubbleIsGlass() throws {
         let tokens = try shippedTokens()
         let bubble = tokens.rendering(of: .bubble, dark: false, reduceTransparency: false, increaseContrast: false)
-        #expect(bubble == .glass(tint: .paper, tintOpacity: 0.2))
+        // Clear glass, so what's behind tälli's bubble stays visible (owner, 2026-10-20).
+        #expect(bubble == .glass(tint: .paper, tintOpacity: 0.1, clear: true))
     }
 
     @Test(

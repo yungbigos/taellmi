@@ -129,7 +129,7 @@ Rules:
   | window | lists, toolbar | material, paper tint 20 % (dark 25 %); toolbar, bottom bar and month rail float as glass |
   | reading | under your thoughts: the open thought, flow, time, the composer | see-through: the blurred desktop (sidebar material) with a light paper tint (15 % / 20 %); running on under the toolbar and the bottom bar; never the glass-shape effect behind text |
   | panel | menu bar panel, ⌘K, settings, recovery key, unlock | popover material, paper tint 20 % / 25 % |
-  | bubble | tälli's bubble | Liquid Glass with a faint paper tint |
+  | bubble | tälli's bubble | clear Liquid Glass (what's behind stays visible) with a faint paper tint (10 %) |
 
   Quiet fills on top (the live transcript box, the highlighted ⌘K row, search matches, marks on the time axis) are named tokens in `fill`; corner radii are in `shape`.
 - **Space on a 4 pt grid.** Views use the named steps in `space.scale` (xs 4 · s 8 · m 12 · l 16 · xl 24 · xxl 32 · xxxl 48), never their own numbers. Your text sits in a reading column of at most 680 pt.

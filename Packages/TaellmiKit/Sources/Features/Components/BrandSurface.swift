@@ -42,7 +42,8 @@ public struct BrandOutline: Sendable, Equatable {
 /// What a surface turns into, once the Mac's accessibility settings are taken into account.
 public enum SurfaceRendering: Sendable, Equatable {
     case material(BrandMaterial, tint: BrandColorRole, tintOpacity: Double)
-    case glass(tint: BrandColorRole, tintOpacity: Double)
+    /// Liquid Glass; `clear` is the very see-through variant (things behind stay visible).
+    case glass(tint: BrandColorRole, tintOpacity: Double, clear: Bool)
     case solid(BrandColorRole, outline: BrandOutline?)
 }
 
@@ -67,6 +68,7 @@ public enum BrandRadius: String, CaseIterable, Sendable {
 
 extension BrandTokens {
     private static let glass = "glass"
+    private static let glassClear = "glass_clear"
 
     /// How a surface is drawn. Reduce Transparency and Increase Contrast always get a solid colour, so text
     /// keeps its contrast whatever is behind the window; a broken token also falls back to solid.
@@ -82,7 +84,8 @@ extension BrandTokens {
             return .solid(fallback, outline: nil)
         }
         let opacity = dark ? token.tintOpacity.dark : token.tintOpacity.light
-        if token.material == Self.glass { return .glass(tint: tint, tintOpacity: opacity) }
+        if token.material == Self.glass { return .glass(tint: tint, tintOpacity: opacity, clear: false) }
+        if token.material == Self.glassClear { return .glass(tint: tint, tintOpacity: opacity, clear: true) }
         guard let material = BrandMaterial(rawValue: token.material) else { return .solid(fallback, outline: nil) }
         return .material(material, tint: tint, tintOpacity: opacity)
     }
@@ -200,8 +203,9 @@ struct BrandSurfaceBackground: View {
                     brand.color(tint).opacity(opacity)
                 }
                 .clipShape(shape)
-            case .glass(let tint, let opacity):
-                Color.clear.glassEffect(.regular.tint(brand.color(tint).opacity(opacity)), in: shape)
+            case .glass(let tint, let opacity, let clear):
+                Color.clear.glassEffect(
+                    (clear ? Glass.clear : Glass.regular).tint(brand.color(tint).opacity(opacity)), in: shape)
             case .solid(let role, let outline):
                 // The outline marks floating shapes (bubble, fields); window-sized surfaces end at the window edge.
                 shape.fill(brand.color(role))

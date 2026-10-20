@@ -49,6 +49,7 @@ struct BrandSeedTests {
             7: "53297c01d8d123285feeee611bd030cd5249536f47876af561b5ff347f2d5259",
             8: "25a9703bd728d46a0917b29b940dfc709ad9ea65a7ca98f150340dbc809ffc05",
             9: "a458edf1a91a3a97c47772f6147ed6a25f07860044ef44402871222442f099fe",
+            10: "1bf8683a8f7cfca54459bcd09158bf95708a357aeb5626227f537f1fa31944e9",
         ]
         #expect(
             pinned[setting.seedVersion] == hash,

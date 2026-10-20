@@ -29,6 +29,8 @@ struct ViewSwitcher: View {
                         .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
+                // No system focus ring: the blue outline already marks the active view.
+                .focusEffectDisabled()
                 .accessibilityAddTraits(isActive ? .isSelected : [])
                 .accessibilityLabel("show \(kind.rawValue)")
             }

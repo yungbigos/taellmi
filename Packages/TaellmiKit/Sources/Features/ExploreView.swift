@@ -137,10 +137,9 @@ public struct ExploreView: View {
     }
 
     private var entryList: some View {
-        List(
-            model.entries,
-            selection: Binding(get: { model.selectedID }, set: { id in model.choose(id) })
-        ) { entry in
+        // tällmi draws the selected row itself: the system highlight turns grey whenever the list loses
+        // keyboard focus (e.g. to the open thought), which looked like a flicker.
+        List(model.entries) { entry in
             // One line per thought: what it says, and when. Everything else is in the open thought's details.
             // While searching, the line shows the part around the match with the words marked instead.
             HStack(alignment: .firstTextBaseline, spacing: brand.space(.s)) {
@@ -159,8 +158,20 @@ public struct ExploreView: View {
                     .brandFont("text.label").monospacedDigit().brandForeground(.quiet)
             }
             .padding(.vertical, brand.space(.xs))
+            .contentShape(Rectangle())
+            .onTapGesture { model.choose(entry.id) }
             .listRowSeparator(.hidden)
-            .tag(entry.id)
+            .listRowBackground(
+                model.selectedID == entry.id ? BrandFillBackground(name: .selectedRow, radius: .field) : nil
+            )
+            .accessibilityAddTraits(model.selectedID == entry.id ? [.isSelected, .isButton] : .isButton)
+        }
+        .onMoveCommand { direction in
+            switch direction {
+            case .up: model.moveSelection(by: -1)
+            case .down: model.moveSelection(by: 1)
+            default: break
+            }
         }
         .scrollContentBackground(.hidden)
         .overlay {

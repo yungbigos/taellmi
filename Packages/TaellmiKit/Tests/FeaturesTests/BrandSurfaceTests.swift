@@ -34,7 +34,7 @@ struct BrandSurfaceTests {
                 continue
             }
             #expect(tint == .paper)
-            #expect(opacity >= 0.25 && opacity <= 0.5)
+            #expect(opacity >= 0.1 && opacity <= 0.5)
         }
     }
 

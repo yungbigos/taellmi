@@ -661,6 +661,14 @@ public final class ExploreViewModel {
         Task { await select(id) }
     }
 
+    /// ↑/↓ in the list: the previous or next thought, staying within the list.
+    public func moveSelection(by step: Int) {
+        guard !entries.isEmpty else { return }
+        let current = selectedID.flatMap { id in entries.firstIndex { $0.id == id } }
+        let next = current.map { min(max($0 + step, 0), entries.count - 1) } ?? (step > 0 ? 0 : entries.count - 1)
+        choose(entries[next].id)
+    }
+
     public func select(_ id: String?) async {
         selectedID = id
         openedSearch = nil

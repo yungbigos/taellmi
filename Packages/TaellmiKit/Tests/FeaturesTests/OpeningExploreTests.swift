@@ -75,3 +75,25 @@ struct OpeningExploreTests {
         #expect(model.detail?.entry.id == "a")
     }
 }
+
+@Suite("Moving through the list with the arrow keys")
+struct ListKeyboardTests {
+    @Test("↓ and ↑ move to the next and previous thought and stop at the ends")
+    func arrows() async {
+        let entries = ["a", "b", "c"].enumerated().map { index, id in
+            Entry(
+                id: id, createdAt: sampleDate.addingTimeInterval(-Double(index) * 60), durationSeconds: nil,
+                source: .typed, folder: id, text: "Gedanke \(id)")
+        }
+        let model = ExploreViewModel(library: FakeLibrary(entries: entries), autosaveDelay: .zero, startView: .stack)
+        await model.open(selecting: nil)
+        model.moveSelection(by: 1)
+        #expect(model.selectedID == "a")
+        model.moveSelection(by: 1)
+        model.moveSelection(by: 1)
+        model.moveSelection(by: 1)
+        #expect(model.selectedID == "c")
+        model.moveSelection(by: -1)
+        #expect(model.selectedID == "b")
+    }
+}

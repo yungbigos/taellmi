@@ -54,6 +54,7 @@ AppComposition ──► everything (wires concrete engines into protocols)
 - `Features` and the app shell use **default MainActor isolation**. The other modules don't.
 - Every engine is an `actor` that owns its model, loads it lazily and unloads it after the configured idle time.
 - The pipeline is an `actor` draining a `job` table, so work survives quit and crash.
+  A picture of every step, from speech to concepts, with where each result is stored: [pipeline.html](pipeline.html) (open it in a browser).
 - UI state lives in `@Observable` view models. Dependencies are passed in through `init` from the composition root. No TCA.
 
 ## Where things are stored

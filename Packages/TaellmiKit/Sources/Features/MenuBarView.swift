@@ -26,29 +26,28 @@ public struct MenuBarView: View {
             if let hotkeyWarning {
                 Label(hotkeyWarning + " change it in settings.", systemImage: "exclamationmark.triangle.fill")
                     .brandFont("text.label")
-                    .foregroundStyle(.orange)
+                    .brandStatus(.warning)
             }
             if model.isRecording {
                 Text(model.livePreviewText.isEmpty ? "listening …" : model.livePreviewText)
-                    .font(.callout)
-                    .foregroundStyle(model.livePreviewText.isEmpty ? .secondary : .primary)
+                    .brandForeground(model.livePreviewText.isEmpty ? .quiet : .ink)
                     .frame(maxWidth: .infinity, minHeight: 60, alignment: .topLeading)
                     .padding(8)
-                    .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 8))
-                    .animation(.easeOut(duration: 0.15), value: model.livePreviewText)
+                    .brandFill(.field)
+                    .brandAnimation(\.crossfade, value: model.livePreviewText)
                     .accessibilityLabel("live transcript")
             }
             if let error = model.errorMessage {
-                Text(error).font(.callout).foregroundStyle(.red)
+                Text(error).brandStatus(.problem)
             }
             Divider()
             if model.recentEntries.isEmpty {
-                Text("no thoughts yet.").foregroundStyle(.secondary)
+                Text("no thoughts yet.").brandForeground(.quiet)
             } else {
                 ForEach(model.recentEntries) { entry in
                     VStack(alignment: .leading, spacing: 2) {
                         Text(entry.createdAt, format: .dateTime.day().month().hour().minute())
-                            .brandFont("text.label").foregroundStyle(.secondary)
+                            .brandFont("text.label").brandForeground(.quiet)
                         Text(CaptureViewModel.preview(of: entry)).lineLimit(2)
                     }
                 }
@@ -66,6 +65,7 @@ public struct MenuBarView: View {
         }
         .padding(16)
         .frame(width: 340)
+        .brandSurface(.panel)
         .textCase(appearance.swiftUICase)
     }
 
@@ -80,10 +80,10 @@ public struct MenuBarView: View {
                     if let started = model.recordingStartedAt {
                         Text("listening")
                         Text(timerInterval: started...Date.distantFuture, countsDown: false)
-                            .monospacedDigit().foregroundStyle(.secondary)
+                            .monospacedDigit().brandForeground(.quiet)
                     } else {
                         Text(model.isSaving ? "saving …" : "new thought")
-                        Text(hotkeyLabel).brandFont("text.label").foregroundStyle(.secondary)
+                        Text(hotkeyLabel).brandFont("text.label").brandForeground(.quiet)
                     }
                 }
                 Spacer()

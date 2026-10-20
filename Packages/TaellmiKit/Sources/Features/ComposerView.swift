@@ -17,12 +17,12 @@ struct ComposerView: View {
                 if isListening, model.composerText.isEmpty {
                     Text(spoken)
                         .brandFont("text.thought")
-                        .foregroundStyle(spoken == Self.listening ? .secondary : .primary)
+                        .brandForeground(spoken == Self.listening ? .quiet : .ink)
                         .lineSpacing(6)
                         .padding(.top, 8)
                         .padding(.leading, 5)
                         .allowsHitTesting(false)
-                        .animation(.easeOut(duration: 0.15), value: spoken)
+                        .brandAnimation(\.crossfade, value: spoken)
                 }
                 TextEditor(text: $model.composerText)
                     .brandFont("text.thought")
@@ -41,7 +41,7 @@ struct ComposerView: View {
             HStack {
                 Spacer()
                 Text(isListening ? "speak or type · ⌘↩ save · esc discard" : "⌘↩ save · esc close")
-                    .brandFont("text.label").foregroundStyle(.tertiary)
+                    .brandFont("text.label").brandForeground(.quiet)
                 Button("save") { Task { await model.finishComposing() } }
                     .keyboardShortcut(.return, modifiers: .command)
                     .buttonStyle(.borderless)
@@ -49,7 +49,7 @@ struct ComposerView: View {
             .padding()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.background)
+        .brandSurface(.reading)
         .task { focused = true }
     }
 

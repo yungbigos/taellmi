@@ -2,7 +2,7 @@
 
 Decided with the owner on 2026-10-20. This is the source of truth for how tällmi looks, moves and talks. Agents read it before writing any UI text or visual. Domain terms live in [GLOSSARY.md](../GLOSSARY.md); this file maps them to the words users see.
 
-Visual identity (logo, colour values, type scale, tälli's look and motion) decided on 2026-10-20. The exact numbers live in [brand/tokens.json](brand/tokens.json); the app ships the same file as the seed `Seeds/brand.json` (setting `brand.tokens`, a test keeps both identical) and reads it through config, never from Swift. In the app, views use `.brandStyle(_:)`, `.brandFont("…")` and `TalliView(mood:entrance:)`; tälli's behaviour is `TalliMotion`. A live reference is in [brand/prototype.html](brand/prototype.html).
+Visual identity (logo, colour values, type scale, tälli's look and motion) decided on 2026-10-20. The exact numbers live in [brand/tokens.json](brand/tokens.json); the app ships the same file as the seed `Seeds/brand.json` (setting `brand.tokens`, a test keeps both identical) and reads it through config, never from Swift. In the app, views use `.brandStyle(_:)`, `.brandFont("…")`, `.brandForeground(_:)`, `.brandSurface(_:)`, `.brandFill(_:)` and `TalliView(mood:entrance:)`; tälli's behaviour is `TalliMotion`. All of them live in `Features/Components`. A live reference is in [brand/prototype.html](brand/prototype.html).
 
 **Still open, not decided here:**
 - German and other translations
@@ -122,6 +122,17 @@ Rules:
   - Wherever you are, a thought you focus turns flat, horizontal, at reading size and searchable.
 - Paper first: the light look is the reference, and dark gets equal care.
 - **Glass goes on navigation and controls, plus tälli's bubble. It never goes under your thoughts.**
+- **See-through, softly.** tällmi's windows and panels let the desktop show through: a macOS material with a thin paper tint on top, so text keeps its contrast. Four surfaces, each a token in `surface`:
+
+  | Surface | Where | How |
+  |---|---|---|
+  | window | sidebar, lists, toolbar | material, paper tint 40 % (dark 45 %) |
+  | reading | under your thoughts: the open thought, flow, time, the composer | nearly solid paper (86 % / 84 %); never glass |
+  | panel | menu bar panel, ⌘K, settings, recovery key, unlock | popover material, paper tint 30 % / 35 % |
+  | bubble | tälli's bubble | Liquid Glass with a faint paper tint |
+
+  Quiet fills on top (the live transcript box, the highlighted ⌘K row, search matches, marks on the time axis) are named tokens in `fill`; corner radii are in `shape`.
+- **Accessibility wins over the look.** With Reduce Transparency every surface becomes solid paper. With Increase Contrast it becomes solid paper with a thin quiet outline, and the fills get stronger. Errors and warnings stay in the macOS red and orange.
 - **All lowercase is deliberate.** Apple's guidelines ask for title case in menus and buttons. We chose lowercase, knowingly, for everything we draw.
 
 ## 8. Motion

@@ -16,6 +16,8 @@ public struct ExploreView: View {
 
     public var body: some View {
         content
+            .brandAnimation(\.crossfade, value: model.view)
+            .background { BrandSurfaceBackground(kind: .window, radius: nil).ignoresSafeArea() }
             .toolbar { ToolbarItem(placement: .principal) { viewPicker } }
             .background(CommandShortcutButtons(model: model))
             .sheet(isPresented: $model.isPaletteOpen) { CommandPaletteView(palette: palette) }
@@ -37,7 +39,10 @@ public struct ExploreView: View {
         NavigationSplitView {
             sidebar
         } detail: {
-            if model.view == .flow { FlowView(model: model) } else { TimeView(model: model) }
+            Group {
+                if model.view == .flow { FlowView(model: model) } else { TimeView(model: model) }
+            }
+            .brandSurface(.reading)
         }
         .searchable(text: $model.query.text, isPresented: $searchFocused, prompt: "search")
         .onChange(of: model.query.text) { Task { await model.refresh() } }
@@ -70,11 +75,15 @@ public struct ExploreView: View {
         } content: {
             if model.showsTrash { trashList } else { entryList }
         } detail: {
-            if let detail = model.detail {
-                EntryDetailView(model: model, detail: detail)
-            } else {
-                ContentUnavailableView("no thought selected", systemImage: "text.alignleft")
+            Group {
+                if let detail = model.detail {
+                    EntryDetailView(model: model, detail: detail)
+                } else {
+                    ContentUnavailableView("no thought selected", systemImage: "text.alignleft")
+                }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .brandSurface(.reading)
         }
         .frame(minWidth: 900, minHeight: 560)
         .task {
@@ -112,6 +121,7 @@ public struct ExploreView: View {
             }
         }
         .listStyle(.sidebar)
+        .scrollContentBackground(.hidden)
         .navigationSplitViewColumnWidth(min: 170, ideal: 190)
     }
 
@@ -135,17 +145,18 @@ public struct ExploreView: View {
         ) { entry in
             VStack(alignment: .leading, spacing: 3) {
                 HStack {
-                    Image(systemName: entry.source == .typed ? "keyboard" : "waveform").foregroundStyle(.secondary)
+                    Image(systemName: entry.source == .typed ? "keyboard" : "waveform").brandForeground(.quiet)
                     Text(entry.createdAt, format: .dateTime.weekday().day().month().hour().minute())
-                        .brandFont("text.label").foregroundStyle(.secondary)
+                        .brandFont("text.label").brandForeground(.quiet)
                 }
                 Text(entry.text.isEmpty ? "transcribing …" : entry.text)
                     .lineLimit(2)
-                    .foregroundStyle(entry.text.isEmpty ? .secondary : .primary)
+                    .brandForeground(entry.text.isEmpty ? .quiet : .ink)
             }
             .padding(.vertical, 2)
             .tag(entry.id)
         }
+        .scrollContentBackground(.hidden)
         .searchable(text: $model.query.text, isPresented: $searchFocused, prompt: "search")
         .onChange(of: model.query.text) { Task { await model.refresh() } }
         .overlay {
@@ -163,7 +174,7 @@ public struct ExploreView: View {
             HStack {
                 VStack(alignment: .leading) {
                     Text(item.entry.createdAt, format: .dateTime.day().month().hour().minute())
-                        .brandFont("text.label").foregroundStyle(.secondary)
+                        .brandFont("text.label").brandForeground(.quiet)
                     Text(item.entry.text).lineLimit(2)
                 }
                 Spacer()
@@ -172,6 +183,7 @@ public struct ExploreView: View {
                     .help("moves the thought to the macOS Trash.")
             }
         }
+        .scrollContentBackground(.hidden)
         .overlay {
             if model.trashedEntries.isEmpty { ContentUnavailableView("trash is empty.", systemImage: "trash") }
         }
@@ -216,10 +228,10 @@ struct EntryDetailView: View {
                 .brandFont("text.thought")
                 .scrollContentBackground(.hidden)
                 .padding(8)
-                .background(.background.secondary, in: RoundedRectangle(cornerRadius: 8))
+                .brandFill(.field)
             if !detail.corrections.isEmpty {
                 Text("spellings: " + detail.corrections.map { "\($0.from) → \($0.to)" }.joined(separator: ", "))
-                    .brandFont("text.label").foregroundStyle(.secondary)
+                    .brandFont("text.label").brandForeground(.quiet)
             }
             if detail.entry.source == .voice {
                 RecordingSection(detail: detail, playbackRequest: model.playbackRequest)
@@ -250,7 +262,7 @@ struct RecordingSection: View {
                         }
                         if let duration = detail.entry.durationSeconds {
                             Text(Duration.seconds(duration), format: .time(pattern: .minuteSecond))
-                                .monospacedDigit().foregroundStyle(.secondary)
+                                .monospacedDigit().brandForeground(.quiet)
                         }
                     }
                     ScrollView {
@@ -264,7 +276,7 @@ struct RecordingSection: View {
                                             Duration.milliseconds(segment.startMs),
                                             format: .time(pattern: .minuteSecond)
                                         )
-                                        .font(.caption.monospacedDigit()).foregroundStyle(.secondary)
+                                        .brandFont("text.label").monospacedDigit().brandForeground(.quiet)
                                         Text(segment.text).multilineTextAlignment(.leading)
                                     }
                                 }
@@ -275,7 +287,7 @@ struct RecordingSection: View {
                     .frame(maxHeight: 160)
                 }
             } else {
-                Text("recording deleted.").foregroundStyle(.secondary)
+                Text("recording deleted.").brandForeground(.quiet)
             }
         }
         .onChange(of: detail.entry.id) {

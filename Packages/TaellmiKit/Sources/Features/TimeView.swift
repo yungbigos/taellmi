@@ -43,7 +43,7 @@ struct TimeView: View {
             GeometryReader { geometry in
                 let marks = TimelineLayout.marks(for: model.entries, in: model.timeRange)
                 ZStack(alignment: .topLeading) {
-                    Rectangle().fill(.quaternary).frame(height: 1)
+                    BrandFillBackground(name: .axis, radius: nil).frame(height: 1)
                         .offset(y: geometry.size.height / 2)
                     ForEach(marks) { mark in
                         markView(mark)
@@ -52,14 +52,14 @@ struct TimeView: View {
                                 y: geometry.size.height / 2 + Self.lane(for: mark.id) * geometry.size.height * 0.3)
                     }
                     if marks.isEmpty {
-                        Text("no thoughts in this time.").foregroundStyle(.secondary)
+                        Text("no thoughts in this time.").brandForeground(.quiet)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 }
             }
             Text(hovered?.preview ?? " ")
                 .lineLimit(2)
-                .foregroundStyle(.secondary)
+                .brandForeground(.quiet)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(24)
@@ -69,9 +69,9 @@ struct TimeView: View {
         let side = 10 + mark.size * 26
         return Group {
             if mark.isSpoken {
-                Circle().fill(.tint.opacity(0.75))
+                BrandFillBackground(name: .markSpoken, radius: nil).clipShape(Circle())
             } else {
-                RoundedRectangle(cornerRadius: 3).fill(.tint.opacity(0.45))
+                BrandFillBackground(name: .markTyped, radius: .mark)
             }
         }
         .frame(width: side, height: side)

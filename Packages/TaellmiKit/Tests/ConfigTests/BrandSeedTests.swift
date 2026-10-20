@@ -39,7 +39,10 @@ struct BrandSeedTests {
         encoder.outputFormatting = .sortedKeys
         let digest = SHA256.hash(data: try encoder.encode(JSONValue.object(fields)))
         let hash = digest.map { String(format: "%02x", $0) }.joined()
-        let pinned: [Int: String] = [1: "c561ef1150f6432f190a94c004dcc95cfe505818750a1af934e2c0dbf75dcde5"]
+        let pinned: [Int: String] = [
+            1: "c561ef1150f6432f190a94c004dcc95cfe505818750a1af934e2c0dbf75dcde5",
+            2: "19dd482f2cb68801e55bbeb920a9876ad0cd489697b094da4870777eed0176f6",
+        ]
         #expect(
             pinned[setting.seedVersion] == hash,
             "tokens changed: bump version to \(setting.seedVersion + 1), pin \(hash)")

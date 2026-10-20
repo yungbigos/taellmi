@@ -117,7 +117,7 @@ public final class AppController {
             try environment.confirmRecoveryKey(lastGroup: group, keepInKeychain: keep)
         }
         panel?.close()
-        panel = PanelWindow.show(title: "recovery key") {
+        panel = PanelWindow.show(title: "recovery key", brand: environment.brand) {
             RecoveryKeyView(model: model) { [weak self] in
                 self?.panel?.close()
                 Task { await self?.privacy?.load() }
@@ -132,7 +132,7 @@ public final class AppController {
             _ = try vault.unlock(with: recovery)
             return true
         }
-        panel = PanelWindow.show(title: "unlock tällmi") {
+        panel = PanelWindow.show(title: "unlock tällmi", brand: AppEnvironment.seededBrand) {
             UnlockArchiveView(model: model) { [weak self] in
                 self?.panel?.close()
                 Task { await self?.start() }

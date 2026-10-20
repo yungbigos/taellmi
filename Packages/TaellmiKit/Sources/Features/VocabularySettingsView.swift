@@ -18,7 +18,7 @@ public struct VocabularySettingsView: View {
                         .disabled(model.newTerm.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
                 if model.terms.isEmpty {
-                    Text("no names yet.").foregroundStyle(.secondary)
+                    Text("no names yet.").brandForeground(.quiet)
                 }
                 ForEach(model.terms, id: \.self) { term in
                     HStack {
@@ -50,10 +50,11 @@ public struct VocabularySettingsView: View {
                 Text("contacts are read on this mac only and never stored.")
             }
             if let message = model.message {
-                Text(message).foregroundStyle(.red)
+                Text(message).brandStatus(.problem)
             }
         }
         .formStyle(.grouped)
+        .scrollContentBackground(.hidden)
         .frame(width: 460, height: 420)
         .task { await model.load() }
     }

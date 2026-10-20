@@ -33,13 +33,13 @@ struct CompanionView: View {
             } else if showsDiscarded {
                 Text("discarded.").foregroundStyle(.secondary)
             } else if let error = model.errorMessage {
-                Text(error).foregroundStyle(.red)
+                Text(error).brandStatus(.problem)
             } else {
                 Text(model.livePreviewText.isEmpty ? "listening …" : model.livePreviewText)
                     .foregroundStyle(model.livePreviewText.isEmpty ? .secondary : .primary)
                     .lineLimit(4)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .animation(.easeOut(duration: 0.15), value: model.livePreviewText)
+                    .brandAnimation(\.crossfade, value: model.livePreviewText)
                 TextField("or type …", text: $model.typedText)
                     .textFieldStyle(.plain)
                     .focused($typingFocused)
@@ -53,11 +53,12 @@ struct CompanionView: View {
             Spacer(minLength: 0)
             Text(hint)
                 .brandFont("text.whisper")
-                .foregroundStyle(.tertiary)
+                // On glass over any app, vibrant system colours keep text readable; fixed brand colours can't.
+                .foregroundStyle(.secondary)
         }
         .brandFont("text.body")
         .padding(10)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .brandSurface(.bubble, radius: .bubble)
     }
 }

@@ -6,6 +6,8 @@ import SwiftUI
 struct FlowView: View {
     @Bindable var model: ExploreViewModel
     @Environment(\.calendar) private var calendar
+    @Environment(\.brand) private var brand
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ScrollViewReader { proxy in
@@ -38,7 +40,11 @@ struct FlowView: View {
             }
             .onAppear { proxy.scrollTo("flow-end", anchor: .bottom) }
             .onChange(of: model.currentMatch) { _, id in
-                if let id { withAnimation(.easeInOut(duration: 0.25)) { proxy.scrollTo(id, anchor: .center) } }
+                if let id {
+                    withAnimation(reduceMotion ? nil : brand?.animation(\.scroll) ?? .default) {
+                        proxy.scrollTo(id, anchor: .center)
+                    }
+                }
             }
         }
     }
@@ -60,7 +66,7 @@ private struct FlowBlock: View {
                 Text(entry.createdAt, format: .dateTime.hour().minute())
             }
             .brandFont("text.label")
-            .foregroundStyle(.tertiary)
+            .brandForeground(.quiet)
             .frame(width: 44)
             TextField("", text: $text, axis: .vertical)
                 .textFieldStyle(.plain)
@@ -77,10 +83,9 @@ private struct FlowBlock: View {
                 }
         }
         .padding(10)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(isMatch ? AnyShapeStyle(.tint.opacity(isCurrentMatch ? 0.22 : 0.08)) : AnyShapeStyle(.clear))
-        )
+        .background {
+            if isMatch { BrandFillBackground(name: isCurrentMatch ? .matchCurrent : .match, radius: .field) }
+        }
         .onAppear { text = entry.text }
         .onChange(of: entry.text) { _, newText in if newText != text { text = newText } }
     }

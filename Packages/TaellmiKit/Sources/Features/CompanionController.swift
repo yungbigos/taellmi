@@ -4,35 +4,36 @@ import SwiftUI
 
 /// tälli's settings, read from config by the composition root.
 public struct CompanionSettings: Sendable {
+    /// How far from the cursor tälli appears when you call it.
     public var cursorOffset: Double
     public var savedDisplaySeconds: Double
-    public var followsCursor: Bool
-    /// Share of the remaining way tälli covers per frame when following (0…1).
-    public var followSmoothing: Double
+    /// How big tälli is in its panel, in points.
+    public var talliSize: Double
     /// Keys claimed only while tälli is open.
     public var finishKey: Hotkey
     public var cancelKey: Hotkey
 
     public init(
-        cursorOffset: Double, savedDisplaySeconds: Double, followsCursor: Bool, followSmoothing: Double,
-        finishKey: Hotkey, cancelKey: Hotkey
+        cursorOffset: Double, savedDisplaySeconds: Double, talliSize: Double, finishKey: Hotkey, cancelKey: Hotkey
     ) {
+        self.talliSize = talliSize
         self.finishKey = finishKey
         self.cancelKey = cancelKey
         self.cursorOffset = cursorOffset
         self.savedDisplaySeconds = savedDisplaySeconds
-        self.followsCursor = followsCursor
-        self.followSmoothing = followSmoothing
     }
 }
 
 /// A floating panel that never takes focus from the app you are in (until you click into it to type).
 final class CompanionPanel: NSPanel {
-    static let size = CGSize(width: 340, height: 150)
+    /// Room for tälli at `talliSize` beside a bubble of a fixed width.
+    static func size(talliSize: CGFloat) -> CGSize {
+        CGSize(width: 276 + talliSize, height: max(150, talliSize + 20))
+    }
 
-    init() {
+    init(size: CGSize) {
         super.init(
-            contentRect: CGRect(origin: .zero, size: Self.size), styleMask: [.nonactivatingPanel, .borderless],
+            contentRect: CGRect(origin: .zero, size: size), styleMask: [.nonactivatingPanel, .borderless],
             backing: .buffered, defer: true)
         isFloatingPanel = true
         level = .statusBar
@@ -46,19 +47,25 @@ final class CompanionPanel: NSPanel {
     override var canBecomeKey: Bool { true }
 }
 
-/// Shows tälli next to the cursor for Capture and hides it again.
+/// Shows tälli next to the cursor for Capture and hides it again. In between tälli stays where it appeared,
+/// watching the cursor, until you drag it somewhere else.
 public final class CompanionController {
     private let model: CaptureViewModel
     private let appearance: AppearanceViewModel
     private let settings: CompanionSettings
     private let hotkeys: GlobalHotkeyMonitor
-    private let panel = CompanionPanel()
+    private let panel: CompanionPanel
+    private let panelSize: CGSize
     /// The brand tokens from config, applied to tälli's panel.
     public var brand: BrandTokens?
     private var showsSaved = false
     private var showsDiscarded = false
     private var hideTask: Task<Void, Never>?
-    private var followTask: Task<Void, Never>?
+    private var isShown = false
+    /// Where the pointer and the panel were when you pressed on tälli, and whether it has become a drag.
+    private var press: (mouse: CGPoint, frame: CGRect, isDrag: Bool)?
+    private var pokes = 0
+    private var stirs = 0
     /// The app you were in when tälli appeared; it gets the keyboard back when tälli hides.
     private var previousApp: NSRunningApplication?
     /// Bumped whenever the input field should take focus (after the panel became key).
@@ -79,6 +86,8 @@ public final class CompanionController {
         self.appearance = appearance
         self.settings = settings
         self.hotkeys = hotkeys
+        panelSize = CompanionPanel.size(talliSize: settings.talliSize)
+        panel = CompanionPanel(size: panelSize)
         render()
     }
 
@@ -97,7 +106,7 @@ public final class CompanionController {
         } else if panel.isVisible, !model.typedText.trimmingCharacters(in: .whitespaces).isEmpty {
             await submitTyped()
         } else {
-            showAtCursor()
+            showNearCursor()
             await model.toggle()
             if !model.isRecording { render() }
         }
@@ -131,14 +140,14 @@ public final class CompanionController {
         onOpenEntry(id)
     }
 
-    private func showAtCursor() {
+    private func showNearCursor() {
         hideTask?.cancel()
         showsSaved = false
         showsDiscarded = false
+        isShown = true
         showCount += 1
         render()
-        panel.setFrame(targetFrame(), display: true)
-        startFollowing()
+        panel.setFrame(frameNearCursor(), display: true)
         panel.alphaValue = 0
         // Typing only reaches tälli when tällmi is the active app, so activate briefly and remember where
         // you were; hiding hands the keyboard straight back to that app.
@@ -176,35 +185,57 @@ public final class CompanionController {
         }
     }
 
-    /// Where tälli wants to be right now: beside the cursor, on the screen the cursor is on.
-    private func targetFrame() -> CGRect {
+    /// Beside the cursor, on the screen the cursor is on.
+    private func frameNearCursor() -> CGRect {
         let cursor = NSEvent.mouseLocation
-        let screen = NSScreen.screens.first { $0.frame.contains(cursor) } ?? NSScreen.main
         return CompanionPlacement.frame(
-            cursor: cursor, size: CompanionPanel.size, screen: screen?.visibleFrame ?? .zero,
+            cursor: cursor, size: panelSize, screen: screen(containing: cursor),
             offset: settings.cursorOffset)
     }
 
-    /// Glides after the cursor about 60 times a second while visible. Reading the cursor position
-    /// needs no extra permission.
-    private func startFollowing() {
-        followTask?.cancel()
-        guard settings.followsCursor else { return }
-        followTask = Task { [weak self] in
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .milliseconds(16))
-                guard let self else { return }
-                let current = panel.frame.origin
-                let next = CompanionFollow.step(
-                    from: current, to: targetFrame().origin, smoothing: settings.followSmoothing)
-                if next != current { panel.setFrameOrigin(next) }
-            }
+    private func screen(containing point: CGPoint) -> CGRect {
+        (NSScreen.screens.first { $0.frame.contains(point) } ?? NSScreen.main)?.visibleFrame ?? .zero
+    }
+
+    /// The pointer in the panel's SwiftUI coordinates (origin top-left). Reading it needs no extra permission.
+    private func cursorInPanel() -> CGPoint? {
+        guard isShown, let content = panel.contentView else { return nil }
+        let point = panel.convertPoint(fromScreen: NSEvent.mouseLocation)
+        return CGPoint(x: point.x, y: content.bounds.height - point.y)
+    }
+
+    /// Measured in screen points from where you pressed, so the panel moving under the pointer doesn't feed
+    /// back into the drag. Only once the pointer moved past the tolerance does the press become a drag.
+    private func drag() {
+        let mouse = NSEvent.mouseLocation
+        guard var start = press else {
+            press = (mouse, panel.frame, false)
+            return
         }
+        if !start.isDrag {
+            let tolerance = brand?.motion.attention?.dragTolerancePt ?? 0
+            guard CompanionPlacement.isDrag(from: start.mouse, to: mouse, tolerance: tolerance) else { return }
+            start.isDrag = true
+            press = start
+            stirs += 1
+            render()
+        }
+        let moved = CompanionPlacement.dragged(
+            start.frame, by: CGVector(dx: mouse.x - start.mouse.x, dy: mouse.y - start.mouse.y),
+            screen: screen(containing: mouse))
+        panel.setFrameOrigin(moved.origin)
+    }
+
+    /// Letting go: a press that never became a drag was a poke.
+    private func endPress() {
+        if press?.isDrag == true { stirs += 1 } else { pokes += 1 }
+        press = nil
+        render()
     }
 
     private func hide() {
-        followTask?.cancel()
-        followTask = nil
+        isShown = false
+        press = nil
         previousApp?.activate()
         previousApp = nil
         hotkeys.unregister(id: Self.cancelHotkeyID)
@@ -214,8 +245,13 @@ public final class CompanionController {
         NSAnimationContext.runAnimationGroup { [panel] context in
             context.duration = 0.18
             panel.animator().alphaValue = 0
-        } completionHandler: { [panel] in
-            MainActor.assumeIsolated { panel.orderOut(nil) }
+        } completionHandler: { [weak self, panel] in
+            MainActor.assumeIsolated {
+                // Called again while fading out: stay.
+                guard let self, !self.isShown else { return }
+                panel.orderOut(nil)
+                self.render()
+            }
         }
     }
 
@@ -224,8 +260,13 @@ public final class CompanionController {
             CompanionView(
                 model: model, showsSaved: showsSaved, showsDiscarded: showsDiscarded, focusRequest: focusRequest,
                 hint: "\(settings.finishKey.displayLabel) save · \(settings.cancelKey.displayLabel) discard",
+                isShown: isShown,
+                cursor: { [weak self] in self?.cursorInPanel() },
+                talliSize: settings.talliSize, panelSize: panelSize, pokes: pokes, stirs: stirs,
                 onSubmitTyped: { [weak self] in Task { await self?.submitTyped() } },
-                onOpenSaved: { [weak self] in self?.openSavedEntry() }
+                onOpenSaved: { [weak self] in self?.openSavedEntry() },
+                onDrag: { [weak self] in self?.drag() },
+                onDragEnded: { [weak self] in self?.endPress() }
             )
             .id(showCount)
             .textCase(appearance.swiftUICase)

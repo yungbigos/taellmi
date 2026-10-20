@@ -250,8 +250,7 @@ public final class AppEnvironment {
         CompanionSettings(
             cursorOffset: (try? settings.number(SettingKeys.companionCursorOffset)) ?? 0,
             savedDisplaySeconds: (try? settings.number(SettingKeys.companionSavedDisplaySeconds)) ?? 0,
-            followsCursor: (try? settings.bool(SettingKeys.companionFollowsCursor)) ?? false,
-            followSmoothing: (try? settings.number(SettingKeys.companionFollowSmoothing)) ?? 1,
+            talliSize: (try? settings.number(SettingKeys.companionTalliSize)) ?? 64,
             finishKey: (try? settings.string(SettingKeys.companionFinishKey)).flatMap { try? Hotkey(parsingKey: $0) }
                 ?? .enter,
             cancelKey: (try? settings.string(SettingKeys.companionCancelKey)).flatMap { try? Hotkey(parsingKey: $0) }

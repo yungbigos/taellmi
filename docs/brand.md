@@ -30,7 +30,7 @@ The promise is **finding and understanding**, never rewriting.
 | Name | What it is | Rules |
 |---|---|---|
 | **tällmi** | the app | Always lowercase, always with ä, even at the start of a sentence. Never "Tällmi", "Tellmi" or "Taellmi". `taellmi` appears only in identifiers (bundle id, paths). |
-| **tälli** | the companion at your cursor | Same rules. tälli is a character, not the app. Never use one name for the other. |
+| **tälli** | the companion you call with the hotkey | Same rules. tälli is a character, not the app. Never use one name for the other. |
 
 The main window has no name of its own: it is **tällmi**. The menu item is **open tällmi**. The window title shows the current view.
 
@@ -55,7 +55,7 @@ The brief for the character work in issue #7:
 - **the mouth is the a's lower counter.** It opens only when tälli says something.
 - when tälli thinks, the ä grows letters: äh → ähh → ähm → ähmmm, and folds them back when done
 - **body: G1 blue with "key + bounce" light**: six gradient steps, a soft tint (never white) from the top left, and light bouncing back into the bottom right so it never sinks into night
-- thumbnail-sized next to the cursor
+- thumbnail-sized, beside the spot where you called it
 - no gender, no age: a small creature, not a person and not a pet breed
 
 ## 5. Colour
@@ -143,7 +143,8 @@ Rules:
 **Alive, like an organism that thinks.** Soft and lifelike: one soft overshoot (about 4 %) is allowed where something arrives, never repeated bounces, wiggles or celebrations.
 - tälli breathes slowly when idle and swells gently with your voice.
 - **Coming alive:** at the cursor tälli **rises** a little and grows in (0.85 s); when the window launches it **rolls in** from the side and settles upright (1.1 s). In both, the eyes open last. Leaving: the eyes close, then it sinks a little and fades (0.28 s).
-- **It reacts to stimuli, even when idle:** the eyes glance at the cursor when it moves fast or comes close (never constant tracking); it swells with your voice; it thinks visibly while the app works on your thoughts; it is livelier in the morning and slower and sleepier at night (the Mac's clock only, nothing recorded). Camera and device motion come later (#31).
+- **It sits still and watches you.** tälli appears beside the cursor and stays there; it never follows the cursor. Drag tälli to move it. While you move the cursor its eyes follow it, and they stop once the cursor rests. As the cursor comes close it perks up: a little bigger, eyes a little wider. Click it and it squishes, eyes shut, and springs back; three quick pokes and it squeezes its eyes shut for a moment. With nothing happening for a while (and only when it isn't listening) its lids droop and its breath slows until you move again. Click anywhere in the bubble to type.
+- **It reacts to stimuli, even when idle:** it swells with your voice; it thinks visibly while the app works on your thoughts; it is livelier in the morning and slower and sleepier at night (the Mac's clock only, nothing recorded). Camera and device motion come later (#31).
 - When tälli is hidden, the organism lives quietly in the menu bar dots and the ä in the window. tälli itself still never appears unasked.
 - Slow ambient life inside the views (space and time drift, new connections glow in softly), never under your text.
 - **The dots carry status, so words are the exception:**
@@ -154,11 +155,14 @@ Rules:
   | you pause | drift slowly and wait, like an "äh" |
   | tälli is thinking | look up and to the side; the ä grows "hmmm" letters |
   | saving | settle into a blink; the mouth opens for "saved." |
+  | you move the cursor | follow it; widen as it comes close |
+  | you poke tälli | shut while it squishes; squeeze shut after three quick pokes |
+  | nothing happens for a while | lids droop, looking down a little |
   | logo / icon | may blink once on hover or launch |
 
 - Saving is a small settle, plus a level-change haptic on the trackpad. No confetti, no wiggle, no celebration. Haptics only for moments you caused.
 - Switching views (⌘1–⌘4) is a quick crossfade. Space drifts slowly.
-- Reduce Motion makes tälli a still face: entrances become fades, no breathing, swell, drift, blink or glance. Status shows as the dots brightening with your voice and the thinking letters fading in place. Reduce Transparency removes glass.
+- Reduce Motion makes tälli a still face: entrances become fades, no breathing, swell, drift, blink, watching the cursor or perking up; a poke dims the dots for a moment instead of squishing. Status shows as the dots brightening with your voice and the thinking letters fading in place. Reduce Transparency removes glass.
 - Every timing and curve is a named token in [brand/tokens.json](brand/tokens.json).
 
 ## 9. Voice

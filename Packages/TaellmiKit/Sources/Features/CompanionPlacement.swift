@@ -1,6 +1,7 @@
 import CoreGraphics
 
-/// Where tälli's panel goes: beside the cursor, never covering it, always fully on screen.
+/// Where tälli's panel goes: beside the cursor when you call it, never covering it, always fully on screen.
+/// After that it stays put unless you drag tälli.
 /// Coordinates are AppKit screen coordinates (origin bottom-left).
 public enum CompanionPlacement {
     public nonisolated static func frame(cursor: CGPoint, size: CGSize, screen: CGRect, offset: CGFloat) -> CGRect {
@@ -12,15 +13,16 @@ public enum CompanionPlacement {
         y = min(max(y, screen.minY), screen.maxY - size.height)
         return CGRect(origin: CGPoint(x: x, y: y), size: size)
     }
-}
 
-/// tälli glides after the cursor: every frame it covers a fraction (`smoothing`, 0…1) of the remaining way.
-public enum CompanionFollow {
-    public nonisolated static func step(from current: CGPoint, to target: CGPoint, smoothing: CGFloat) -> CGPoint {
-        let dx = target.x - current.x
-        let dy = target.y - current.y
-        if abs(dx) < 1, abs(dy) < 1 { return target }
-        let fraction = min(max(smoothing, 0), 1)
-        return CGPoint(x: current.x + dx * fraction, y: current.y + dy * fraction)
+    /// Whether a press on tälli that moved from `start` to `end` is a drag rather than a poke.
+    public nonisolated static func isDrag(from start: CGPoint, to end: CGPoint, tolerance: CGFloat) -> Bool {
+        hypot(end.x - start.x, end.y - start.y) > tolerance
+    }
+
+    /// The panel after you dragged tälli by `drag` from where it was at the start of the drag; never off screen.
+    public nonisolated static func dragged(_ start: CGRect, by drag: CGVector, screen: CGRect) -> CGRect {
+        let x = min(max(start.minX + drag.dx, screen.minX), screen.maxX - start.width)
+        let y = min(max(start.minY + drag.dy, screen.minY), screen.maxY - start.height)
+        return CGRect(origin: CGPoint(x: x, y: y), size: start.size)
     }
 }

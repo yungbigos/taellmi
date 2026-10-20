@@ -32,8 +32,10 @@ public struct TalliLetter: Sendable, Equatable {
 public struct TalliPose: Sendable, Equatable {
     public var opacity: Double = 1
     public var scale: Double = 1
-    /// Extra vertical squash while the voice is loud (1 = none).
+    /// Vertical squash while the voice is loud or tälli is poked (1 = none).
     public var squash: Double = 1
+    /// Horizontal stretch while tälli is poked (1 = none).
+    public var stretch: Double = 1
     public var offset: CGSize = .zero
     /// Radians.
     public var rotation: Double = 0
@@ -74,12 +76,37 @@ public final class TalliMotion {
     private var nextLetter: Double = 0
     private var browAt: Double?
     private var mouth: Double = 0
+    private var breathPhase: Double = 0
+    private var attention: TalliAttention?
+    /// Smoothed 0…1: how close the cursor is, and how far tälli has dozed off.
+    private var near: Double = 0
+    private var rest: Double = 0
+    private var wasResting = false
+    /// Smoothed −1…1: how far tälli turns towards where it looks.
+    private var lean: Double = 0
 
     /// - Parameter random: 0…1, injected so tests are deterministic.
     public init(tokens: BrandTokens, entrance: TalliEntrance?, random: @escaping () -> Double) {
         self.tokens = tokens
         self.entrance = entrance
         self.random = random
+        attention = tokens.motion.attention.map(TalliAttention.init)
+    }
+
+    /// Where the cursor is, in points from tälli's centre with y down; `nil` when unknown. A tälli that is
+    /// never told stays as it was: it doesn't watch, perk up or rest.
+    public func see(cursor: CGVector?, at time: Double) {
+        attention?.see(cursor: cursor, at: time)
+    }
+
+    /// You clicked tälli.
+    public func poke(at time: Double) {
+        attention?.poke(at: time)
+    }
+
+    /// Something happened near tälli other than the cursor moving: you type, or carry it around.
+    public func stir(at time: Double) {
+        attention?.stir(at: time)
     }
 
     /// The breathing period at a given hour: slower and sleepier at night, livelier in the morning.
@@ -107,6 +134,34 @@ public final class TalliMotion {
         let sinceStart = time - (start ?? time)
         let sleepy = sleepiness(hour)
 
+        // Attention: how close the cursor is and whether tälli rests, smoothed so it eases in and out.
+        let watching = tokens.motion.attention
+        var gaze: CGVector?
+        var pokeAge: Double?
+        var startleAge: Double?
+        var squeezing = false
+        var cursorSide = 1.0
+        var restThreshold = 0.5
+        if let attention, let watching {
+            let resting = mood == .idle && attention.isResting(at: time)
+            if wasResting && !resting { blinkStart = time }
+            wasResting = resting
+            let restTarget = resting ? 1.0 : 0
+            rest +=
+                (restTarget - rest)
+                * (1 - exp(-dt / (restTarget > rest ? watching.restResponse : watching.wakeResponse)))
+            near += (attention.proximity - near) * (1 - exp(-dt / watching.proximityResponse))
+            gaze = attention.gaze(at: time)
+            pokeAge = attention.pokeAge(at: time)
+            startleAge = attention.startleAge(at: time)
+            squeezing = attention.isSqueezing(at: time)
+            cursorSide = attention.cursorSide
+            restThreshold = watching.restThreshold
+            let leanTarget = reduceMotion || mood == .thinking ? 0 : gaze.map { max(-1, min(1, $0.dx)) } ?? 0
+            lean += (leanTarget - lean) * (1 - exp(-dt / watching.gazeResponse))
+        }
+        let perked = near * (1 - rest)
+
         // Voice: fast attack, slower release.
         let target = Double(listeningLevel)
         let tau = target > level ? motion.voice.attack : motion.voice.release
@@ -126,15 +181,34 @@ public final class TalliMotion {
         if reduceMotion {
             pose.scale = 1
         } else {
-            let breath = motion.breath.amplitude * sin(time * 2 * .pi / breathPeriod(hour: hour))
+            // The phase advances by the current period, so a slower breath while resting never jumps.
+            let period = breathPeriod(hour: hour) * (1 + (watching?.restBreathSlower ?? 0) * rest)
+            breathPhase = (breathPhase + dt * 2 * .pi / period).truncatingRemainder(dividingBy: 2 * .pi)
+            let breath = motion.breath.amplitude * sin(breathPhase)
             let swell = motion.voice.swellMax * level
             var settle = 0.0
             if mood == .saved {
                 let progress = min(1, (time - moodStart) / motion.saving.settle)
                 settle = -motion.saving.settleDepth * sin(.pi * curve("soft", progress))
             }
-            pose.scale = (1 + breath + swell + settle) * entered.scale
+            let perk = (watching?.perkScale ?? 0) * perked
+            pose.scale = (1 + breath + swell + settle + perk) * entered.scale
             pose.squash = 1 - motion.voice.squash * level
+            if let pokeAge, let watching {
+                let spring = exp(-pokeAge * watching.pokeDecay) * cos(2 * .pi * watching.pokeWobbleHz * pokeAge)
+                pose.stretch = 1 + watching.pokeSquishX * spring
+                pose.squash *= 1 - watching.pokeSquishY * spring
+                if pokeAge < watching.pokeHopFor {
+                    pose.offset.height -= watching.pokeHop * sin(.pi * pokeAge / watching.pokeHopFor)
+                }
+            }
+            if let startleAge, let watching {
+                pose.offset.height -= watching.startleHop * sin(.pi * startleAge / watching.startleDuration)
+            }
+            if let watching {
+                pose.offset.width += watching.leanX * lean
+                pose.rotation += watching.leanRotation * lean
+            }
         }
 
         // Eyes.
@@ -154,12 +228,22 @@ public final class TalliMotion {
             }
             look = (drift.x, drift.y)
         }
+        // Watching the cursor is motion, so Reduce Motion keeps the eyes where they were.
+        let gain = watching?.gazeGain ?? 1
+        if let gaze, mood != .thinking, !reduceMotion { look = (gaze.dx * gain, gaze.dy * gain) }
+        if let watching, gaze == nil, rest > restThreshold, !reduceMotion, watching.restLook.count == 2 {
+            look = (watching.restLook[0] * rest, watching.restLook[1] * rest)
+        }
+        if let watching, squeezing, !reduceMotion, watching.squeezeLookAway.count == 2 {
+            look = (-cursorSide * watching.squeezeLookAway[0], watching.squeezeLookAway[1])
+        }
         if let lookAside = entered.look { look = lookAside }
         if reduceMotion {
             let holdsGaze = mood == .thinking || pose.isPausing
             eye = holdsGaze ? (look.x, look.y, 0, 0) : (0, 0, 0, 0)
         } else {
-            followCriticallyDamped(to: look, dt: dt)
+            // Watching the cursor, the eyes keep up quicker than they wander otherwise.
+            followCriticallyDamped(to: look, dt: dt, response: gaze == nil ? nil : watching?.gazeResponse)
         }
         pose.eyes = CGVector(dx: eye.x, dy: eye.y)
 
@@ -168,7 +252,7 @@ public final class TalliMotion {
             if case .saved = mood, time - moodStart >= motion.saving.blinkAt, blinkStart ?? -1 < moodStart {
                 blinkStart = time
             }
-            if mood != .saved, let next = nextBlink, time > next {
+            if mood != .saved, rest < restThreshold, let next = nextBlink, time > next {
                 blinkStart = time
                 nextBlink =
                     time + interval(motion.blink.everyMin, motion.blink.everyMax)
@@ -177,13 +261,25 @@ public final class TalliMotion {
             let duration = motion.blink.duration * (1 + motion.blink.nightLonger * sleepy)
             if let began = blinkStart, time - began < duration { pose.lid = sin(.pi * (time - began) / duration) }
             pose.lid = max(pose.lid, motion.blink.nightLid * sleepy)
+            if let watching {
+                pose.lid = max(pose.lid, watching.restLid * rest)
+                if let pokeAge { pose.lid = max(pose.lid, 1 - min(1, pokeAge / watching.pokeEyesShutFor)) }
+                if squeezing { pose.lid = max(pose.lid, watching.squeezeLid) }
+            }
         }
         pose.lid = max(pose.lid, entered.lid)
 
         // Dots follow the voice: they pulse, or under Reduce Motion they brighten instead.
-        pose.dotScale = reduceMotion ? 1 : 1 + motion.voice.dotPulseMax * level
+        pose.dotScale = reduceMotion ? 1 : 1 + motion.voice.dotPulseMax * level + (watching?.widenDots ?? 0) * perked
+        if !reduceMotion, let watching, let startleAge {
+            pose.dotScale += watching.startleWiden * (1 - startleAge / watching.startleDuration)
+        }
         let dim = motion.voice.reduceMotionDim
         pose.dotOpacity = reduceMotion && isListening ? dim + (1 - dim) * level : 1
+        // Under Reduce Motion a poke doesn't squish; the dots dim for a moment so you still see it noticed.
+        if reduceMotion, let watching, let pokeAge, pokeAge < watching.pokeReduceMotionFor {
+            pose.dotOpacity = watching.pokeReduceMotionDim
+        }
 
         // The rare raised brow while thinking.
         if mood == .thinking && !reduceMotion {
@@ -289,8 +385,8 @@ public final class TalliMotion {
     }
 
     /// The eyes follow their target without overshoot. A missing spring means they jump there.
-    private func followCriticallyDamped(to target: (x: Double, y: Double), dt: Double) {
-        guard let response = tokens.easing["spring.glance"]?.response else {
+    private func followCriticallyDamped(to target: (x: Double, y: Double), dt: Double, response faster: Double?) {
+        guard let response = faster ?? tokens.easing["spring.glance"]?.response else {
             eye = (target.x, target.y, 0, 0)
             return
         }

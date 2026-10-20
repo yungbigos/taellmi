@@ -113,7 +113,7 @@ _In the app_: not shown; the window is just tällmi
 _Avoid_: Browse, library view
 
 **Companion**:
-The small animated presence that appears next to the cursor for Capture, called **tälli** in the app. It appears when you call it (hotkey or click). It never appears unasked, unless you turned on invitations at times you set.
+The small animated presence that appears next to the cursor for Capture and stays there, watching the cursor, called **tälli** in the app. It appears when you call it (hotkey or click). It never appears unasked, unless you turned on invitations at times you set.
 _In the app_: tälli
 _Avoid_: Assistant, advisor, avatar, Clippy (in code and docs; "tälli" is the name users see)
 

@@ -28,24 +28,32 @@ struct CompanionPlacementTests {
     }
 }
 
-@Suite("tälli gliding after the cursor")
-struct CompanionFollowTests {
-    @Test("each frame moves a fraction of the way towards the target")
-    func movesFraction() {
-        let next = CompanionFollow.step(from: CGPoint(x: 0, y: 0), to: CGPoint(x: 100, y: 40), smoothing: 0.25)
-        #expect(next == CGPoint(x: 25, y: 10))
+@Suite("Moving tälli by dragging it")
+struct CompanionDragTests {
+    private let screen = CGRect(x: 0, y: 0, width: 1440, height: 900)
+    private let start = CGRect(x: 400, y: 300, width: 300, height: 160)
+
+    @Test("the panel moves by exactly as far as you dragged")
+    func movesWithTheDrag() {
+        let moved = CompanionPlacement.dragged(start, by: CGVector(dx: 120, dy: -40), screen: screen)
+        #expect(moved.origin == CGPoint(x: 520, y: 260))
+        #expect(moved.size == start.size)
     }
 
-    @Test("snaps onto the target when it is less than a pixel away, so it comes to rest")
-    func snaps() {
-        let target = CGPoint(x: 100, y: 100)
-        #expect(CompanionFollow.step(from: CGPoint(x: 99.6, y: 100.3), to: target, smoothing: 0.25) == target)
+    @Test(
+        "you can't drag it off the screen",
+        arguments: [
+            CGVector(dx: 5000, dy: 0), CGVector(dx: -5000, dy: 0), CGVector(dx: 0, dy: 5000),
+            CGVector(dx: 0, dy: -5000),
+        ])
+    func staysOnScreen(drag: CGVector) {
+        #expect(screen.contains(CompanionPlacement.dragged(start, by: drag, screen: screen)))
     }
 
-    @Test("smoothing 1 jumps straight to the target; 0 is treated as 'no following'")
-    func extremes() {
-        let target = CGPoint(x: 50, y: 60)
-        #expect(CompanionFollow.step(from: .zero, to: target, smoothing: 1) == target)
-        #expect(CompanionFollow.step(from: .zero, to: target, smoothing: 0) == .zero)
+    @Test("a press that barely moves is a poke; moving further is a drag", arguments: [(3.0, false), (10.0, true)])
+    func pokeOrDrag(distance: Double, isDrag: Bool) {
+        let start = CGPoint(x: 500, y: 500)
+        let end = CGPoint(x: 500 + distance * 0.6, y: 500 + distance * 0.8)
+        #expect(CompanionPlacement.isDrag(from: start, to: end, tolerance: 4) == isDrag)
     }
 }

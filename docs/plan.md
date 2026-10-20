@@ -124,7 +124,7 @@ Decisions are locked (see section 3); we fix model choices later if real use sho
     - only fixed, editable texts from config
     - never generated content (ADR 0006)
   - the menu bar icon stays as a fallback (settings, quit) and can be hidden in Settings
-- **A small animated companion appears next to the mouse cursor** when you press the hotkey. It lives anywhere on screen, not in the crowded menu bar.
+- **A small animated companion appears next to the mouse cursor** when you press the hotkey and stays there, watching the cursor; you can drag it. It lives anywhere on screen, not in the crowded menu bar.
 - It shows that it is listening (reacting to your voice), the live preview text, and a short confirmation when the Entry is saved. Then it disappears.
 - **Later:** playful physics, e.g. reacting to the Mac's motion or orientation.
 - The menu bar stays only as a fallback.

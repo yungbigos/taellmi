@@ -9,23 +9,49 @@ import os
 public struct TalliView: View {
     var mood: TalliMood
     var entrance: TalliEntrance?
+    var cursor: (@MainActor () -> CGPoint?)?
+    var pokes: Int
+    var stirs: Int
+    var paused: Bool
     @Environment(\.brand) private var brand
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.colorScheme) private var colorScheme
     @State private var renderer: TalliRenderer?
+    /// Where tälli is in its window, so the cursor can be measured from its centre.
+    @State private var frame: CGRect = .zero
 
-    /// - Parameter entrance: how tälli comes alive when it appears; `nil` to be there already.
-    public init(mood: TalliMood, entrance: TalliEntrance? = .rise) {
+    /// - Parameters:
+    ///   - entrance: how tälli comes alive when it appears; `nil` to be there already.
+    ///   - cursor: where the pointer is, in this window's global SwiftUI coordinates. When given, tälli watches
+    ///     it; it is read once per frame, which needs no extra permission.
+    ///   - pokes: counts your clicks on tälli; each new one pokes it.
+    ///   - stirs: counts things happening near tälli other than the cursor (typing, carrying it), which keep
+    ///     it from dozing off.
+    ///   - paused: stops drawing frames while tälli can't be seen.
+    public init(
+        mood: TalliMood, entrance: TalliEntrance? = .rise, cursor: (@MainActor () -> CGPoint?)? = nil,
+        pokes: Int = 0, stirs: Int = 0, paused: Bool = false
+    ) {
         self.mood = mood
         self.entrance = entrance
+        self.cursor = cursor
+        self.pokes = pokes
+        self.stirs = stirs
+        self.paused = paused
     }
 
     public var body: some View {
         // Under Reduce Motion the face is still; a slow tick keeps the dots' brightness and letters current.
-        TimelineView(.animation(minimumInterval: reduceMotion ? 0.2 : nil)) { context in
+        TimelineView(.animation(minimumInterval: reduceMotion ? 0.2 : nil, paused: paused)) { context in
             Canvas { canvas, size in
                 guard let renderer else { return }
                 let now = context.date.timeIntervalSinceReferenceDate
+                if let cursor {
+                    let centre = CGPoint(
+                        x: frame.midX, y: frame.minY + size.height * (brand?.talli.layout.centerY ?? 0.5))
+                    renderer.motion.see(
+                        cursor: cursor().map { CGVector(dx: $0.x - centre.x, dy: $0.y - centre.y) }, at: now)
+                }
                 let hour =
                     Double(Calendar.current.component(.hour, from: context.date))
                     + Double(Calendar.current.component(.minute, from: context.date)) / 60
@@ -36,6 +62,9 @@ public struct TalliView: View {
         .onChange(of: brand, initial: true) {
             renderer = brand.map { TalliRenderer(tokens: $0, entrance: entrance) }
         }
+        .onGeometryChange(for: CGRect.self, of: { $0.frame(in: .global) }, action: { frame = $0 })
+        .onChange(of: pokes) { renderer?.motion.poke(at: Date.now.timeIntervalSinceReferenceDate) }
+        .onChange(of: stirs) { renderer?.motion.stir(at: Date.now.timeIntervalSinceReferenceDate) }
         .accessibilityElement()
         .accessibilityLabel(accessibilityText)
     }
@@ -117,7 +146,7 @@ final class TalliRenderer {
         layer.opacity = pose.opacity
         layer.translateBy(x: center.x, y: center.y)
         layer.rotate(by: .radians(pose.rotation))
-        layer.scaleBy(x: pose.scale * em, y: pose.scale * pose.squash * em)
+        layer.scaleBy(x: pose.scale * pose.stretch * em, y: pose.scale * pose.squash * em)
 
         // Glyph space: the a's bounding box is centred on the origin.
         let box = a.bounds

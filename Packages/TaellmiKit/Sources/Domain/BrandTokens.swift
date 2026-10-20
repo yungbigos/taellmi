@@ -177,11 +177,13 @@ public struct BrandTokens: Sendable, Equatable, Codable {
         public var crossfade: Crossfade
         public var scroll: Crossfade
         public var timeOfDay: TimeOfDay
+        /// How tälli watches the cursor while it sits still. Optional, so tokens edited before it existed still load.
+        public var attention: Attention?
 
         enum CodingKeys: String, CodingKey {
             case appearCursor = "appear.cursor"
             case appearLaunch = "appear.launch"
-            case breath, voice, pause, thinking, saving, blink, crossfade, scroll, timeOfDay
+            case breath, voice, pause, thinking, saving, blink, crossfade, scroll, timeOfDay, attention
         }
 
         public struct Appear: Sendable, Equatable, Codable {
@@ -260,6 +262,57 @@ public struct BrandTokens: Sendable, Equatable, Codable {
         public struct Crossfade: Sendable, Equatable, Codable {
             public var duration: Double
             public var easing: String
+        }
+
+        /// Distances are points from tälli's centre, times seconds.
+        public struct Attention: Sendable, Equatable, Codable {
+            /// The cursor distance at which the eyes look all the way.
+            public var reachPt: Double
+            /// Where tälli starts to notice the cursor, and where it is fully perked up.
+            public var nearPt: Double
+            public var closePt: Double
+            /// How long the eyes keep following a cursor that stopped moving.
+            public var followForS: Double
+            /// How far past their usual travel the eyes go when they look at the cursor.
+            public var gazeGain: Double
+            public var gazeResponse: Double
+            /// How much the body shifts and turns towards where it looks.
+            public var leanX: Double
+            public var leanRotation: Double
+            public var proximityResponse: Double
+            public var perkScale: Double
+            public var widenDots: Double
+            /// A cursor faster than this makes tälli start: a small hop, eyes wide.
+            public var startleSpeedPtS: Double
+            public var startleWiden: Double
+            public var startleHop: Double
+            public var startleDuration: Double
+            public var restAfterS: Double
+            /// How far tälli must have dozed off before it stops blinking and looks down.
+            public var restThreshold: Double
+            public var restLid: Double
+            public var restLook: [Double]
+            public var restBreathSlower: Double
+            public var restResponse: Double
+            public var wakeResponse: Double
+            public var pokeDuration: Double
+            public var pokeSquishX: Double
+            public var pokeSquishY: Double
+            public var pokeDecay: Double
+            public var pokeWobbleHz: Double
+            public var pokeHop: Double
+            public var pokeHopFor: Double
+            public var pokeEyesShutFor: Double
+            public var pokeReduceMotionDim: Double
+            public var pokeReduceMotionFor: Double
+            /// This many pokes within `squeezeWithinS` and tälli squeezes its eyes shut.
+            public var squeezePokes: Int
+            public var squeezeWithinS: Double
+            public var squeezeHoldS: Double
+            public var squeezeLid: Double
+            public var squeezeLookAway: [Double]
+            /// How far the pointer must move on tälli before a press becomes a drag instead of a poke.
+            public var dragTolerancePt: Double
         }
 
         public struct TimeOfDay: Sendable, Equatable, Codable {

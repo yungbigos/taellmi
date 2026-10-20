@@ -32,10 +32,10 @@ public enum SettingKeys {
     public static let exploreStartView = "explore.start_view"
     public static let companionCursorOffset = "companion.cursor_offset"
     public static let companionSavedDisplaySeconds = "companion.saved_display_s"
-    public static let companionFollowsCursor = "companion.follows_cursor"
+    /// How big tälli is in its panel, in points.
+    public static let companionTalliSize = "companion.talli_size_pt"
     public static let companionFinishKey = "companion.finish_key"
     public static let companionCancelKey = "companion.cancel_key"
-    public static let companionFollowSmoothing = "companion.follow_smoothing"
     public static let fragmentTargetLength = "fragment.target_chars"
     public static let fragmentMaxLength = "fragment.max_chars"
     public static let embedBatchSize = "embed.batch_size"
@@ -67,8 +67,7 @@ public enum SettingKeys {
             exploreHotkey,
             exploreAutosaveDelaySeconds, exploreStartView,
             companionCursorOffset,
-            companionSavedDisplaySeconds, companionFollowsCursor, companionFinishKey, companionCancelKey,
-            companionFollowSmoothing, brandTokens,
+            companionSavedDisplaySeconds, companionTalliSize, companionFinishKey, companionCancelKey, brandTokens,
         ] + meaning + Commands.all.map(\.settingKey)
 }
 

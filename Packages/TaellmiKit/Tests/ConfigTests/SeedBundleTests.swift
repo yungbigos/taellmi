@@ -27,6 +27,14 @@ struct SeedBundleTests {
         }
     }
 
+    /// tälli stays where you called it now. Old installs keep these rows; nothing reads them any more.
+    @Test("tälli no longer has settings for following the cursor")
+    func followCursorRetired() throws {
+        let keys = Set(try SeedBundle.bundled().settings.map(\.key))
+        #expect(!keys.contains("companion.follows_cursor"))
+        #expect(!keys.contains("companion.follow_smoothing"))
+    }
+
     @Test("validation catches a pipeline role with no assignment")
     func catchesUnassignedRole() throws {
         var bundle = try SeedBundle.bundled()

@@ -15,6 +15,11 @@ _Avoid_: Note, record, memo, item
 The canonical content of an Entry, which you can read and edit. For a voice Entry it starts as a Transcript, and from then on it only changes when you edit it.
 _Avoid_: Body, content, cleaned transcript
 
+**Formatting**:
+How the words of a Text look and are laid out: bold, italic, underline, strike-through, headings, paragraphs, lists, quotes and links. It never changes whether words count; only you add or change it, except that a spoken Entry's first Text gets paragraphs from long pauses and numbered lists from counting out loud, without changing a word, recorded on the Entry.
+_In the app_: no umbrella word; bold, italic, underline, strike through, bullet list, numbered list
+_Avoid_: Markup, styling, rich text
+
 **Transcript**:
 The verbatim output of a speech-to-text model for one Recording, with timings. It seeds the Text and maps words to moments in the audio. It is kept alongside the Recording and expires with it under Retention.
 _In the app_: transcript
@@ -58,7 +63,7 @@ _Avoid_: Backup password, master key
 ## Meaning
 
 **Fragment**:
-A contiguous part of an Entry's Text that is about one thing. An Entry has one or more Fragments.
+A contiguous part of an Entry's Text that is about one thing. An Entry has one or more Fragments. Each list item, at any level, is a Fragment of its own, and a heading starts a new one.
 _In the app_: passage
 _Avoid_: Chunk, segment, section, block
 

@@ -169,6 +169,13 @@ Decisions are locked (see section 3); we fix model choices later if real use sho
   - A stdio relay helper for Claude Desktop, Jan and goose comes later.
   - Research: [research/2026-10-mcp.md](research/2026-10-mcp.md).
 
+### Formatting (requested 2026-10-20, decided, [ADR 0014](decisions/0014-formatting-as-markdown.md))
+- **While typing:** bold, italic, underline, strike-through, bullet lists and numbered lists. They are stored as Markdown in `entry.md` and styled where they stand, with the markup hidden except around the words the cursor is in. A floating bar over a selection, shortcuts and ⌘K apply them.
+- **From imports:** headings, checklists, quotes and links show as such.
+- **From speech, only when a spoken thought is first written:** paragraphs from long pauses, and numbered lists when you count out loud ("erstens … zweitens …"). Both are recorded on the Entry, and no word changes.
+- **Search and meaning read only the words.** Each list item is its own passage.
+- **Build order:** editor and words-only view → paragraphs from pauses → German test clips through Parakeet → spoken lists (#55).
+
 ### Phase 1 — Capture and archive (MVP you can use daily)
 - Menu-bar app with a global hotkey: press → record → press again → done. Optional push-to-talk.
 - Live transcript preview while you talk (SpeechTranscriber, set to de-DE, so English words may look odd in the preview only); the final transcript from Parakeet v3 (automatic language detection, handles German with English mixed in) replaces it in the background.

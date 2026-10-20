@@ -108,6 +108,22 @@ Rules:
 | text.label | Sans 500 | 0.85 | date, source |
 | text.whisper | Sans 400 italic | 0.77 | the small explainer |
 
+**Formatting in your thought** ([ADR 0014](decisions/0014-formatting-as-markdown.md)) stays in Funnel Sans, at the thought's size unless noted. Headings too, because your text is never set in display type.
+
+| Format | Look |
+|---|---|
+| bold | Sans 700 |
+| italic | Sans italic |
+| underline | a thin line in ink. A concept's thick coloured underline wins on the same word. |
+| strike through | a thin line in ink |
+| heading `#` · `##` · `###` | Sans 600 at 1.45 · 1.3 · 1.15 × body |
+| bullet list, numbered list | • and 1. in quiet, with a hanging indent of `l` per level |
+| checklist (from imports) | a box in quiet, ticked in blue |
+| quote | indented by `l`, with a thin bar in quiet |
+| link | blue |
+| markup, while the cursor is in it | quiet |
+| missing image (from imports) | `image not imported` in text.whisper, quiet |
+
 - **One loud thing per screen**, and it is not too loud. Your own text is never animated, rotated or set in display type.
 - Fonts are bundled with the app. Nothing loads from the network.
 
@@ -122,6 +138,7 @@ Rules:
   - Wherever you are, a thought you focus turns flat, horizontal, at reading size and searchable.
 - Paper first: the light look is the reference, and dark gets equal care.
 - **Glass goes on navigation and controls, plus tälli's bubble. It never goes under your thoughts.**
+- **The formatting bar** floats in glass above a selection once you've finished selecting, or below it if there's no room, and never covers the selected words. It holds bold · italic · underline · strike through · bullet list · numbered list, and a format that's on shows in blue. It goes when you type, press esc or click elsewhere. There is no other formatting toolbar.
 - **See-through, softly.** tällmi's windows and panels let the desktop show through: a macOS material with a thin paper tint on top, so text keeps its contrast. Four surfaces, each a token in `surface`:
 
   | Surface | Where | How |
@@ -162,6 +179,7 @@ Rules:
 
 - Saving is a small settle, plus a level-change haptic on the trackpad. No confetti, no wiggle, no celebration. Haptics only for moments you caused.
 - Switching views (⌘1–⌘4) is a quick crossfade. Space drifts slowly.
+- The formatting bar fades in quickly, without overshoot; with Reduce Motion it simply appears. Hidden markup appears and disappears at once, with no animation inside your text.
 - Reduce Motion makes tälli a still face: entrances become fades, no breathing, swell, drift, blink, watching the cursor or perking up; a poke dims the dots for a moment instead of squishing. Status shows as the dots brightening with your voice and the thinking letters fading in place. Reduce Transparency removes glass.
 - Every timing and curve is a named token in [brand/tokens.json](brand/tokens.json).
 
@@ -239,6 +257,7 @@ Domain terms stay in code and docs. Users see the UI word. If a term has no UI w
 | Link | **connection** | |
 | Cluster | **constellation** | |
 | Vocabulary | **spellings** | |
+| Formatting | no umbrella word: **bold · italic · underline · strike through · bullet list · numbered list** | They switch on and off, so they are named, not "verb + object" like other commands. Formatting from speech shows in the details as e.g. `numbered list from "erstens … drittens"` · `3 paragraphs from pauses`. |
 | Curation, Role, Model, Engine, Assignment, Seed | (not shown) | The voice tab may name a model the user picks. |
 | Capture | (not shown) | You just call tälli. |
 | Explore | (not shown) | The window is tällmi. |

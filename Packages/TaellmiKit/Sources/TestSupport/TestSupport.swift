@@ -1,3 +1,4 @@
+import AVFoundation
 import Config
 import Domain
 import Foundation
@@ -27,6 +28,22 @@ public final class TemporaryDirectory: Sendable {
     public func makeAudioFile(named name: String = "recording.m4a") throws -> URL {
         let file = url.appendingPathComponent(name)
         try Data("fake audio".utf8).write(to: file)
+        return file
+    }
+
+    /// A real, readable m4a of silence lasting `seconds`.
+    public func makeRealAudioFile(named name: String = "real.m4a", seconds: Double) throws -> URL {
+        let file = url.appendingPathComponent(name)
+        let rate = 16_000.0
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: rate, channels: 1),
+            let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(rate * seconds))
+        else { throw CocoaError(.fileWriteUnknown) }
+        buffer.frameLength = buffer.frameCapacity
+        let audio = try AVAudioFile(
+            forWriting: file,
+            settings: [AVFormatIDKey: kAudioFormatMPEG4AAC, AVSampleRateKey: rate, AVNumberOfChannelsKey: 1])
+        try audio.write(from: buffer)
+        audio.close()
         return file
     }
 }

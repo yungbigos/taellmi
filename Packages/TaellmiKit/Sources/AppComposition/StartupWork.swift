@@ -18,6 +18,7 @@ nonisolated struct StartupWork: Sendable {
     let archiveRoot: URL
     let archiveKey: SymmetricKey?
     private let logger = Logger(subsystem: "app.taellmi", category: "startup")
+    private var settings: SettingsStore { SettingsStore(database: database) }
 
     init(
         paths: AppPaths, database: AppDatabase, files: EntryFileStore, index: EntryIndex, runner: PipelineRunner,
@@ -61,6 +62,7 @@ nonisolated struct StartupWork: Sendable {
         try recoverScratchRecordings()
         let report = try index.rebuild(from: files)
         logger.info("Index rebuilt: \(report.indexed) entries, \(report.invalidFolders.count) unreadable")
+        try removeEmptySpokenThoughts()
         try await runner.recoverInterrupted()
         for entry in try index.awaitingTranscription() where files.hasRecording(entry) {
             try await runner.enqueue(entry)
@@ -74,11 +76,33 @@ nonisolated struct StartupWork: Sendable {
             let leftovers = try? FileManager.default.contentsOfDirectory(
                 at: paths.scratch, includingPropertiesForKeys: [.creationDateKey])
         else { return }
+        let minimum = try settings.number(SettingKeys.minimumRecordingSeconds)
         for file in leftovers where file.pathExtension == "m4a" {
+            let duration = Self.duration(of: file)
+            // Cut off before anything was said (or unreadable): nothing to keep, as with a too-short recording.
+            guard duration >= minimum else {
+                try? FileManager.default.removeItem(at: file)
+                logger.info("Threw away an interrupted recording shorter than the minimum")
+                continue
+            }
             let created = (try? file.resourceValues(forKeys: [.creationDateKey]).creationDate) ?? Date()
             let entry = try files.createVoiceEntry(
-                Recording(file: file, durationSeconds: Self.duration(of: file), startedAt: created))
+                Recording(file: file, durationSeconds: duration, startedAt: created))
             logger.info("Recovered an interrupted recording as Entry \(entry.id)")
+        }
+    }
+
+    /// Spoken thoughts without any Text whose recording is too short to hold anything (left by earlier
+    /// versions) can never become a thought; they are removed. Anything with Text stays.
+    private func removeEmptySpokenThoughts() throws {
+        let minimum = try settings.number(SettingKeys.minimumRecordingSeconds)
+        for entry in try index.awaitingTranscription()
+        where entry.text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && (entry.durationSeconds ?? 0) < minimum
+        {
+            try files.discard(entry)
+            try index.remove(id: entry.id)
+            logger.info("Removed an empty spoken thought \(entry.id)")
         }
     }
 

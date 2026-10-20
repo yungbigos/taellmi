@@ -14,7 +14,8 @@ struct AppEnvironmentTests {
         let scratch = try TemporaryDirectory()
         let paths = AppPaths(root: home.url)
         try FileManager.default.createDirectory(at: paths.scratch, withIntermediateDirectories: true)
-        try Data("orphaned audio".utf8).write(to: paths.scratch.appendingPathComponent("orphan.m4a"))
+        try FileManager.default.moveItem(
+            at: try scratch.makeRealAudioFile(seconds: 1.5), to: paths.scratch.appendingPathComponent("orphan.m4a"))
         let fake = FakeTranscriber()
         let environment = try AppEnvironment(
             paths: paths, engines: ["fake_engine": { _, _ in fake }], recorder: FakeRecorder(folder: scratch.url))
@@ -27,6 +28,52 @@ struct AppEnvironmentTests {
         #expect(entries.count == 1)
         #expect(entries.first?.text == FakeTranscriber.germanResult.text)
         #expect(try FileManager.default.contentsOfDirectory(atPath: paths.scratch.path).isEmpty)
+    }
+
+    @Test("a recording left behind that is empty or unreadable is thrown away, not turned into a thought")
+    func dropsEmptyScratchRecordings() async throws {
+        let home = try TemporaryDirectory()
+        let scratch = try TemporaryDirectory()
+        let paths = AppPaths(root: home.url)
+        try FileManager.default.createDirectory(at: paths.scratch, withIntermediateDirectories: true)
+        try Data("cut off".utf8).write(to: paths.scratch.appendingPathComponent("broken.m4a"))
+        try FileManager.default.moveItem(
+            at: try scratch.makeRealAudioFile(seconds: 0.2), to: paths.scratch.appendingPathComponent("short.m4a"))
+        let environment = try AppEnvironment(
+            paths: paths, engines: ["fake_engine": { _, _ in FakeTranscriber() }],
+            recorder: FakeRecorder(folder: scratch.url))
+        _ = try seedFakeTranscription(environment.database, modelsRoot: paths.models)
+
+        try await environment.start()
+        await environment.waitForPipeline()
+
+        #expect(try await environment.journal.recentEntries(limit: 5).isEmpty)
+        #expect(try FileManager.default.contentsOfDirectory(atPath: paths.scratch.path).isEmpty)
+    }
+
+    @Test("on start, empty spoken thoughts too short to hold anything are removed; ones with Text stay")
+    func removesEmptySpokenThoughts() async throws {
+        let home = try TemporaryDirectory()
+        let scratch = try TemporaryDirectory()
+        let paths = AppPaths(root: home.url)
+        let files = EntryFileStore(storage: PlainFolderStorage(root: paths.archive))
+        let empty = try files.createVoiceEntry(
+            Recording(file: try scratch.makeAudioFile(named: "a.m4a"), durationSeconds: 0, startedAt: sampleDate))
+        var typedInto = try files.createVoiceEntry(
+            Recording(file: try scratch.makeAudioFile(named: "b.m4a"), durationSeconds: 0, startedAt: sampleDate))
+        typedInto.text = "Nachträglich getippt."
+        try files.saveText(typedInto)
+        let environment = try AppEnvironment(
+            paths: paths, engines: ["fake_engine": { _, _ in FakeTranscriber() }],
+            recorder: FakeRecorder(folder: scratch.url))
+        _ = try seedFakeTranscription(environment.database, modelsRoot: paths.models)
+
+        try await environment.start()
+        await environment.waitForPipeline()
+
+        let ids = try await environment.journal.recentEntries(limit: 5).map(\.id)
+        #expect(!ids.contains(empty.id))
+        #expect(ids.contains(typedInto.id))
     }
 
     @Test("on start, a voice Entry in the Archive without Text is transcribed")

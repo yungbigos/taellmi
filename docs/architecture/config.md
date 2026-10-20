@@ -41,6 +41,7 @@ pipeline_step     id, step, ordinal, enabled, role, conditions_json
 setting           key, value_json, type, origin, seed_version
                   e.g. chunk.target_tokens=300, chunk.overlap_tokens=50, search.rrf_k=60,
                        models.idle_unload_s=60, capture.hotkey="⌥⌘Space", embed.dimensions=512
+                  brand.tokens (type json) holds the whole design-token document from Seeds/brand.json
 ```
 
 Each embedding vector stores the `model_id` and `dimensions` that produced it. Changing the `embed` assignment therefore queues a background re-embed automatically, and search only compares vectors from the active model.

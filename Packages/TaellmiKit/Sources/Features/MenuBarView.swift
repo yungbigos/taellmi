@@ -25,7 +25,7 @@ public struct MenuBarView: View {
             recordButton
             if let hotkeyWarning {
                 Label(hotkeyWarning + " change it in settings.", systemImage: "exclamationmark.triangle.fill")
-                    .font(.caption)
+                    .brandFont("text.label")
                     .foregroundStyle(.orange)
             }
             if model.isRecording {
@@ -48,7 +48,7 @@ public struct MenuBarView: View {
                 ForEach(model.recentEntries) { entry in
                     VStack(alignment: .leading, spacing: 2) {
                         Text(entry.createdAt, format: .dateTime.day().month().hour().minute())
-                            .font(.caption).foregroundStyle(.secondary)
+                            .brandFont("text.label").foregroundStyle(.secondary)
                         Text(CaptureViewModel.preview(of: entry)).lineLimit(2)
                     }
                 }
@@ -74,9 +74,8 @@ public struct MenuBarView: View {
             Task { await model.toggle() }
         } label: {
             HStack {
-                Image(systemName: model.isRecording ? "stop.circle.fill" : "mic.circle.fill")
-                    .font(.system(size: 28))
-                    .foregroundStyle(model.isRecording ? .red : .accentColor)
+                TalliView(mood: model.isRecording ? .listening(level: model.level) : .idle, entrance: nil)
+                    .frame(width: 40, height: 40)
                 VStack(alignment: .leading) {
                     if let started = model.recordingStartedAt {
                         Text("listening")
@@ -84,7 +83,7 @@ public struct MenuBarView: View {
                             .monospacedDigit().foregroundStyle(.secondary)
                     } else {
                         Text(model.isSaving ? "saving …" : "new thought")
-                        Text(hotkeyLabel).font(.caption).foregroundStyle(.secondary)
+                        Text(hotkeyLabel).brandFont("text.label").foregroundStyle(.secondary)
                     }
                 }
                 Spacer()

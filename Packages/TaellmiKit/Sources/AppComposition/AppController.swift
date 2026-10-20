@@ -1,3 +1,4 @@
+import AppKit
 import Domain
 import Features
 import Foundation
@@ -10,6 +11,10 @@ import os
 public final class AppController {
     public private(set) var environment: AppEnvironment?
     public private(set) var startupError: String?
+    /// The brand tokens, read once from config at startup.
+    public private(set) var brand: BrandTokens?
+    /// The menu bar dots, quiet and listening, drawn once from the brand tokens.
+    public private(set) var menuBarIcons: (quiet: NSImage, listening: NSImage)?
 
     @ObservationIgnored private let hotkeys = GlobalHotkeyMonitor()
     @ObservationIgnored private var companion: CompanionController?
@@ -60,6 +65,12 @@ public final class AppController {
             settings: environment.companionSettings(), hotkeys: hotkeys
         ) { entryID in explore.show(selecting: entryID) }
         self.companion = companion
+        brand = environment.brand
+        menuBarIcons = (
+            MenuBarDots.image(listening: false, tokens: brand), MenuBarDots.image(listening: true, tokens: brand)
+        )
+        explore.brand = brand
+        companion.brand = brand
         let settings = environment.settings
         commandShortcutSettings = Commands.all.map { command in
             let checker = CombinedConflictChecker([

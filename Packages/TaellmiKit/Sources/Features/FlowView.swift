@@ -13,9 +13,8 @@ struct FlowView: View {
                 LazyVStack(alignment: .leading, spacing: 18) {
                     ForEach(FlowSections.group(model.flowEntries, calendar: calendar)) { section in
                         Text(section.day, format: .dateTime.weekday(.wide).day().month(.wide).year())
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .padding(.top, 8)
+                            .brandFont("display.heading")
+                            .padding(.top, 24)
                         ForEach(section.entries) { entry in
                             FlowBlock(
                                 entry: entry, isMatch: model.flowMatches.contains(entry.id),
@@ -60,12 +59,12 @@ private struct FlowBlock: View {
                 Image(systemName: entry.source == .typed ? "keyboard" : "waveform")
                 Text(entry.createdAt, format: .dateTime.hour().minute())
             }
-            .font(.caption2)
+            .brandFont("text.label")
             .foregroundStyle(.tertiary)
             .frame(width: 44)
             TextField("", text: $text, axis: .vertical)
                 .textFieldStyle(.plain)
-                .font(.body)
+                .brandFont("text.thought")
                 .lineSpacing(4)
                 .onChange(of: text) { _, newText in
                     guard newText != entry.text else { return }
@@ -80,7 +79,7 @@ private struct FlowBlock: View {
         .padding(10)
         .background(
             RoundedRectangle(cornerRadius: 8)
-                .fill(isMatch ? Color.accentColor.opacity(isCurrentMatch ? 0.22 : 0.08) : .clear)
+                .fill(isMatch ? AnyShapeStyle(.tint.opacity(isCurrentMatch ? 0.22 : 0.08)) : AnyShapeStyle(.clear))
         )
         .onAppear { text = entry.text }
         .onChange(of: entry.text) { _, newText in if newText != text { text = newText } }

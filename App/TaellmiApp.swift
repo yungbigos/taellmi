@@ -12,13 +12,19 @@ struct TaellmiApp: App {
                 MenuBarView(
                     model: environment.captureModel, appearance: environment.appearanceModel,
                     hotkeyLabel: controller.hotkeyLabel, hotkeyWarning: controller.hotkeyWarning,
-                    onOpenArchive: { controller.openExplore() })
+                    onOpenArchive: { controller.openExplore() }
+                )
+                .brandStyle(controller.brand)
             } else {
                 Text(controller.startupError ?? "starting …").padding()
             }
         } label: {
-            Image(systemName: controller.isRecording ? "record.circle.fill" : "waveform")
-                .accessibilityLabel("tällmi")
+            if let icons = controller.menuBarIcons {
+                Image(nsImage: controller.isRecording ? icons.listening : icons.quiet)
+                    .accessibilityLabel("tällmi")
+            } else {
+                Text("tällmi")
+            }
         }
         .menuBarExtraStyle(.window)
 
@@ -28,7 +34,9 @@ struct TaellmiApp: App {
             {
                 SettingsView(
                     hotkey: hotkey, exploreHotkey: exploreHotkey, appearance: environment.appearanceModel,
-                    vocabulary: environment.vocabularyModel, commandShortcuts: controller.commandShortcutSettings)
+                    vocabulary: environment.vocabularyModel, commandShortcuts: controller.commandShortcutSettings
+                )
+                .brandStyle(controller.brand)
             } else {
                 Text(controller.startupError ?? "starting …").padding()
             }

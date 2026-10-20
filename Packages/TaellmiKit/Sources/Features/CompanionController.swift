@@ -53,6 +53,8 @@ public final class CompanionController {
     private let settings: CompanionSettings
     private let hotkeys: GlobalHotkeyMonitor
     private let panel = CompanionPanel()
+    /// The brand tokens from config, applied to tälli's panel.
+    public var brand: BrandTokens?
     private var showsSaved = false
     private var showsDiscarded = false
     private var hideTask: Task<Void, Never>?
@@ -61,6 +63,9 @@ public final class CompanionController {
     private var previousApp: NSRunningApplication?
     /// Bumped whenever the input field should take focus (after the panel became key).
     private var focusRequest = 0
+    /// Counts appearances, so tälli comes alive once per appearance and keeps its state while it is shown.
+    private var showCount = 0
+    private var hosting: NSHostingView<AnyView>?
     private let onOpenEntry: (String) -> Void
     private static let cancelHotkeyID: UInt32 = 2
     private static let finishHotkeyID: UInt32 = 3
@@ -130,6 +135,7 @@ public final class CompanionController {
         hideTask?.cancel()
         showsSaved = false
         showsDiscarded = false
+        showCount += 1
         render()
         panel.setFrame(targetFrame(), display: true)
         startFollowing()
@@ -214,13 +220,23 @@ public final class CompanionController {
     }
 
     private func render() {
-        panel.contentView = NSHostingView(
-            rootView: CompanionView(
+        let content = AnyView(
+            CompanionView(
                 model: model, showsSaved: showsSaved, showsDiscarded: showsDiscarded, focusRequest: focusRequest,
                 hint: "\(settings.finishKey.displayLabel) save · \(settings.cancelKey.displayLabel) discard",
                 onSubmitTyped: { [weak self] in Task { await self?.submitTyped() } },
                 onOpenSaved: { [weak self] in self?.openSavedEntry() }
             )
-            .textCase(appearance.swiftUICase))
+            .id(showCount)
+            .textCase(appearance.swiftUICase)
+            .brandStyle(brand))
+        // Updating the same hosting view keeps tälli's motion state (a new one would replay the entrance).
+        if let hosting {
+            hosting.rootView = content
+        } else {
+            let hosting = NSHostingView(rootView: content)
+            self.hosting = hosting
+            panel.contentView = hosting
+        }
     }
 }

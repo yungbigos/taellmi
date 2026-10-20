@@ -4,7 +4,7 @@ The rules and decisions are in [../brand.md](../brand.md). This folder holds the
 
 | File | What |
 |---|---|
-| [tokens.json](tokens.json) | Every colour, gradient, type size, motion timing, easing curve and haptic. The app must load these through config (seed JSON), not hard-code them. |
+| [tokens.json](tokens.json) | Every colour, gradient, type size, motion timing, easing curve and haptic. The app ships an identical copy as `Packages/TaellmiKit/Sources/Config/Resources/Seeds/brand.json`; change both together (a test fails if they differ), and bump `version` so Macs that already have tällmi pick up the change (a test pins each version to its content). |
 | [logo/wordmark-light.svg](logo/wordmark-light.svg), [logo/wordmark-dark.svg](logo/wordmark-dark.svg) | The soft eyes wordmark `tällmi`, for light and dark backgrounds. |
 | [logo/mark-light.svg](logo/mark-light.svg), [logo/mark-dark.svg](logo/mark-dark.svg) | The ä alone, flat ink with pink dots. |
 | [logo/talli.svg](logo/talli.svg) | tälli in its body material (G1, key + bounce light), on a transparent background. |

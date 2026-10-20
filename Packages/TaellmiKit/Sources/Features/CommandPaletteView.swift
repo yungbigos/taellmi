@@ -10,7 +10,7 @@ struct CommandPaletteView: View {
         VStack(spacing: 0) {
             TextField("search or run a command …", text: $palette.query)
                 .textFieldStyle(.plain)
-                .font(.title3)
+                .brandFont("text.thought")
                 .padding(14)
                 .focused($focused)
                 .onChange(of: palette.query) { _, text in Task { await palette.update(query: text) } }
@@ -65,7 +65,7 @@ struct CommandPaletteView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 7)
-        .background(highlighted ? Color.accentColor.opacity(0.18) : .clear)
+        .background(highlighted ? AnyShapeStyle(.tint.opacity(0.18)) : AnyShapeStyle(.clear))
         .contentShape(Rectangle())
     }
 

@@ -2,7 +2,7 @@
 
 Decided with the owner on 2026-10-20. This is the source of truth for how tällmi looks, moves and talks. Agents read it before writing any UI text or visual. Domain terms live in [GLOSSARY.md](../GLOSSARY.md); this file maps them to the words users see.
 
-Visual identity (logo, colour values, type scale, tälli's look and motion) decided on 2026-10-20. The exact numbers live in [brand/tokens.json](brand/tokens.json); the app reads them through config, never from Swift. A live reference is in [brand/prototype.html](brand/prototype.html).
+Visual identity (logo, colour values, type scale, tälli's look and motion) decided on 2026-10-20. The exact numbers live in [brand/tokens.json](brand/tokens.json); the app ships the same file as the seed `Seeds/brand.json` (setting `brand.tokens`, a test keeps both identical) and reads it through config, never from Swift. In the app, views use `.brandStyle(_:)`, `.brandFont("…")` and `TalliView(mood:entrance:)`; tälli's behaviour is `TalliMotion`. A live reference is in [brand/prototype.html](brand/prototype.html).
 
 **Still open, not decided here:**
 - German and other translations

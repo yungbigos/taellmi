@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// tälli next to the cursor: the orb, and a bubble with what it hears, a place to type, or "gespeichert".
+/// tälli next to the cursor, and a glass bubble with what it hears, a place to type, or "gespeichert".
 struct CompanionView: View {
     @Bindable var model: CaptureViewModel
     var showsSaved: Bool
@@ -26,8 +26,8 @@ struct CompanionView: View {
         VStack(alignment: .leading, spacing: 6) {
             if showsSaved {
                 Button(action: onOpenSaved) {
-                    Label("saved.", systemImage: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
+                    // tälli's blink says it; the word is the quiet confirmation.
+                    Text("saved.")
                 }
                 .buttonStyle(.plain)
             } else if showsDiscarded {
@@ -42,7 +42,6 @@ struct CompanionView: View {
                     .animation(.easeOut(duration: 0.15), value: model.livePreviewText)
                 TextField("or type …", text: $model.typedText)
                     .textFieldStyle(.plain)
-                    .font(.callout)
                     .focused($typingFocused)
                     .onSubmit(onSubmitTyped)
                     .task(id: focusRequest) {
@@ -53,12 +52,12 @@ struct CompanionView: View {
             }
             Spacer(minLength: 0)
             Text(hint)
-                .font(.caption2)
+                .brandFont("text.whisper")
                 .foregroundStyle(.tertiary)
         }
-        .font(.callout)
+        .brandFont("text.body")
         .padding(10)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
     }
 }

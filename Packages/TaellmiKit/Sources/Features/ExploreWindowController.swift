@@ -1,10 +1,13 @@
 import AppKit
+import Domain
 import SwiftUI
 
 /// Opens the Explore window. While it is open, tällmi shows in the Dock and in ⌘Tab like a normal app.
 public final class ExploreWindowController: NSObject, NSWindowDelegate {
     private let model: ExploreViewModel
     private var window: NSWindow?
+    /// The brand tokens from config, applied to the window content.
+    public var brand: BrandTokens?
 
     public init(model: ExploreViewModel) {
         self.model = model
@@ -37,7 +40,7 @@ public final class ExploreWindowController: NSObject, NSWindowDelegate {
             defer: false)
         window.title = "tällmi"
         window.isReleasedWhenClosed = false
-        window.contentView = NSHostingView(rootView: ExploreView(model: model))
+        window.contentView = NSHostingView(rootView: ExploreView(model: model).brandStyle(brand))
         window.setFrameAutosaveName("ExploreWindow")
         if !window.setFrameUsingName("ExploreWindow") { window.center() }
         window.delegate = self

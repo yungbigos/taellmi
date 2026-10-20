@@ -137,7 +137,7 @@ public struct ExploreView: View {
                 HStack {
                     Image(systemName: entry.source == .typed ? "keyboard" : "waveform").foregroundStyle(.secondary)
                     Text(entry.createdAt, format: .dateTime.weekday().day().month().hour().minute())
-                        .font(.caption).foregroundStyle(.secondary)
+                        .brandFont("text.label").foregroundStyle(.secondary)
                 }
                 Text(entry.text.isEmpty ? "transcribing …" : entry.text)
                     .lineLimit(2)
@@ -163,7 +163,7 @@ public struct ExploreView: View {
             HStack {
                 VStack(alignment: .leading) {
                     Text(item.entry.createdAt, format: .dateTime.day().month().hour().minute())
-                        .font(.caption).foregroundStyle(.secondary)
+                        .brandFont("text.label").foregroundStyle(.secondary)
                     Text(item.entry.text).lineLimit(2)
                 }
                 Spacer()
@@ -198,7 +198,7 @@ struct EntryDetailView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text(detail.entry.createdAt, format: .dateTime.weekday(.wide).day().month(.wide).year().hour().minute())
-                    .font(.headline)
+                    .brandFont("display.heading")
                 Spacer()
                 Button(role: .destructive) {
                     Task {
@@ -213,13 +213,13 @@ struct EntryDetailView: View {
                 }
             }
             TextEditor(text: $model.editorText)
-                .font(.body)
+                .brandFont("text.thought")
                 .scrollContentBackground(.hidden)
                 .padding(8)
                 .background(.background.secondary, in: RoundedRectangle(cornerRadius: 8))
             if !detail.corrections.isEmpty {
                 Text("spellings: " + detail.corrections.map { "\($0.from) → \($0.to)" }.joined(separator: ", "))
-                    .font(.caption).foregroundStyle(.secondary)
+                    .brandFont("text.label").foregroundStyle(.secondary)
             }
             if detail.entry.source == .voice {
                 RecordingSection(detail: detail, playbackRequest: model.playbackRequest)

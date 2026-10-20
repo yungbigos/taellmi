@@ -27,6 +27,8 @@ public enum SettingKeys {
     public static let companionFinishKey = "companion.finish_key"
     public static let companionCancelKey = "companion.cancel_key"
     public static let companionFollowSmoothing = "companion.follow_smoothing"
+    /// Colours, type, tälli's look and motion (docs/brand/tokens.json), shipped as `Seeds/brand.json`.
+    public static let brandTokens = "brand.tokens"
 
     /// Every setting the code reads; the seed tests check each has a default.
     public static let all =
@@ -37,7 +39,7 @@ public enum SettingKeys {
             vocabularyUseContacts, textCase, exploreHotkey, exploreAutosaveDelaySeconds,
             companionCursorOffset,
             companionSavedDisplaySeconds, companionFollowsCursor, companionFinishKey, companionCancelKey,
-            companionFollowSmoothing,
+            companionFollowSmoothing, brandTokens,
         ] + Commands.all.map(\.settingKey)
 }
 

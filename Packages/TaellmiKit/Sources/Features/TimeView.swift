@@ -16,7 +16,7 @@ struct TimeView: View {
                     Image(systemName: "chevron.left")
                 }
                 .help("show earlier")
-                Text(rangeLabel).font(.headline).monospacedDigit()
+                Text(rangeLabel).brandFont("display.title").monospacedDigit()
                 Button {
                     Task { await model.perform(.showLater) }
                 } label: {
@@ -69,9 +69,9 @@ struct TimeView: View {
         let side = 10 + mark.size * 26
         return Group {
             if mark.isSpoken {
-                Circle().fill(Color.accentColor.opacity(0.75))
+                Circle().fill(.tint.opacity(0.75))
             } else {
-                RoundedRectangle(cornerRadius: 3).fill(Color.accentColor.opacity(0.45))
+                RoundedRectangle(cornerRadius: 3).fill(.tint.opacity(0.45))
             }
         }
         .frame(width: side, height: side)

@@ -1,0 +1,47 @@
+import Config
+import CryptoKit
+import Domain
+import Foundation
+import Testing
+
+@Suite("Brand tokens ship as config")
+struct BrandSeedTests {
+    private func brandSetting() throws -> SeedBundle.Setting {
+        try #require(try SeedBundle.bundled().settings.first { $0.key == SettingKeys.brandTokens })
+    }
+
+    @Test("the brand tokens are a seeded setting and decode into colours, tälli's look and motion")
+    func decodes() throws {
+        let tokens = try BrandTokens(json: try brandSetting().value)
+        #expect(tokens.color.light.pink.value == "#F0397C")
+        #expect(tokens.color.dark.blue.value == "#7398FF")
+        #expect(tokens.talli.body.fill.stops.count == 6)
+        #expect(tokens.motion.appearCursor.duration == 0.85)
+        #expect(tokens.type.scale["text.thought"]?.family == "text")
+    }
+
+    @Test("the shipped tokens are exactly the ones decided in docs/brand/tokens.json")
+    func matchesTheBrandBook() throws {
+        let repo = URL(fileURLWithPath: #filePath).deletingLastPathComponent()
+            .appendingPathComponent("../../../../docs/brand/tokens.json").standardizedFileURL
+        let documented = try JSONDecoder().decode(JSONValue.self, from: Data(contentsOf: repo))
+        #expect(try brandSetting().value == documented)
+    }
+
+    /// The seeder only updates a row whose seed version went up, so a changed token without a bump
+    /// would never reach a Mac that already has tällmi. Bump `version` in both files, then update this pin.
+    @Test("changing the tokens comes with a version bump, so existing installs pick it up")
+    func changesBumpTheVersion() throws {
+        let setting = try brandSetting()
+        guard case .object(var fields) = setting.value else { throw CocoaError(.coderReadCorrupt) }
+        fields["version"] = nil
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        let digest = SHA256.hash(data: try encoder.encode(JSONValue.object(fields)))
+        let hash = digest.map { String(format: "%02x", $0) }.joined()
+        let pinned: [Int: String] = [1: "c561ef1150f6432f190a94c004dcc95cfe505818750a1af934e2c0dbf75dcde5"]
+        #expect(
+            pinned[setting.seedVersion] == hash,
+            "tokens changed: bump version to \(setting.seedVersion + 1), pin \(hash)")
+    }
+}

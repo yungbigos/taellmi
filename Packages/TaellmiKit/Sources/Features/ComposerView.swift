@@ -10,13 +10,13 @@ struct ComposerView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            TalliView(mood: isListening ? .listening(level: model.capture?.level ?? 0) : .idle)
+            TalliView(mood: isListening ? .listening(level: model.capture?.level ?? 0) : .idle, entrance: .roll)
                 .frame(width: 72, height: 72)
                 .padding(.top, 40)
             ZStack(alignment: .topLeading) {
                 if isListening, model.composerText.isEmpty {
                     Text(spoken)
-                        .font(.title3)
+                        .brandFont("text.thought")
                         .foregroundStyle(spoken == Self.listening ? .secondary : .primary)
                         .lineSpacing(6)
                         .padding(.top, 8)
@@ -25,7 +25,7 @@ struct ComposerView: View {
                         .animation(.easeOut(duration: 0.15), value: spoken)
                 }
                 TextEditor(text: $model.composerText)
-                    .font(.title3)
+                    .brandFont("text.thought")
                     .lineSpacing(6)
                     .scrollContentBackground(.hidden)
                     .focused($focused)
@@ -41,7 +41,7 @@ struct ComposerView: View {
             HStack {
                 Spacer()
                 Text(isListening ? "speak or type · ⌘↩ save · esc discard" : "⌘↩ save · esc close")
-                    .font(.caption).foregroundStyle(.tertiary)
+                    .brandFont("text.label").foregroundStyle(.tertiary)
                 Button("save") { Task { await model.finishComposing() } }
                     .keyboardShortcut(.return, modifiers: .command)
                     .buttonStyle(.borderless)

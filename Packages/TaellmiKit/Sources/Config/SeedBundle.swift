@@ -180,7 +180,17 @@ public struct SeedBundle: Sendable, Equatable {
         }
         return SeedBundle(
             providers: try read("providers"), models: try read("models"), assignments: try read("assignments"),
-            pipeline: try read("pipeline"), prompts: try read("prompts"), settings: try read("settings"))
+            pipeline: try read("pipeline"), prompts: try read("prompts"),
+            settings: try read("settings") + [try brandSetting(folder: folder)])
+    }
+
+    /// The brand tokens live in their own file, since they are one large document; they are stored as one setting.
+    private static func brandSetting(folder: URL) throws -> Setting {
+        let value = try JSONDecoder().decode(
+            JSONValue.self, from: Data(contentsOf: folder.appendingPathComponent("brand.json")))
+        var version = 1
+        if case .object(let fields) = value, let number = fields["version"]?.doubleValue { version = Int(number) }
+        return Setting(key: SettingKeys.brandTokens, type: "json", value: value, seedVersion: version)
     }
 
     /// Problems that would make this config unusable. Empty means valid.

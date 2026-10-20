@@ -1,0 +1,517 @@
+{
+  "$schema_note": "tällmi brand tokens, decided with the owner on 2026-10-20 (docs/brand.md). Source of truth for colour, type, tälli's look and motion. The app must read these through the config layer (seed JSON), never hard-code them in Swift. Times are seconds, sizes are fractions of the referenced size unless a unit is named.",
+  "version": 1,
+  "color": {
+    "light": {
+      "paper": {
+        "value": "#FFFFFF",
+        "role": "page behind your thoughts; macOS window colour may replace it"
+      },
+      "ink": {
+        "value": "#0C1638",
+        "role": "text and the wordmark",
+        "contrast_on_paper": 17.68
+      },
+      "blue": {
+        "value": "#2852D2",
+        "role": "accent: controls, focus, selection, links",
+        "contrast_on_paper": 6.51,
+        "label_on_blue": "#FFFFFF",
+        "label_contrast": 6.51
+      },
+      "mist": {
+        "value": "#DCE4F5",
+        "role": "quiet fills, selected rows",
+        "contrast_on_paper": 1.28,
+        "note": "fill only, never text; ink on mist is 13.86"
+      },
+      "pink": {
+        "value": "#F0397C",
+        "role": "only the dots: tälli's eyes, the ä in the logo, the listening pulse",
+        "contrast_on_paper": 3.76,
+        "note": "graphic, needs 3:1; never text"
+      },
+      "quiet": {
+        "value": "#586282",
+        "role": "secondary text: dates, sources, hints",
+        "contrast_on_paper": 6.03
+      }
+    },
+    "dark": {
+      "paper": {
+        "value": "#0A1230",
+        "role": "night surface for tällmi's own views; also the icon ground's core"
+      },
+      "ink": {
+        "value": "#E7ECF8",
+        "role": "text and the wordmark",
+        "contrast_on_paper": 15.54
+      },
+      "blue": {
+        "value": "#7398FF",
+        "role": "accent",
+        "contrast_on_paper": 6.71,
+        "label_on_blue": "#0A1230",
+        "label_contrast": 6.71,
+        "note": "white on this blue is only 2.74, so labels on blue use the night colour"
+      },
+      "mist": {
+        "value": "#1A2850",
+        "role": "quiet fills",
+        "contrast_on_paper": 1.28,
+        "note": "fill only; ink on mist is 12.13"
+      },
+      "pink": {
+        "value": "#FF6A9C",
+        "role": "only the dots",
+        "contrast_on_paper": 6.82
+      },
+      "quiet": {
+        "value": "#98A3C3",
+        "role": "secondary text",
+        "contrast_on_paper": 7.32
+      }
+    },
+    "rules": [
+      "Pink is used for the two dots and nothing else.",
+      "Everything not listed follows macOS: system greys, materials, Liquid Glass.",
+      "Text must reach 4.5:1 (WCAG AA); the dots and other graphics 3:1."
+    ]
+  },
+  "talli": {
+    "glyph": {
+      "font": "Funnel Display",
+      "weight": 700,
+      "char": "a",
+      "soften_stroke": 0.07,
+      "soften_join": "round",
+      "note": "the softened ä: the real Funnel Display a, inflated by a round-joined stroke of 7 % of the font size in the same fill"
+    },
+    "eyes": {
+      "radius": 0.068,
+      "gap": 0.27,
+      "offset_x": -0.015,
+      "lift_above_xheight": 0.16,
+      "xheight_pad": 0.035,
+      "color": "pink (dark-mode pink on night grounds, light-mode pink on paper)",
+      "note": "fractions of the font size. The eyes are always two solid pink dots.",
+      "travel_x": 0.06,
+      "travel_y": 0.045
+    },
+    "body": {
+      "lighting": "key + bounce (L2)",
+      "fill": {
+        "type": "linear",
+        "from": [
+          0.0,
+          0.0
+        ],
+        "to": [
+          0.55,
+          1.05
+        ],
+        "space": "glyph bounding box, x right, y down",
+        "stops": [
+          {
+            "color": "#6F8FE2",
+            "at": 0.0
+          },
+          {
+            "color": "#5479DC",
+            "at": 0.22
+          },
+          {
+            "color": "#3B65D6",
+            "at": 0.48
+          },
+          {
+            "color": "#2F58C9",
+            "at": 0.72
+          },
+          {
+            "color": "#2D54C2",
+            "at": 0.88
+          },
+          {
+            "color": "#3460CC",
+            "at": 1.0
+          }
+        ]
+      },
+      "overlays": [
+        {
+          "name": "key",
+          "type": "radial",
+          "center": [
+            0.26,
+            0.14
+          ],
+          "radius": 0.5,
+          "color": "#BECEF5",
+          "opacity": 0.12,
+          "note": "soft tint from the top left, never white"
+        },
+        {
+          "name": "bounce",
+          "type": "radial",
+          "center": [
+            0.9,
+            1.02
+          ],
+          "radius": 0.55,
+          "color": "#7A9CFF",
+          "opacity": 0.2,
+          "note": "light bouncing back from the ground, so the bottom right lifts instead of going dark"
+        }
+      ],
+      "overlay_space": "center in glyph bounding box; radius as a fraction of the font size; painted only on the body (source-atop)"
+    },
+    "mouth": {
+      "where": "the lower counter of the a",
+      "center": [
+        0.43,
+        -0.27
+      ],
+      "rx": 0.15,
+      "ry": 0.1,
+      "open_rx": 1.2,
+      "open_ry": 1.9,
+      "note": "x as a fraction of glyph width, y as a fraction of x-height above the baseline; it opens only when tälli says something"
+    },
+    "letters": {
+      "chars": "h then m",
+      "size": 0.62,
+      "max": 6,
+      "same_material": true,
+      "note": "the thinking äh: letters grow out of the ä in the body material, at 62 % of the ä's size"
+    },
+    "ground_night": {
+      "type": "radial",
+      "center": [
+        0.5,
+        0.36
+      ],
+      "radius": 0.85,
+      "stops": [
+        {
+          "color": "#1B2B66",
+          "at": 0.0
+        },
+        {
+          "color": "#111D4A",
+          "at": 0.45
+        },
+        {
+          "color": "#0A1230",
+          "at": 0.8
+        },
+        {
+          "color": "#060B1F",
+          "at": 1.0
+        }
+      ]
+    },
+    "layout": {
+      "fit_height": 1.15,
+      "fit_width": 1.25,
+      "fill": 0.8,
+      "center_y": 0.56,
+      "note": "how tälli fills its frame: the ä plus eyes take 1.15 em of height, the ä 1.25 em of width plus its letters; 80 % of the room; the ä sits at 56 % of the height"
+    },
+    "brow": {
+      "length": 2.6,
+      "lift": 2.2,
+      "spread": 0.22,
+      "thinning": 0.35,
+      "note": "the rare raised brow: one dot stretches into an arc of 2.6 eye radii, lifted 2.2 radii, spanning ±22 % of a half turn, 35 % thinner"
+    }
+  },
+  "app_icon": {
+    "concept": "peek",
+    "shape": "macOS 26 squircle (Icon Composer); corner radius about 22.5 % in previews",
+    "ground": "talli.ground_night, plus a 10 % mist sheen fading out over the top half",
+    "talli": {
+      "font_size": 1.08,
+      "center": [
+        0.47,
+        0.8
+      ],
+      "eyes_look": [
+        0.3,
+        -0.55
+      ],
+      "note": "the softened ä fills the tile and is cut off by the bottom edge; the eyes look up at you"
+    },
+    "edge": {
+      "color": "#FFFFFF",
+      "opacity": 0.07,
+      "width": "1/256 of the tile"
+    },
+    "motion": "The Dock icon is still. It may blink once at launch; the menu bar dots may glance and blink."
+  },
+  "wordmark": {
+    "text": "tällmi",
+    "font": "Funnel Display",
+    "weight": 700,
+    "soften_stroke": 0.06,
+    "dots": {
+      "radius": 0.068,
+      "gap": 0.145,
+      "lift": 0.085,
+      "color": "pink"
+    },
+    "color": "ink",
+    "note": "the soft eyes wordmark (2b). The i keeps an ink dot. Always lowercase."
+  },
+  "type": {
+    "families": {
+      "display": "Funnel Display",
+      "text": "Funnel Sans",
+      "fallback": "Bricolage Grotesque",
+      "system": "SF Pro (only where macOS draws)"
+    },
+    "base": {
+      "style": "macOS body",
+      "size_pt": 13,
+      "note": "every size below is relative to this, so all of them follow the macOS text-size setting"
+    },
+    "scale": {
+      "display.moment": {
+        "family": "display",
+        "weight": 600,
+        "size": 4.6,
+        "line": 0.95,
+        "tracking": -0.02,
+        "use": "the one loud thing per screen: a month, a constellation name"
+      },
+      "display.title": {
+        "family": "display",
+        "weight": 600,
+        "size": 2.0,
+        "line": 1.05,
+        "tracking": -0.01,
+        "use": "view title"
+      },
+      "display.heading": {
+        "family": "display",
+        "weight": 500,
+        "size": 1.45,
+        "line": 1.15,
+        "tracking": 0,
+        "use": "section, constellation name"
+      },
+      "text.thought": {
+        "family": "text",
+        "weight": 400,
+        "size": 1.154,
+        "line": 1.55,
+        "tracking": 0,
+        "use": "your thought, at reading size (15 pt at default)"
+      },
+      "text.body": {
+        "family": "text",
+        "weight": 400,
+        "size": 1.0,
+        "line": 1.45,
+        "tracking": 0,
+        "use": "lists, settings, ⌘K"
+      },
+      "text.label": {
+        "family": "text",
+        "weight": 500,
+        "size": 0.85,
+        "line": 1.3,
+        "tracking": 0.01,
+        "use": "meta: date, source"
+      },
+      "text.whisper": {
+        "family": "text",
+        "weight": 400,
+        "size": 0.77,
+        "line": 1.3,
+        "tracking": 0.01,
+        "italic": true,
+        "use": "the small explainer"
+      }
+    },
+    "rules": [
+      "One loud thing per screen, and it is not too loud.",
+      "Your own text is never animated, rotated or set in display type."
+    ]
+  },
+  "easing": {
+    "soft": {
+      "bezier": [
+        0.33,
+        0.0,
+        0.2,
+        1.0
+      ],
+      "use": "crossfades, settles"
+    },
+    "enter": {
+      "bezier": [
+        0.16,
+        1.0,
+        0.3,
+        1.0
+      ],
+      "use": "letters and fades coming in"
+    },
+    "exit": {
+      "bezier": [
+        0.4,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "use": "leaving"
+    },
+    "breath": {
+      "curve": "sine",
+      "use": "idle breathing"
+    },
+    "spring.appear": {
+      "response": 0.46,
+      "damping": 0.72,
+      "overshoot": 0.04,
+      "use": "A1 rise: one soft overshoot, then still"
+    },
+    "spring.roll": {
+      "response": 0.62,
+      "damping": 0.78,
+      "use": "A2 roll in"
+    },
+    "spring.glance": {
+      "response": 0.7,
+      "damping": 1.0,
+      "use": "eyes; critically damped, no overshoot"
+    }
+  },
+  "motion": {
+    "appear.cursor": {
+      "name": "rise (A1)",
+      "duration": 0.85,
+      "from_scale": 0.62,
+      "rise": 0.16,
+      "easing": "spring.appear",
+      "fade_in": 0.12,
+      "eyes_open_at": 0.22,
+      "eyes_open_for": 0.16,
+      "use": "tälli at the cursor"
+    },
+    "appear.launch": {
+      "name": "roll in (A2)",
+      "duration": 1.1,
+      "from_scale": 0.86,
+      "from_x": -1.1,
+      "from_rotation_rad": -1.15,
+      "easing": "spring.roll",
+      "fade_in": 0.15,
+      "eyes_open_at": 0.45,
+      "look_at_you_at": 0.62,
+      "use": "launching the window, first appearance",
+      "eyes_open_for": 0.16,
+      "look_aside": [
+        0.9,
+        0.0
+      ]
+    },
+    "disappear": {
+      "eyes_close": 0.08,
+      "duration": 0.2,
+      "to_scale": 0.82,
+      "sink": 0.08,
+      "easing": "exit"
+    },
+    "breath": {
+      "period": 4.5,
+      "amplitude": 0.022,
+      "night_slower": 0.45,
+      "morning_faster": 0.15
+    },
+    "voice": {
+      "swell_max": 0.1,
+      "attack": 0.08,
+      "release": 0.26,
+      "dot_pulse_max": 0.28,
+      "squash": 0.012,
+      "silence_below": 0.05,
+      "reduce_motion_dim": 0.55
+    },
+    "pause": {
+      "after_silence": 0.7,
+      "drift_every_min": 1.6,
+      "drift_every_max": 3.0,
+      "drift_x": 0.7,
+      "drift_y": 0.45,
+      "drift_smoothing": 0.9
+    },
+    "thinking": {
+      "first_letter_after": 1.0,
+      "letter_every_min": 0.7,
+      "letter_every_max": 1.6,
+      "letter_in": 0.22,
+      "letter_out": 0.4,
+      "look": [
+        0.9,
+        -0.9
+      ],
+      "look_sway": 0.5,
+      "brow_every_min": 2.5,
+      "brow_every_max": 5.5,
+      "brow_duration": 0.9,
+      "look_sway_speed": 0.7
+    },
+    "saving": {
+      "settle": 0.32,
+      "settle_depth": 0.03,
+      "blink_at": 0.18,
+      "say_at": 0.32,
+      "then_disappear_after": 1.9,
+      "line": "saved.",
+      "mouth_response": 0.12
+    },
+    "blink": {
+      "duration": 0.17,
+      "night_longer": 0.9,
+      "every_min": 2.8,
+      "every_max": 6.8,
+      "night_lid": 0.45,
+      "morning_more": 0.3
+    },
+    "glance": {
+      "trigger_speed_pt_s": 900,
+      "trigger_distance_pt": 150,
+      "hold": 0.9,
+      "reach": 180
+    },
+    "crossfade": {
+      "duration": 0.16,
+      "easing": "soft",
+      "use": "switching views ⌘1–⌘4"
+    },
+    "time_of_day": {
+      "source": "the Mac's clock only, nothing recorded",
+      "night_center_h": 3,
+      "night_width_h": 5.5,
+      "morning_center_h": 8,
+      "morning_width_h": 2.5,
+      "night_falloff_h": 2
+    },
+    "reduce_motion": "tälli is a still face. Entrances and exits become a 0.26 s / 0.20 s fade. No breathing, swell, drift, blink or glance. While listening the dots brighten and dim with your voice; thinking letters fade in place; crossfades stay."
+  },
+  "haptics": {
+    "saving": "levelChange",
+    "rules": [
+      "Only on a Force Touch trackpad, and only for moments you caused.",
+      "No haptic for appearing, thinking or listening.",
+      "Sound design comes later, opt-in."
+    ]
+  },
+  "menu_bar": {
+    "size_pt": 18,
+    "em": 1.6,
+    "note": "the two dots in the menu bar: an 18 pt square, dots sized as on a 1.6 × 18 pt ä"
+  }
+}

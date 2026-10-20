@@ -1,8 +1,9 @@
 import Domain
 import SwiftUI
 
-/// flow: every thought as one long note. Oldest at the top, newest at the bottom (it opens there),
-/// day dividers, each thought editable in place. A search highlights matches; ⌘G jumps between them.
+/// flow: every thought as one long note. Newest at the top, where it opens (issue #53); the month rail at the side
+/// jumps back in time. Day dividers, each thought editable in place. A search highlights matches; ⌘G jumps
+/// between them.
 struct FlowView: View {
     @Bindable var model: ExploreViewModel
     @Environment(\.calendar) private var calendar
@@ -34,7 +35,6 @@ struct FlowView: View {
                             .onDisappear { model.forgetMeaning(for: entry.id) }
                         }
                     }
-                    Color.clear.frame(height: 1).id("flow-end")
                 }
                 .frame(maxWidth: 720)
                 .padding(32)
@@ -46,11 +46,7 @@ struct FlowView: View {
                 }
             }
             .onAppear {
-                if let id = model.scrollTarget {
-                    proxy.scrollTo(id, anchor: .center)
-                } else {
-                    proxy.scrollTo("flow-end", anchor: .bottom)
-                }
+                if let id = model.scrollTarget { proxy.scrollTo(id, anchor: .center) }
             }
             .onChange(of: model.scrollRequest) { _, request in
                 if let request { proxy.scrollTo(request.entryID, anchor: .center) }

@@ -245,13 +245,15 @@ private struct BrandAnimation<Value: Equatable>: ViewModifier {
 }
 
 /// The macOS material behind the window, so the desktop shows through.
-private struct VisualEffectBackground: NSViewRepresentable {
+struct VisualEffectBackground: NSViewRepresentable {
     var material: NSVisualEffectView.Material
+    /// Always active: following the window's active state made the colour change when you clicked into it.
+    static let state: NSVisualEffectView.State = .active
 
     func makeNSView(context: Context) -> NSVisualEffectView {
         let view = NSVisualEffectView()
         view.blendingMode = .behindWindow
-        view.state = .followsWindowActiveState
+        view.state = Self.state
         view.material = material
         return view
     }

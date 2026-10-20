@@ -368,6 +368,10 @@ public struct BrandTokens: Sendable, Equatable, Codable {
         public var scale: [String: Double]
         /// The widest a column of your text gets, so lines stay readable.
         public var readingWidthPt: Double
+        /// The search field in the floating bar at the bottom of the window.
+        public var barSearchWidthPt: Double
+        /// Dots per month on the month rail; a busier month shows this many.
+        public var railMaxDots: Int
         public var inspectorWidthPt: Width
         public var listWidthPt: Width
         public var sidebarWidthPt: Width

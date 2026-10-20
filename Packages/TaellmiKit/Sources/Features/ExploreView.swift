@@ -2,11 +2,11 @@ import AVFoundation
 import Domain
 import SwiftUI
 
-/// The Explore window: filters, the list of Entries with search, and the open Entry.
+/// The Explore window: the view you chose, with a floating bar at the bottom that holds that view's filters
+/// (issue #54). There is no sidebar.
 public struct ExploreView: View {
     @Bindable var model: ExploreViewModel
     @State private var palette: CommandPaletteModel
-    @State private var searchFocused = false
     @Environment(\.undoManager) private var undoManager
     @Environment(\.brand) private var brand
 
@@ -19,38 +19,60 @@ public struct ExploreView: View {
         content
             .brandAnimation(\.crossfade, value: model.view)
             .background { BrandSurfaceBackground(kind: .window, radius: nil).ignoresSafeArea() }
-            .toolbar { ToolbarItem(placement: .principal) { viewPicker } }
+            .toolbar {
+                ToolbarItem(placement: .principal) { viewPicker }
+                ToolbarItemGroup(placement: .primaryAction) {
+                    Button {
+                        Task { await model.perform(.openPalette) }
+                    } label: {
+                        Label("search", systemImage: "magnifyingglass")
+                    }
+                    .help("search or run a command")
+                    Button {
+                        Task { await model.perform(.newThought) }
+                    } label: {
+                        Label("new thought", systemImage: "plus")
+                    }
+                    .help("new thought: speak or type")
+                }
+            }
             .toolbarBackgroundVisibility(.hidden, for: .windowToolbar)
             .background(CommandShortcutButtons(model: model))
             .sheet(isPresented: $model.isPaletteOpen) { CommandPaletteView(palette: palette) }
-            .onChange(of: model.searchFocusRequest) { searchFocused = true }
+            .onChange(of: model.query.text) { Task { await model.refresh() } }
+            .frame(minWidth: 900, minHeight: 560)
     }
 
     @ViewBuilder private var content: some View {
         if model.isComposing {
             ComposerView(model: model)
-        } else if model.view == .stack || model.showsTrash {
-            splitView
-        } else if model.view == .space {
-            SpaceView(model: model, ground: AnyView(readingGround))
         } else {
-            wideView
+            mainView
+                .safeAreaInset(edge: .bottom, spacing: 0) { ExploreBarView(model: model) }
         }
     }
 
-    /// flow and time use the whole width next to the sidebar.
-    private var wideView: some View {
-        NavigationSplitView {
-            sidebar
-        } detail: {
-            Group {
-                if model.view == .flow { FlowView(model: model) } else { TimeView(model: model) }
+    @ViewBuilder private var mainView: some View {
+        if model.showsTrash {
+            trashList.background { readingGround }
+        } else {
+            switch model.view {
+            case .stack: splitView
+            case .flow:
+                // The rail floats over the page, at the side of the reading column.
+                FlowView(model: model)
+                    .background { readingGround }
+                    .overlay(alignment: .trailing) { MonthRailView(model: model) }
+            case .time:
+                // Next to the axis, so it never covers the newest marks.
+                HStack(spacing: 0) {
+                    TimeView(model: model)
+                    MonthRailView(model: model)
+                }
+                .background { readingGround }
+            case .space: SpaceView(model: model).background { readingGround }
             }
-            .background { readingGround }
         }
-        .searchable(text: $model.query.text, isPresented: $searchFocused, prompt: "search")
-        .onChange(of: model.query.text) { Task { await model.refresh() } }
-        .frame(minWidth: 900, minHeight: 560)
     }
 
     private var viewPicker: some View {
@@ -75,11 +97,10 @@ public struct ExploreView: View {
         Task { await model.perform(command) }
     }
 
+    /// stack: the list of thoughts, and the open thought.
     private var splitView: some View {
         NavigationSplitView {
-            sidebar
-        } content: {
-            if model.showsTrash { trashList } else { entryList }
+            entryList
         } detail: {
             Group {
                 if let detail = model.detail {
@@ -92,70 +113,13 @@ public struct ExploreView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background { readingGround }
         }
-        .frame(minWidth: 900, minHeight: 560)
     }
 
-    /// The page under your thoughts. It runs on under the toolbar and the sidebar, so both float over it as glass.
+    /// The page under your thoughts. It runs on under the toolbar and the bar, so both float over it as glass.
     private var readingGround: some View {
         BrandSurfaceBackground(kind: .reading, radius: nil)
             .backgroundExtensionEffect()
             .ignoresSafeArea()
-    }
-
-    private var sidebar: some View {
-        List {
-            Section("time") {
-                ForEach(EntryQuery.Period.allCases, id: \.self) { period in
-                    sidebarRow(
-                        Self.label(for: period), icon: "calendar",
-                        selected: !model.showsTrash && model.query.period == period
-                    ) {
-                        model.showsTrash = false
-                        model.query.period = period
-                    }
-                }
-            }
-            Section("source") {
-                sidebarRow("all", icon: "tray.full", selected: model.query.sources == nil) {
-                    model.query.sources = nil
-                }
-                sidebarRow("spoken", icon: "waveform", selected: model.query.sources == [.voice]) {
-                    model.query.sources = [.voice]
-                }
-                sidebarRow("typed", icon: "keyboard", selected: model.query.sources == [.typed]) {
-                    model.query.sources = [.typed]
-                }
-            }
-            Section {
-                sidebarRow("trash", icon: "trash", selected: model.showsTrash) { model.showsTrash = true }
-            }
-        }
-        .listStyle(.sidebar)
-        .scrollContentBackground(.hidden)
-        .navigationSplitViewColumnWidth(
-            min: brand?.space.sidebarWidthPt.min ?? 170, ideal: brand?.space.sidebarWidthPt.ideal ?? 190)
-    }
-
-    private func sidebarRow(_ title: String, icon: String, selected: Bool, action: @escaping () -> Void) -> some View {
-        Button {
-            action()
-            Task {
-                await model.select(nil)
-                await model.refresh()
-            }
-        } label: {
-            Label(title, systemImage: icon)
-                .fontWeight(selected ? .medium : .regular)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .listRowBackground(
-            Group {
-                if selected {
-                    BrandFillBackground(name: .selection, radius: .field).padding(.horizontal, brand.space(.s))
-                }
-            })
     }
 
     private var entryList: some View {
@@ -185,8 +149,6 @@ public struct ExploreView: View {
             .tag(entry.id)
         }
         .scrollContentBackground(.hidden)
-        .searchable(text: $model.query.text, isPresented: $searchFocused, prompt: "search")
-        .onChange(of: model.query.text) { Task { await model.refresh() } }
         .overlay {
             if model.entries.isEmpty {
                 ContentUnavailableView(
@@ -213,6 +175,8 @@ public struct ExploreView: View {
             .listRowSeparator(.hidden)
         }
         .scrollContentBackground(.hidden)
+        .frame(maxWidth: brand.map { CGFloat($0.space.readingWidthPt) } ?? .infinity)
+        .frame(maxWidth: .infinity)
         .overlay {
             if model.trashedEntries.isEmpty { ContentUnavailableView("trash is empty.", systemImage: "trash") }
         }

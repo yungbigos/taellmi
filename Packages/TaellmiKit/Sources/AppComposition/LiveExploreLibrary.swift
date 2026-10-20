@@ -114,18 +114,30 @@ nonisolated struct LiveExploreLibrary: ExploreLibrary {
         try index.upsert(entry, transcript: try files.loadEntry(folder: entry.folder).transcript)
     }
 
+    // Trash is file work, so it runs off the main actor; the bar asks for the count on every refresh.
     func trashed() async throws -> [TrashedEntry] {
-        try files.trashedFolders()
-            .compactMap { folder in
-                (try? files.loadEntry(folder: folder)).map { TrashedEntry(entry: $0.entry, trashedFolder: folder) }
-            }
-            .sorted { $0.entry.createdAt > $1.entry.createdAt }
+        let files = files
+        return try await Task.detached(priority: .utility) {
+            try files.trashedFolders()
+                .compactMap { folder in
+                    (try? files.loadEntry(folder: folder)).map { TrashedEntry(entry: $0.entry, trashedFolder: folder) }
+                }
+                .sorted { $0.entry.createdAt > $1.entry.createdAt }
+        }.value
+    }
+
+    func trashedCount() async throws -> Int {
+        let files = files
+        return try await Task.detached(priority: .utility) { try files.trashedFolders().count }.value
     }
 
     func deleteForever(trashedFolder: String) async throws {
-        let id = try? files.loadEntry(folder: trashedFolder).entry.id
-        try files.deleteFromTrash(trashedFolder: trashedFolder)
-        // Your own summary is your text too; it goes with the thought.
-        if let id { try curation?.setSummary(nil, for: id) }
+        let library = self
+        try await Task.detached(priority: .utility) {
+            let id = try? library.files.loadEntry(folder: trashedFolder).entry.id
+            try library.files.deleteFromTrash(trashedFolder: trashedFolder)
+            // Your own summary is your text too; it goes with the thought.
+            if let id { try library.curation?.setSummary(nil, for: id) }
+        }.value
     }
 }

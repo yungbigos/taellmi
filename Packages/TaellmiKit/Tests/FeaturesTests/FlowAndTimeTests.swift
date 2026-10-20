@@ -28,14 +28,14 @@ struct ViewSwitchingTests {
 
 @Suite("flow: every thought as one long note")
 struct FlowTests {
-    @Test("oldest at the top, newest at the bottom, grouped by day")
+    @Test("newest at the top, oldest at the bottom, grouped by day")
     func sections() {
         let sections = FlowSections.group(
-            [thought("new", "c", daysAgo: 0), thought("mid", "b", daysAgo: 0.01), thought("old", "a", daysAgo: 2)],
+            [thought("mid", "b", daysAgo: 0.01), thought("old", "a", daysAgo: 2), thought("new", "c", daysAgo: 0)],
             calendar: berlinCalendar)
-        #expect(sections.map { $0.entries.map(\.id) } == [["old"], ["mid", "new"]])
+        #expect(sections.map { $0.entries.map(\.id) } == [["new", "mid"], ["old"]])
         #expect(
-            sections.first.map {
+            sections.last.map {
                 berlinCalendar.isDate($0.day, inSameDayAs: sampleDate.addingTimeInterval(-2 * 86_400))
             } == true)
     }
@@ -59,14 +59,14 @@ struct FlowTests {
         model.view = .flow
         model.query.text = "marleen"
         await model.refresh()
-        #expect(model.flowMatches == ["a", "c"])
-        #expect(model.currentMatch == "a")
-        await model.perform(.nextMatch)
+        #expect(model.flowMatches == ["c", "a"])
         #expect(model.currentMatch == "c")
         await model.perform(.nextMatch)
         #expect(model.currentMatch == "a")
+        await model.perform(.nextMatch)
+        #expect(model.currentMatch == "c")
         await model.perform(.previousMatch)
-        #expect(model.currentMatch == "c")
+        #expect(model.currentMatch == "a")
     }
 }
 
@@ -74,7 +74,8 @@ struct FlowTests {
 struct TimelineTests {
     @Test(
         "each zoom level shows a span ending with the anchor's day",
-        arguments: [(TimelineZoom.day, 1.0), (.week, 7.0), (.month, 30.0), (.year, 365.0)])
+        // A month span is 31 days, so any calendar month fits when you jump to it from the month rail.
+        arguments: [(TimelineZoom.day, 1.0), (.week, 7.0), (.month, 31.0), (.year, 365.0)])
     func spans(zoom: TimelineZoom, days: Double) {
         let range = TimelineRange(zoom: zoom, anchor: sampleDate, calendar: berlinCalendar)
         #expect(

@@ -82,6 +82,8 @@ public protocol ExploreLibrary: Sendable {
     func trash(id: String) async throws -> String
     func restore(trashedFolder: String) async throws
     func trashed() async throws -> [TrashedEntry]
+    /// How many thoughts are in trash, without loading them.
+    func trashedCount() async throws -> Int
     func deleteForever(trashedFolder: String) async throws
     /// A thought's summary, concepts and related thoughts (ADR 0012).
     func meaning(id: String) async throws -> ThoughtMeaning
@@ -113,13 +115,21 @@ public final class ExploreViewModel {
     public private(set) var concepts: [ConceptSummary] = []
     public private(set) var conceptKinds: [ConceptKind] = []
     public private(set) var conceptDetail: ConceptDetail?
+    /// In space: the concepts you picked to filter by, in the order you picked them.
+    public private(set) var pickedConcepts: [String] = []
+    private var pickedDetails: [String: ConceptDetail] = [:]
+    @ObservationIgnored private var pickGeneration = 0
+    /// In space: only concepts of this kind (nil: every kind), and only those whose name has these letters.
+    public var conceptKindFilter: String?
+    public var conceptSearch = ""
+    /// Thoughts in trash, for the count in the bar.
+    public private(set) var trashCount = 0
     /// In time: the span on screen.
     public var timeRange = TimelineRange(zoom: .week, anchor: Date())
     /// Current shortcut of every command, from config.
     public var shortcuts: [Command: Hotkey] = [:]
     public var isPaletteOpen = false
-    /// Bumped when the search field should take focus / the recording should play or pause.
-    public private(set) var searchFocusRequest = 0
+    /// Bumped when the recording should play or pause.
     public private(set) var playbackRequest = 0
     /// Writing a new thought in the full-window composer.
     public private(set) var isComposing = false
@@ -198,9 +208,8 @@ public final class ExploreViewModel {
         case .openPalette: isPaletteOpen = true
         case .newThought: await startComposing()
         case .deleteThought: await trashSelected()
-        case .searchThoughts:
-            if showsTrash { await show(trash: false) }
-            searchFocusRequest += 1
+        // Search lives in ⌘K, opened from the search button at the top right.
+        case .searchThoughts: isPaletteOpen = true
         case .showStack: await show(view: .stack)
         case .showFlow: await show(view: .flow)
         case .showTime: await show(view: .time)
@@ -369,8 +378,134 @@ public final class ExploreViewModel {
         }
     }
 
-    /// The flow's thoughts, oldest first.
-    public var flowEntries: [Entry] { entries.reversed() }
+    /// The flow's thoughts, newest first (issue #53).
+    public var flowEntries: [Entry] { entries }
+
+    // MARK: The bar at the bottom and the month rail
+
+    /// What the bar at the bottom holds right now.
+    public var bar: ExploreBar {
+        if showsTrash { return .trash }
+        switch view {
+        case .stack, .flow: return .thoughts
+        case .time: return .time
+        case .space: return .space
+        }
+    }
+
+    /// flow and time have the month rail at the side.
+    public var showsMonthRail: Bool { !showsTrash && (view == .flow || view == .time) }
+
+    /// The one Source shown, or nil while both are.
+    public var onlySource: EntrySource? {
+        guard let sources = query.sources, sources.count == 1 else { return nil }
+        return sources.first
+    }
+
+    public func choose(period: EntryQuery.Period) async {
+        query.period = period
+        await select(nil)
+        await refresh()
+    }
+
+    /// Shows only this Source; asking again shows both.
+    public func toggle(source: EntrySource) async {
+        query.sources = onlySource == source ? nil : [source]
+        await refresh()
+    }
+
+    public func leaveTrash() async {
+        await show(trash: false)
+    }
+
+    /// Deletes every thought in trash for good (each goes on to the macOS Trash).
+    public func emptyTrash() async {
+        var failed = false
+        for item in trashedEntries {
+            do {
+                try await library.deleteForever(trashedFolder: item.trashedFolder)
+            } catch {
+                failed = true
+            }
+        }
+        if failed { errorMessage = "couldn't empty the trash. try again." }
+        await refresh()
+    }
+
+    public var railMonths: [RailMonth] { MonthRail.months(for: entries, calendar: .current) }
+
+    /// In time: the month the span ends in, marked on the rail.
+    public var currentRailMonth: Date? {
+        guard view == .time else { return nil }
+        return MonthRail.startOfMonth(timeRange.end.addingTimeInterval(-1), calendar: .current)
+    }
+
+    /// flow scrolls to the month's newest thought; time shows the whole month.
+    public func jump(to month: RailMonth) async {
+        if view == .time {
+            timeRange.show(monthStarting: month.start)
+            return
+        }
+        let next = Calendar.current.date(byAdding: .month, value: 1, to: month.start) ?? month.start
+        guard let newest = flowEntries.first(where: { $0.createdAt >= month.start && $0.createdAt < next }) else {
+            return
+        }
+        scrollRequest = ScrollRequest(entryID: newest.id)
+    }
+
+    /// time: back to today, at the same zoom.
+    public func showToday() {
+        timeRange.jump(to: Date())
+    }
+
+    // MARK: Picking concepts in space
+
+    /// The concepts space shows: of the chosen kind, matching the search, most-mentioned first.
+    public var visibleConcepts: [ConceptSummary] {
+        let search = conceptSearch.trimmingCharacters(in: .whitespaces)
+        return concepts.filter { concept in
+            (conceptKindFilter.map { concept.kind == $0 } ?? true)
+                && (search.isEmpty || concept.name.localizedStandardContains(search))
+        }
+    }
+
+    /// Thoughts that mention every picked concept and match the Source toggles, newest first.
+    public var pickedThoughts: [Entry] {
+        guard let first = pickedConcepts.first, let base = pickedDetails[first] else { return [] }
+        let others = pickedConcepts.dropFirst().compactMap { pickedDetails[$0].map { Set($0.thoughts.map(\.id)) } }
+        return base.thoughts
+            .filter { entry in
+                others.allSatisfy { $0.contains(entry.id) } && (query.sources?.contains(entry.source) ?? true)
+            }
+            .sorted { $0.createdAt > $1.createdAt }
+    }
+
+    /// Adds a concept to the filter, or takes it away when it is already picked.
+    public func togglePick(_ id: String) async {
+        if pickedConcepts.contains(id) {
+            pickedConcepts.removeAll { $0 == id }
+            pickedDetails[id] = nil
+        } else {
+            let generation = pickGeneration
+            do {
+                let detail = try await library.conceptDetail(id: id)
+                // A second click while loading, or a clear meanwhile, wins.
+                guard generation == pickGeneration, !pickedConcepts.contains(id) else { return }
+                pickedDetails[id] = detail
+                pickedConcepts.append(id)
+            } catch {
+                errorMessage = "couldn't open that concept. try again."
+            }
+        }
+        conceptDetail = pickedConcepts.last.flatMap { pickedDetails[$0] }
+    }
+
+    public func clearPicks() {
+        pickGeneration += 1
+        pickedConcepts = []
+        pickedDetails = [:]
+        conceptDetail = nil
+    }
 
     private func show(view: ExploreViewKind) async {
         self.view = view
@@ -401,10 +536,15 @@ public final class ExploreViewModel {
         refreshGeneration += 1
         let generation = refreshGeneration
         do {
+            // The count in the bar may fail on its own; your thoughts still show.
+            if !showsTrash, let count = try? await library.trashedCount(), generation == refreshGeneration {
+                trashCount = count
+            }
             if showsTrash {
                 let trashed = try await library.trashed()
                 guard generation == refreshGeneration else { return }
                 trashedEntries = trashed
+                trashCount = trashed.count
             } else if view == .space {
                 // space lists concepts (loaded below); it shows no thoughts of its own.
             } else if view == .stack {
@@ -440,14 +580,11 @@ public final class ExploreViewModel {
         meanings[id] = meaning
     }
 
-    /// Opens a concept in space, with its thoughts and the concepts that appear with it.
+    /// Opens a concept in space, picked on its own: its thoughts and the concepts that appear with it.
     public func openConcept(_ id: String) async {
         if view != .space { await show(view: .space) }
-        do {
-            conceptDetail = try await library.conceptDetail(id: id)
-        } catch {
-            errorMessage = "couldn't open that concept. try again."
-        }
+        clearPicks()
+        await togglePick(id)
     }
 
     /// Shows a thought in flow, scrolled to it (from space, or a related thought).
@@ -479,9 +616,16 @@ public final class ExploreViewModel {
         guard view == .space, let concepts = try? await library.concepts(), generation == refreshGeneration
         else { return }
         self.concepts = concepts
-        if let open = conceptDetail?.concept.id {
-            conceptDetail = try? await library.conceptDetail(id: open)
+        // A picked concept that is gone (e.g. its only thought went to trash) is no longer picked.
+        let existing = Set(concepts.map(\.id))
+        pickedConcepts.removeAll { !existing.contains($0) }
+        pickedDetails = pickedDetails.filter { existing.contains($0.key) }
+        for id in pickedConcepts {
+            let detail = try? await library.conceptDetail(id: id)
+            guard generation == refreshGeneration else { return }
+            if let detail, pickedConcepts.contains(id) { pickedDetails[id] = detail }
         }
+        conceptDetail = pickedConcepts.last.flatMap { pickedDetails[$0] }
     }
 
     public func select(_ id: String?) async {

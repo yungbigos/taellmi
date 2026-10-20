@@ -16,9 +16,9 @@ nonisolated public struct FlowSection: Sendable, Equatable, Identifiable {
 }
 
 nonisolated public enum FlowSections {
-    /// Oldest day first; within a day, oldest thought first.
+    /// Newest day first; within a day, newest thought first (issue #53).
     public static func group(_ entries: [Entry], calendar: Calendar) -> [FlowSection] {
-        let sorted = entries.sorted { $0.createdAt < $1.createdAt }
+        let sorted = entries.sorted { $0.createdAt > $1.createdAt }
         var sections: [FlowSection] = []
         for entry in sorted {
             let day = calendar.startOfDay(for: entry.createdAt)
@@ -40,7 +40,8 @@ nonisolated public enum TimelineZoom: String, Sendable, CaseIterable, Comparable
         switch self {
         case .day: 1
         case .week: 7
-        case .month: 30
+        // 31, so any calendar month fits when you jump to it from the month rail.
+        case .month: 31
         case .year: 365
         }
     }
@@ -68,6 +69,16 @@ nonisolated public struct TimelineRange: Sendable, Equatable {
 
     public var start: Date {
         calendar.date(byAdding: .day, value: -zoom.days, to: end) ?? anchor
+    }
+
+    /// Shows the span that ends with this day, at the same zoom (e.g. today).
+    public mutating func jump(to date: Date) { anchor = date }
+
+    /// Shows a whole calendar month: the span ends where the next month begins.
+    public mutating func show(monthStarting start: Date) {
+        zoom = .month
+        let next = calendar.date(byAdding: .month, value: 1, to: start) ?? start
+        anchor = calendar.date(byAdding: .day, value: -1, to: next) ?? start
     }
 
     public mutating func moveEarlier() { shift(by: -zoom.days) }

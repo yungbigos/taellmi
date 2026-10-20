@@ -113,7 +113,7 @@ Rules:
 
 ## 7. Style
 
-- **The frame is native macOS 26:** Liquid Glass sidebar and toolbars, system controls, generous space, few lines, no custom chrome.
+- **The frame is native macOS 26:** Liquid Glass toolbar and a floating glass bar at the bottom, system controls, generous space, few lines, no custom chrome. There is no sidebar: the bar holds the filters of the view you are in, in glass islands (what to look at · in space, finding concepts · spoken / typed and trash). Search and new thought sit at the top right; search opens ⌘K, and flow and time have a month rail at the side (issues #53, #54).
 - **What makes it unusual lives inside the views** (flow, time, space), never in the frame. The look is editorial: big display type, a lot of white space, asymmetry. It grows from calm to wild across the views:
   - **stack**: Apple Notes-clean.
   - **flow**: magazine spreads, asymmetric, a big date or topic.
@@ -126,8 +126,8 @@ Rules:
 
   | Surface | Where | How |
   |---|---|---|
-  | window | sidebar, lists, toolbar | material, paper tint 20 % (dark 25 %); toolbar and sidebar float as glass |
-  | reading | under your thoughts: the open thought, flow, time, the composer | mostly paper (70 % / 66 %), running on under the toolbar and sidebar; never glass |
+  | window | lists, toolbar | material, paper tint 20 % (dark 25 %); toolbar, bottom bar and month rail float as glass |
+  | reading | under your thoughts: the open thought, flow, time, the composer | mostly paper (70 % / 66 %), running on under the toolbar and the bottom bar; never glass |
   | panel | menu bar panel, ⌘K, settings, recovery key, unlock | popover material, paper tint 20 % / 25 % |
   | bubble | tälli's bubble | Liquid Glass with a faint paper tint |
 

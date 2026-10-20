@@ -125,3 +125,11 @@ struct BrandNativeTests {
         #expect(strong.alphaComponent > quiet.alphaComponent)
     }
 }
+
+@Suite("The see-through window")
+struct WindowMaterialTests {
+    @Test("the window looks the same whether or not it is in front, so clicking into it never changes its colour")
+    func staysActive() {
+        #expect(VisualEffectBackground.state == .active)
+    }
+}

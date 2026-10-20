@@ -2,44 +2,15 @@ import Domain
 import SwiftUI
 
 /// time: a zoomable time axis. Each thought is a mark: size = length, round = spoken, square = typed.
-/// Hover shows its start; click opens it.
+/// Hover shows its start; click opens it. Zoom and moving through time are in the bar at the bottom.
 struct TimeView: View {
     @Bindable var model: ExploreViewModel
     @State private var hovered: TimelineMark?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Button {
-                    Task { await model.perform(.showEarlier) }
-                } label: {
-                    Image(systemName: "chevron.left")
-                }
-                .help("show earlier")
-                Text(rangeLabel).brandFont("display.title").monospacedDigit()
-                Button {
-                    Task { await model.perform(.showLater) }
-                } label: {
-                    Image(systemName: "chevron.right")
-                }
-                .help("show later")
-                Spacer()
-                Picker(
-                    "zoom",
-                    selection: Binding(
-                        get: { model.timeRange.zoom },
-                        set: { zoom in
-                            while model.timeRange.zoom < zoom { model.timeRange.zoomOut() }
-                            while model.timeRange.zoom > zoom { model.timeRange.zoomIn() }
-                        })
-                ) {
-                    ForEach(TimelineZoom.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .frame(width: 260)
-            }
-            .buttonStyle(.borderless)
+            // Zoom, earlier, later and today live in the bar at the bottom.
+            Text(rangeLabel).brandFont("display.title").monospacedDigit()
             GeometryReader { geometry in
                 let marks = TimelineLayout.marks(for: model.entries, in: model.timeRange)
                 ZStack(alignment: .topLeading) {

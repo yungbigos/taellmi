@@ -148,7 +148,7 @@ Decisions are locked (see section 3); we fix model choices later if real use sho
   - **Functional base:** a list of Entries, filters (time, Source), full-text search, and the Text editable directly with autosave.
     - Search is instant and finds word parts and umlauts.
     - Search by meaning comes with embeddings.
-  - **Deleting** moves an Entry to the app's Trash, with ⌘Z. A "Papierkorb" view in the sidebar restores or deletes for good.
+  - **Deleting** moves an Entry to the app's Trash, with ⌘Z. Trash (from the bottom bar or ⌘K) restores or deletes for good.
   - **The "alles klein" style is not applied in Explore** (for now).
 - **Design direction: unconventional, to be explored with several prototypes.** These ideas are recorded so they are not lost, not a commitment for v1:
   - **A game-like walk-through:** walking a character through a room. Possibly a gimmick, but worth exploring as a general design concept.

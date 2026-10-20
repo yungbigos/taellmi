@@ -11,6 +11,7 @@ public actor FakeLibrary: ExploreLibrary {
     private var conceptDetails: [String: ConceptDetail] = [:]
     private var entries: [Entry]
     private var trash: [String: Entry] = [:]
+    private var trashListingFails = false
     private var continuations: [AsyncStream<Void>.Continuation] = []
     private var related: [(id: String, passage: Range<Int>)] = []
     private var heldTexts: Set<String> = []
@@ -104,6 +105,9 @@ public actor FakeLibrary: ExploreLibrary {
             entries
             .filter { entry in query.words.allSatisfy { entry.text.lowercased().contains($0) } }
             .filter { query.sources?.contains($0.source) ?? true }
+            .filter { entry in
+                query.earliestDate(now: Date(), calendar: .current).map { entry.createdAt >= $0 } ?? true
+            }
             .sorted { $0.createdAt > $1.createdAt }
             .map { SearchHit(entry: $0, match: .words, wordRanges: TextMatch.ranges(of: query.words, in: $0.text)) }
         guard !query.words.isEmpty else { return words }
@@ -154,8 +158,17 @@ public actor FakeLibrary: ExploreLibrary {
         publish()
     }
 
+    /// From now on, reading the trash fails, as with a folder that can't be read.
+    public func failTrashListing() { trashListingFails = true }
+
+    public func trashedCount() async throws -> Int {
+        if trashListingFails { throw CocoaError(.fileReadNoPermission) }
+        return trash.count
+    }
+
     public func trashed() async throws -> [TrashedEntry] {
-        trash.map { TrashedEntry(entry: $0.value, trashedFolder: $0.key) }.sorted {
+        if trashListingFails { throw CocoaError(.fileReadNoPermission) }
+        return trash.map { TrashedEntry(entry: $0.value, trashedFolder: $0.key) }.sorted {
             $0.entry.createdAt > $1.entry.createdAt
         }
     }

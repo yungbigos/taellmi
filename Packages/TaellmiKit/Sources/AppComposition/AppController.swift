@@ -162,8 +162,8 @@ public final class AppController {
     }
 
     /// Opens the Explore window ("Archiv öffnen").
-    public func openExplore() {
-        explore?.show()
+    public func openExplore(selecting entryID: String? = nil) {
+        explore?.show(selecting: entryID)
     }
 
     private func registerExploreHotkey(_ hotkey: Hotkey) {

@@ -40,6 +40,9 @@ struct FlowView: View {
                 }
             }
             .onAppear { proxy.scrollTo("flow-end", anchor: .bottom) }
+            .onChange(of: model.scrollTarget) { _, id in
+                if let id { proxy.scrollTo(id, anchor: .center) }
+            }
             .onChange(of: model.currentMatch) { _, id in
                 if let id {
                     withAnimation(reduceMotion ? nil : brand?.animation(\.scroll) ?? .default) {

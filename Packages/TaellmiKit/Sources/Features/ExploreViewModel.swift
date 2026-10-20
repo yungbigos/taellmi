@@ -71,6 +71,8 @@ public final class ExploreViewModel {
     /// In flow: thoughts matching the search, in reading order, and the one jumped to.
     public private(set) var flowMatches: [String] = []
     public private(set) var currentMatch: String?
+    /// The thought the window was opened on (e.g. from the menu bar); flow scrolls to it.
+    public private(set) var scrollTarget: String?
     /// In time: the span on screen.
     public var timeRange = TimelineRange(zoom: .week, anchor: Date())
     /// Current shortcut of every command, from config.
@@ -128,6 +130,17 @@ public final class ExploreViewModel {
     }
 
     /// Re-runs the search (or reloads the Trash) whenever the Archive changes.
+    /// Everything the window needs before it shows: the thoughts loaded, kept up to date, and the chosen
+    /// thought selected. Independent of the view, so flow and time never open empty.
+    public func open(selecting entryID: String?) async {
+        if observation == nil { startObserving() }
+        if entryID != nil { showsTrash = false }
+        await refresh()
+        guard let entryID else { return }
+        await select(entryID)
+        scrollTarget = entryID
+    }
+
     public func startObserving() {
         observation?.cancel()
         let changes = library.changes()

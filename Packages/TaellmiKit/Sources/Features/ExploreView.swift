@@ -89,10 +89,6 @@ public struct ExploreView: View {
             .background { readingGround }
         }
         .frame(minWidth: 900, minHeight: 560)
-        .task {
-            model.startObserving()
-            await model.refresh()
-        }
     }
 
     /// The page under your thoughts. It runs on under the toolbar and the sidebar, so both float over it as glass.

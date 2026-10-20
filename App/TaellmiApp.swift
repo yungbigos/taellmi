@@ -12,7 +12,8 @@ struct TaellmiApp: App {
                 MenuBarView(
                     model: environment.captureModel, appearance: environment.appearanceModel,
                     hotkeyLabel: controller.hotkeyLabel, hotkeyWarning: controller.hotkeyWarning,
-                    onOpenArchive: { controller.openExplore() }
+                    onOpenArchive: { controller.openExplore() },
+                    onOpenThought: { controller.openExplore(selecting: $0) }
                 )
                 .brandStyle(controller.brand)
             } else {

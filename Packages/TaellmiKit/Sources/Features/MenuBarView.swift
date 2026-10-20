@@ -8,12 +8,14 @@ public struct MenuBarView: View {
     let hotkeyLabel: String
     let hotkeyWarning: String?
     let onOpenArchive: () -> Void
+    let onOpenThought: (String) -> Void
 
     public init(
         model: CaptureViewModel, appearance: AppearanceViewModel, hotkeyLabel: String, hotkeyWarning: String?,
-        onOpenArchive: @escaping () -> Void
+        onOpenArchive: @escaping () -> Void, onOpenThought: @escaping (String) -> Void
     ) {
         self.onOpenArchive = onOpenArchive
+        self.onOpenThought = onOpenThought
         self.model = model
         self.appearance = appearance
         self.hotkeyLabel = hotkeyLabel
@@ -45,11 +47,19 @@ public struct MenuBarView: View {
                 Text("no thoughts yet.").brandForeground(.quiet)
             } else {
                 ForEach(model.recentEntries) { entry in
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(entry.createdAt, format: .dateTime.day().month().hour().minute())
-                            .brandFont("text.label").brandForeground(.quiet)
-                        Text(CaptureViewModel.preview(of: entry)).lineLimit(2)
+                    Button {
+                        onOpenThought(entry.id)
+                    } label: {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(entry.createdAt, format: .dateTime.day().month().hour().minute())
+                                .brandFont("text.label").brandForeground(.quiet)
+                            Text(CaptureViewModel.preview(of: entry)).lineLimit(2)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
                     }
+                    .buttonStyle(.plain)
+                    .accessibilityHint("opens this thought")
                 }
             }
             Divider()

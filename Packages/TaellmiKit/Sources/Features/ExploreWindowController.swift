@@ -27,18 +27,15 @@ public final class ExploreWindowController: NSObject, NSWindowDelegate {
         }
     }
 
+    /// Loads first, then shows, so the window never appears empty.
     private func present(selecting entryID: String?) {
-        let window = window ?? makeWindow()
-        self.window = window
-        NSApplication.shared.setActivationPolicy(.regular)
-        NSApplication.shared.activate()
-        window.makeKeyAndOrderFront(nil)
-        if let entryID {
-            Task {
-                model.showsTrash = false
-                await model.refresh()
-                await model.select(entryID)
-            }
+        Task {
+            await model.open(selecting: entryID)
+            let window = window ?? makeWindow()
+            self.window = window
+            NSApplication.shared.setActivationPolicy(.regular)
+            NSApplication.shared.activate()
+            window.makeKeyAndOrderFront(nil)
         }
     }
 

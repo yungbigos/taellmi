@@ -63,6 +63,9 @@ scripts/eval-search.sh         # measure search on eval/ and the controls with t
 - **`docs/plan.md`** is the vision and roadmap, not a to-do list.
 - **`docs/decisions/`** holds the decisions.
 - **Commits and PRs** carry no Claude attribution: no `Co-Authored-By`, no "Generated with" lines.
+- **PR titles follow `type(scope): summary`**, lowercase, e.g. `feat(explore): concepts view in space`, `fix(capture): drop empty recordings`.
+  - Types: `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `chore`.
+  - The scope is the area: `capture`, `explore`, `pipeline`, `search`, `archive`, `config`, `talli`, `mcp`, `visuals`, `foundation`, `import`.
 
 ## How to work
 

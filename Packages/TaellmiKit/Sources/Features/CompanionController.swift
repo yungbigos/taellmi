@@ -66,8 +66,6 @@ public final class CompanionController {
     private var press: (mouse: CGPoint, frame: CGRect, isDrag: Bool)?
     private var pokes = 0
     private var stirs = 0
-    /// The app you were in when tälli appeared; it gets the keyboard back when tälli hides.
-    private var previousApp: NSRunningApplication?
     /// Bumped whenever the input field should take focus (after the panel became key).
     private var focusRequest = 0
     /// Counts appearances, so tälli comes alive once per appearance and keeps its state while it is shown.
@@ -149,11 +147,9 @@ public final class CompanionController {
         render()
         panel.setFrame(frameNearCursor(), display: true)
         panel.alphaValue = 0
-        // Typing only reaches tälli when tällmi is the active app, so activate briefly and remember where
-        // you were; hiding hands the keyboard straight back to that app.
-        let frontmost = NSWorkspace.shared.frontmostApplication
-        if frontmost?.processIdentifier != ProcessInfo.processInfo.processIdentifier { previousApp = frontmost }
-        NSApplication.shared.activate()
+        // The non-activating panel takes the keyboard without making tällmi the active app (like Spotlight),
+        // so tällmi's window stays where it is and the app you were in keeps its place. The field takes focus
+        // once the panel is key (focusRequest).
         panel.makeKeyAndOrderFront(nil)
         focusRequest += 1
         render()
@@ -236,8 +232,6 @@ public final class CompanionController {
     private func hide() {
         isShown = false
         press = nil
-        previousApp?.activate()
-        previousApp = nil
         hotkeys.unregister(id: Self.cancelHotkeyID)
         hotkeys.unregister(id: Self.finishHotkeyID)
         showsSaved = false

@@ -55,9 +55,7 @@ struct ExploreBarView: View {
     }
 
     private func island(@ViewBuilder _ content: () -> some View) -> some View {
-        HStack(spacing: brand.space(.xxs)) { content() }
-            .padding(.all, brand.space(.xs))
-            .glassEffect(.regular, in: .capsule)
+        BarIsland { content() }
     }
 
     private var trashLine: String {
@@ -187,36 +185,6 @@ struct ExploreBarView: View {
 /// "1 thought", "3 thoughts".
 enum ThoughtCount {
     static func words(_ count: Int) -> String { count == 1 ? "1 thought" : "\(count) thoughts" }
-}
-
-/// A word in the bar you can choose; the chosen one carries the selection fill.
-private struct BarChip: View {
-    let title: String
-    var symbol: String?
-    var selected = false
-    var count: Int?
-    let action: () -> Void
-    @Environment(\.brand) private var brand
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: brand.space(.xs)) {
-                if let symbol { Image(systemName: symbol).imageScale(.small) }
-                Text(title)
-                if let count { Text("\(count)").monospacedDigit() }
-            }
-            .fontWeight(selected ? .semibold : .medium)
-            .brandForeground(selected ? .blue : .ink)
-            .padding(.horizontal, brand.space(.m))
-            .frame(height: brand.space(.xxl))
-            .background {
-                if selected { BrandFillBackground(name: .selection, radius: nil).clipShape(Capsule()) }
-            }
-            .contentShape(Capsule())
-        }
-        .buttonStyle(.plain)
-        .accessibilityAddTraits(selected ? .isSelected : [])
-    }
 }
 
 /// A round symbol button in the bar; a toggle when it can be selected, with an optional count.

@@ -1,6 +1,8 @@
+import Config
 import Domain
 import Foundation
 import Persistence
+import Pipeline
 import TestSupport
 import Testing
 
@@ -166,5 +168,23 @@ struct AppEnvironmentTests {
             paths: paths, engines: ["fake_engine": { _, _ in fake }], recorder: FakeRecorder(folder: scratch.url))
         try await fresh.start()
         #expect(try await fresh.journal.recentEntries(limit: 5).first?.text == FakeTranscriber.germanResult.text)
+    }
+}
+
+@Suite("Memory pressure")
+struct MemoryPressureTests {
+    @Test("the memory warning handler can run on the background queue macOS calls it on")
+    func runsOffMain() async throws {
+        let models = try TemporaryDirectory()
+        let cache = EngineCache(
+            factories: [:], embedders: [:], installation: ModelInstallation(root: models.url),
+            clock: ContinuousClock(), idleUnload: { .zero })
+        let handler = AppEnvironment.memoryPressureHandler(cache)
+        await withCheckedContinuation { (done: CheckedContinuation<Void, Never>) in
+            DispatchQueue.global().async {
+                handler()
+                done.resume()
+            }
+        }
     }
 }

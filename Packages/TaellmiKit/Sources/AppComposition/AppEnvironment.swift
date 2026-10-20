@@ -281,10 +281,15 @@ public final class AppEnvironment {
         }
     }
 
+    /// Runs on the background queue macOS delivers memory warnings on, so it must not be tied to the main
+    /// actor (it was, and every warning, e.g. while scrolling, ended the app).
+    nonisolated static func memoryPressureHandler(_ engines: EngineCache<ContinuousClock>) -> @Sendable () -> Void {
+        { Task { await engines.unloadIfIdle() } }
+    }
+
     private func watchMemoryPressure() {
         let source = DispatchSource.makeMemoryPressureSource(eventMask: [.warning, .critical], queue: .global())
-        let engines = engines
-        source.setEventHandler { Task { await engines.unloadIfIdle() } }
+        source.setEventHandler(handler: Self.memoryPressureHandler(engines))
         source.activate()
         memoryPressure = source
     }

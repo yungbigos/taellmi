@@ -112,7 +112,7 @@ extension BrandTokens {
         var invalid: [String] = []
         for kind in BrandSurfaceKind.allCases {
             let token = surface(kind)
-            if token.material != Self.glass, BrandMaterial(rawValue: token.material) == nil {
+            if ![Self.glass, Self.glassClear].contains(token.material), BrandMaterial(rawValue: token.material) == nil {
                 invalid.append("\(kind.rawValue).material: \(token.material)")
             }
             for (field, value) in [("tint", token.tint), ("fallback", token.fallback)]

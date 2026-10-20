@@ -1,6 +1,6 @@
 {
   "$schema_note": "tällmi brand tokens, decided with the owner on 2026-10-20 (docs/brand.md). Source of truth for colour, type, tälli's look and motion. The app must read these through the config layer (seed JSON), never hard-code them in Swift. Times are seconds, sizes are fractions of the referenced size unless a unit is named.",
-  "version": 8,
+  "version": 9,
   "color": {
     "light": {
       "paper": {
@@ -579,8 +579,8 @@
       "material": "under_window_background",
       "tint": "paper",
       "tint_opacity": {
-        "light": 0.7,
-        "dark": 0.66
+        "light": 0.28,
+        "dark": 0.32
       },
       "fallback": "paper",
       "use": "under your thoughts: the open thought, flow, time, the composer. It runs on under the toolbar and sidebar, which float over it as glass."
@@ -609,6 +609,11 @@
       "color": "quiet",
       "width_pt": 1,
       "use": "drawn around solid surfaces when Increase Contrast is on"
+    },
+    "active": {
+      "color": "blue",
+      "width_pt": 1.5,
+      "use": "the outline around the active view in the view switcher; the other views have none"
     },
     "accessibility": "Reduce Transparency and Increase Contrast turn every surface into its solid fallback colour; Increase Contrast also draws the outline and uses each fill's contrast_opacity.",
     "fills": "quiet fills on top of a surface: a brand colour at an opacity. Increase Contrast uses contrast_opacity. Named fills live in fill."

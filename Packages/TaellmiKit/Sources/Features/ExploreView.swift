@@ -21,6 +21,7 @@ public struct ExploreView: View {
             .background { BrandSurfaceBackground(kind: .window, radius: nil).ignoresSafeArea() }
             .toolbar {
                 ToolbarItem(placement: .principal) { viewPicker }
+                    .sharedBackgroundVisibility(.hidden)
                 ToolbarItemGroup(placement: .primaryAction) {
                     Button {
                         Task { await model.perform(.openPalette) }
@@ -96,14 +97,7 @@ public struct ExploreView: View {
     }
 
     private var viewPicker: some View {
-        Picker("view", selection: Binding(get: { model.view }, set: { view in switchTo(view) })) {
-            Text("stack").tag(ExploreViewKind.stack)
-            Text("flow").tag(ExploreViewKind.flow)
-            Text("time").tag(ExploreViewKind.time)
-            Text("space").tag(ExploreViewKind.space)
-        }
-        .pickerStyle(.segmented)
-        .labelsHidden()
+        ViewSwitcher(current: model.view) { view in switchTo(view) }
     }
 
     private func switchTo(_ view: ExploreViewKind) {

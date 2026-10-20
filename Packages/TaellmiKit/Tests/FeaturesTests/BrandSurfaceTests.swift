@@ -22,8 +22,10 @@ struct BrandSurfaceTests {
         #expect(dark == .material(.underWindowBackground, tint: .paper, tintOpacity: 0.25))
     }
 
-    @Test("under your thoughts the surface is mostly paper, never glass")
-    func readingIsNearlySolid() throws {
+    /// Owner's decision 2026-10-20: the desktop shows through under your thoughts too, but with enough paper
+    /// that text stays readable, and never the glass-shape effect behind text.
+    @Test("under your thoughts the desktop shows through, with enough paper for reading, never glass")
+    func readingIsSeeThrough() throws {
         let tokens = try shippedTokens()
         for dark in [false, true] {
             let reading = tokens.rendering(of: .reading, dark: dark, reduceTransparency: false, increaseContrast: false)
@@ -32,7 +34,7 @@ struct BrandSurfaceTests {
                 continue
             }
             #expect(tint == .paper)
-            #expect(opacity >= 0.6)
+            #expect(opacity >= 0.25 && opacity <= 0.5)
         }
     }
 

@@ -127,7 +127,7 @@ Rules:
   | Surface | Where | How |
   |---|---|---|
   | window | lists, toolbar | material, paper tint 20 % (dark 25 %); toolbar, bottom bar and month rail float as glass |
-  | reading | under your thoughts: the open thought, flow, time, the composer | mostly paper (70 % / 66 %), running on under the toolbar and the bottom bar; never glass |
+  | reading | under your thoughts: the open thought, flow, time, the composer | see-through: the blurred desktop with a paper tint (28 % / 32 %), enough for reading; running on under the toolbar and the bottom bar; never the glass-shape effect behind text |
   | panel | menu bar panel, ⌘K, settings, recovery key, unlock | popover material, paper tint 20 % / 25 % |
   | bubble | tälli's bubble | Liquid Glass with a faint paper tint |
 

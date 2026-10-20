@@ -330,6 +330,8 @@ public struct BrandTokens: Sendable, Equatable, Codable {
         public var panel: Surface
         public var bubble: Surface
         public var outline: Outline
+        /// The outline around the active choice, e.g. the current view in the view switcher.
+        public var active: Outline?
     }
 
     public struct Surface: Sendable, Equatable, Codable {

@@ -6,7 +6,7 @@ import os
 
 /// Runs queued work for entries, one job at a time, using whatever models the config assigns.
 public actor PipelineRunner {
-    private let logger = Logger(subsystem: "app.taellmi", category: "pipeline")
+    let logger = Logger(subsystem: "app.taellmi", category: "pipeline")
     let jobs: JobQueue
     private let files: EntryFileStore
     let index: EntryIndex
@@ -19,6 +19,7 @@ public actor PipelineRunner {
     let pipeline: PipelineConfig
     private let vocabulary: [any VocabularySource]
     private let classifier: any WordClassifier
+    let understanding: UnderstandingWork?
     let now: @Sendable () -> Date
     private var isRunning = false
 
@@ -27,8 +28,10 @@ public actor PipelineRunner {
         resolver: ModelResolver, engines: any TranscriberProvider, embedders: any EmbedderProvider,
         settings: SettingsStore, pipeline: PipelineConfig,
         vocabulary: [any VocabularySource], classifier: any WordClassifier,
+        understanding: UnderstandingWork? = nil,
         now: @escaping @Sendable () -> Date = Date.init
     ) {
+        self.understanding = understanding
         self.vocabulary = vocabulary
         self.classifier = classifier
         self.now = now
@@ -59,6 +62,7 @@ public actor PipelineRunner {
         defer { isRunning = false }
         do {
             try scheduleMeaningWork()
+            try await scheduleUnderstanding()
         } catch {
             logger.error("Could not check passages and vectors: \(String(describing: error))")
         }
@@ -93,12 +97,17 @@ public actor PipelineRunner {
             case "transcribe": try await transcribe(entryID: job.entryID)
             case MeaningSteps.fragment: try fragment(entryID: job.entryID)
             case MeaningSteps.embed: try await embed(entryID: job.entryID)
+            case MeaningSteps.understand: try await understand(entryID: job.entryID)
             default: throw PipelineError.unknownStep(job.step)
             }
             try jobs.markDone(job, now: now())
         } catch let error as ResolutionError {
             logger.info("Step \(job.step) waits for a model: \(error.description)")
             try? jobs.markWaiting(job, reason: error.description, retryAfter: policy.waitForModel, now: now())
+        } catch LanguageModelError.unavailable(let reason) {
+            // Apple Intelligence is off: the step waits; the sweep picks the thought up once it is on.
+            logger.info("Step \(job.step) waits, the language model is unavailable: \(reason)")
+            try? jobs.markWaiting(job, reason: reason, retryAfter: policy.waitForModel, now: now())
         } catch EngineCacheError.busy(let loadedModelID) {
             // Another model is in use right now (e.g. search embedding a query); not this job's fault.
             logger.info("Step \(job.step) waits, \(loadedModelID) is busy")

@@ -11,14 +11,70 @@ nonisolated struct LiveExploreLibrary: ExploreLibrary {
     let search: HybridSearch
     /// Called after a Text was written, so its passages and vectors are refreshed soon.
     var onChange: @Sendable () -> Void = {}
+    /// Summaries and concepts (ADR 0012), related thoughts, and your edited summaries. Optional, so the
+    /// library also works without them.
+    var understandings: UnderstandingStore?
+    var related: RelatedThoughts?
+    var curation: CurationStore?
+
+    // These read the database and search vectors, so they run off the main actor.
+
+    func meaning(id: String) async throws -> ThoughtMeaning {
+        let library = self
+        return try await Task.detached(priority: .userInitiated) {
+            let understood = try library.understandings?.understanding(entryID: id)
+            let edited = try library.curation?.summary(for: id)
+            // Positions only fit the Text they were found in; after an edit they wait for the next analysis.
+            let current = try library.index.entry(id: id)?.text
+            let concepts = understood?.sourceText == current ? understood?.concepts ?? [] : []
+            return ThoughtMeaning(
+                summary: edited ?? understood?.summary, summaryIsEdited: edited != nil, concepts: concepts,
+                related: try library.related?.related(to: id) ?? [])
+        }.value
+    }
+
+    func concepts() async throws -> [ConceptSummary] {
+        let understandings = understandings
+        return try await Task.detached(priority: .userInitiated) { try understandings?.concepts() ?? [] }.value
+    }
+
+    func conceptKinds() async throws -> [ConceptKind] {
+        try understandings?.conceptKindDetails() ?? []
+    }
+
+    func conceptDetail(id: String) async throws -> ConceptDetail {
+        let library = self
+        return try await Task.detached(priority: .userInitiated) {
+            guard let understandings = library.understandings,
+                let concept = try understandings.concepts().first(where: { $0.id == id })
+            else { throw CocoaError(.fileNoSuchFile) }
+            return ConceptDetail(
+                concept: concept,
+                thoughts: try understandings.entryIDs(mentioning: id).compactMap { try library.index.entry(id: $0) },
+                appearingWith: try understandings.appearingWith(id))
+        }.value
+    }
+
+    func saveSummary(id: String, text: String?) async throws {
+        try curation?.setSummary(text, for: id)
+    }
 
     /// Newest first without search words; with them, thoughts with the words, then related ones.
     func search(_ query: EntryQuery) async throws -> [SearchHit] {
         try await search.hits(query)
     }
 
+    /// Entries changed, or the pipeline stored new concepts and summaries.
     func changes() -> AsyncStream<Void> {
-        index.changes()
+        let streams = [index.changes()] + (understandings.map { [$0.changes()] } ?? [])
+        return AsyncStream { continuation in
+            let tasks = streams.map { stream in
+                Task {
+                    for await _ in stream { continuation.yield() }
+                }
+            }
+            continuation.onTermination = { _ in for task in tasks { task.cancel() } }
+        }
     }
 
     func detail(id: String) async throws -> EntryDetail {
@@ -67,6 +123,9 @@ nonisolated struct LiveExploreLibrary: ExploreLibrary {
     }
 
     func deleteForever(trashedFolder: String) async throws {
+        let id = try? files.loadEntry(folder: trashedFolder).entry.id
         try files.deleteFromTrash(trashedFolder: trashedFolder)
+        // Your own summary is your text too; it goes with the thought.
+        if let id { try curation?.setSummary(nil, for: id) }
     }
 }

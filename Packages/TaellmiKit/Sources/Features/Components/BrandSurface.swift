@@ -48,7 +48,7 @@ public enum SurfaceRendering: Sendable, Equatable {
 
 /// Named quiet fills from the brand tokens (`fill`).
 public enum BrandFillName: String, CaseIterable, Sendable {
-    case field, selection, match, axis, related
+    case field, selection, match, axis, related, concept
     case matchCurrent = "match.current"
     case markSpoken = "mark.spoken"
     case markTyped = "mark.typed"

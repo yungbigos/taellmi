@@ -25,10 +25,12 @@ struct PipelineRunnerTests {
         let jobs: JobQueue
         let clock = ManualDate()
         let model: ModelConfig
+        let understandings: UnderstandingStore
 
         init(
             fake: FakeTranscriber = FakeTranscriber(), embedder: FakeEmbedder = FakeEmbedder(),
-            vocabulary: [any VocabularySource] = [], names: Set<String> = []
+            vocabulary: [any VocabularySource] = [], names: Set<String> = [],
+            languageModel: FakeLanguageModel? = nil
         ) throws {
             database = try makeDatabase()
             archive = try TemporaryDirectory()
@@ -39,14 +41,18 @@ struct PipelineRunnerTests {
             self.embedder = embedder
             fragments = FragmentStore(database: database)
             vectors = VectorStore(database: database)
-            model = try seedFakeTranscription(database, modelsRoot: models.url)
+            model = try seedFakeTranscription(
+                database, modelsRoot: models.url, languageModel: languageModel != nil)
+            understandings = UnderstandingStore(database: database)
             let installation = ModelInstallation(root: models.url)
             let engines = EngineCache(
                 factories: ["fake_engine": { _, _ in fake }], embedders: ["fake_embedder": { _, _ in embedder }],
                 installation: installation, clock: TestClock(), idleUnload: { .seconds(60) })
             self.engines = engines
             let resolver = ModelResolver(
-                database: database, registeredEngines: engines.registeredEngines, installation: installation,
+                database: database,
+                registeredEngines: engines.registeredEngines.union(languageModel?.registeredEngines ?? []),
+                installation: installation,
                 conditions: { RuntimeConditions(onBattery: false) })
             jobs = JobQueue(database: database)
             runner = PipelineRunner(
@@ -54,6 +60,9 @@ struct PipelineRunnerTests {
                 engines: engines, embedders: engines,
                 settings: SettingsStore(database: database), pipeline: PipelineConfig(database: database),
                 vocabulary: vocabulary, classifier: FakeWordClassifier(names: names),
+                understanding: languageModel.map { [understandings, database] in
+                    UnderstandingWork(store: understandings, prompts: PromptStore(database: database), models: $0)
+                },
                 now: { [clock] in clock.now() })
         }
 
@@ -80,8 +89,9 @@ struct PipelineRunnerTests {
         let entry = try harness.addEntry()
         try await harness.runner.enqueue(entry)
         try await harness.runner.enqueue(entry)
-        #expect(try harness.jobs.jobs(entryID: entry.id).map(\.step) == ["transcribe", "fragment", "embed"])
-        #expect(try harness.jobs.jobs(entryID: entry.id).map(\.state) == [.pending, .pending, .pending])
+        #expect(
+            try harness.jobs.jobs(entryID: entry.id).map(\.step) == ["transcribe", "fragment", "embed", "understand"])
+        #expect(try harness.jobs.jobs(entryID: entry.id).map(\.state) == [.pending, .pending, .pending, .pending])
     }
 
     @Test("running the queue transcribes the entry with the configured model and indexes it")
@@ -100,7 +110,7 @@ struct PipelineRunnerTests {
                 "Ich war heute im Büro.", "Honestly, ziemlich anstrengend.",
             ])
         #expect(try harness.files.loadEntry(folder: entry.folder).transcript?.text == FakeTranscriber.germanResult.text)
-        #expect(try harness.jobs.jobs(entryID: entry.id).map(\.state) == [.done, .done, .done])
+        #expect(try harness.jobs.jobs(entryID: entry.id).map(\.state) == [.done, .done, .done, .done])
     }
 
     @Test("a failing step is retried and succeeds within the attempt limit")
@@ -136,7 +146,7 @@ struct PipelineRunnerTests {
         try await harness.runner.recoverInterrupted()
         await harness.runner.runPending()
 
-        #expect(try harness.jobs.jobs(entryID: entry.id).map(\.state) == [.done, .done, .done])
+        #expect(try harness.jobs.jobs(entryID: entry.id).map(\.state) == [.done, .done, .done, .done])
     }
 
     static let marleneResult = RawTranscription(
@@ -256,5 +266,26 @@ struct JobQueueTests {
 
         try jobs.markDone(first, now: sampleDate)
         #expect(try jobs.claimNext(now: sampleDate)?.step == "second")
+    }
+
+    @Test("a new recording is transcribed before a backlog of slow later steps for older thoughts")
+    func earlierStepsFirst() throws {
+        let database = try makeSeededDatabase()
+        try database.writer.write { db in
+            for id in ["old1", "old2", "new"] {
+                try db.execute(
+                    sql:
+                        "INSERT INTO entry (id, created_at, source, folder) VALUES (?, '2026-10-19 18:34:12', 'voice', ?)",
+                    arguments: [id, id])
+            }
+        }
+        let jobs = JobQueue(database: database)
+        try jobs.enqueue(entryID: "old1", steps: ["understand"], now: sampleDate)
+        try jobs.enqueue(entryID: "old2", steps: ["understand"], now: sampleDate)
+        try jobs.enqueue(entryID: "new", steps: ["transcribe", "fragment"], now: sampleDate)
+
+        let next = try #require(try jobs.claimNext(now: sampleDate))
+        #expect(next.entryID == "new")
+        #expect(next.step == "transcribe")
     }
 }

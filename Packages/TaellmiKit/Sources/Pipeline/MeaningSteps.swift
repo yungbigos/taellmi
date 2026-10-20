@@ -7,6 +7,7 @@ import Persistence
 enum MeaningSteps {
     static let fragment = "fragment"
     static let embed = "embed"
+    static let understand = "understand"
 }
 
 /// How Text is split into passages right now. Its name is stored with every Entry's passages, so a changed

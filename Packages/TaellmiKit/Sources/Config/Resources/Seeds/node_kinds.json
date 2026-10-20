@@ -4,8 +4,9 @@
   {"id": "atom", "name": "Atom", "parent_id": null, "system": true, "style": {}, "enabled": true, "seed_version": 1},
   {"id": "concept", "name": "Concept", "parent_id": null, "system": true, "style": {}, "enabled": true, "seed_version": 1},
   {"id": "cluster", "name": "Cluster", "parent_id": null, "system": true, "style": {}, "enabled": true, "seed_version": 1},
-  {"id": "person", "name": "Person", "parent_id": "concept", "system": false, "style": {}, "enabled": true, "seed_version": 1},
-  {"id": "place", "name": "Place", "parent_id": "concept", "system": false, "style": {}, "enabled": true, "seed_version": 1},
-  {"id": "topic", "name": "Topic", "parent_id": "concept", "system": false, "style": {}, "enabled": true, "seed_version": 1},
-  {"id": "emotion", "name": "Emotion", "parent_id": "concept", "system": false, "style": {}, "enabled": true, "seed_version": 1}
+  {"id": "summary", "name": "Summary", "parent_id": null, "system": true, "style": {}, "enabled": true, "seed_version": 1},
+  {"id": "person", "name": "Person", "parent_id": "concept", "system": false, "style": {"plural": "people", "symbol": "person", "order": 1}, "enabled": true, "seed_version": 2},
+  {"id": "place", "name": "Place", "parent_id": "concept", "system": false, "style": {"plural": "places", "symbol": "mappin", "order": 2}, "enabled": true, "seed_version": 2},
+  {"id": "topic", "name": "Topic", "parent_id": "concept", "system": false, "style": {"plural": "topics", "symbol": "number", "order": 3}, "enabled": true, "seed_version": 2},
+  {"id": "emotion", "name": "Emotion", "parent_id": "concept", "system": false, "style": {"plural": "feelings", "symbol": "heart", "order": 4}, "enabled": true, "seed_version": 2}
 ]

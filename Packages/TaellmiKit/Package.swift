@@ -91,6 +91,10 @@ let package = Package(
         ),
 
         .target(
+            name: "FoundationModelsEngine", dependencies: ["Domain"], path: "Sources/Engines/FoundationModelsEngine",
+            swiftSettings: strict),
+
+        .target(
             name: "SpeechAnalyzerEngine", dependencies: ["Domain"], path: "Sources/Engines/SpeechAnalyzerEngine",
             swiftSettings: strict),
 
@@ -100,6 +104,7 @@ let package = Package(
             dependencies: [
                 "Domain", "Persistence", "Config", "Pipeline", "Search", "Audio", "Features", "SystemServices",
                 "FluidAudioEngine", "SpeechAnalyzerEngine", "MLXEmbedderEngine",
+                "FoundationModelsEngine",
             ],
             swiftSettings: ui
         ),
@@ -163,6 +168,12 @@ let package = Package(
         .testTarget(
             name: "SpeechAnalyzerEngineIntegrationTests", dependencies: ["SpeechAnalyzerEngine", "Domain"],
             resources: [.copy("Fixtures")], swiftSettings: strict),
+        .testTarget(
+            name: "FoundationModelsEngineTests", dependencies: ["FoundationModelsEngine", "Domain"],
+            swiftSettings: strict),
+        .testTarget(
+            name: "FoundationModelsEngineIntegrationTests", dependencies: ["FoundationModelsEngine", "Domain"],
+            swiftSettings: strict),
         .testTarget(
             name: "MLXEmbedderEngineIntegrationTests",
             dependencies: [

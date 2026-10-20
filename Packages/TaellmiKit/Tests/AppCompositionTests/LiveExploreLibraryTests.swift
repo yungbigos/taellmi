@@ -118,3 +118,43 @@ struct LiveExploreLibraryTests {
         withExtendedLifetime(temp) {}
     }
 }
+
+@Suite("A thought's concepts and summary in Explore")
+struct LiveMeaningTests {
+    @Test("concept positions are only shown while the Text is the one they were found in")
+    func positionsFollowText() async throws {
+        let temp = try TemporaryDirectory()
+        let files = EntryFileStore(storage: PlainFolderStorage(root: temp.url), calendar: berlinCalendar)
+        let database = try makeSeededDatabase()
+        let index = EntryIndex(database: database)
+        let fragments = FragmentStore(database: database)
+        let store = UnderstandingStore(database: database)
+        var entry = try files.createTypedEntry(text: "Mit Marleen.", createdAt: sampleDate)
+        try index.upsert(entry, transcript: nil)
+        try fragments.replace(
+            entryID: entry.id, spans: [TextSpan(text: "Mit Marleen.", utf16Range: 0..<12)], sourceText: entry.text,
+            method: "test@1")
+        try store.replace(
+            entryID: entry.id, sourceText: entry.text,
+            understanding: Understanding(
+                summary: "Kurz.", mentions: [ConceptMention(kind: "person", name: "Marleen", utf16Range: 4..<11)]),
+            provenance: .init(modelID: "m", promptRefs: "p"))
+        let library = LiveExploreLibrary(
+            files: files, index: index,
+            search: HybridSearch(
+                index: index, fragments: fragments, vectors: VectorStore(database: database),
+                resolver: ModelResolver(
+                    database: database, registeredEngines: [], installation: ModelInstallation(root: temp.url),
+                    conditions: { RuntimeConditions(onBattery: false) }),
+                embedders: FakeEmbedderProvider(), settings: SettingsStore(database: database)),
+            understandings: store, curation: CurationStore(storage: PlainFolderStorage(root: temp.url)))
+
+        #expect(try await library.meaning(id: entry.id).concepts.map(\.name) == ["Marleen"])
+
+        entry.text = "Gestern: mit Marleen."
+        try index.upsert(entry, transcript: nil)
+        let meaning = try await library.meaning(id: entry.id)
+        #expect(meaning.concepts.isEmpty)
+        #expect(meaning.summary == "Kurz.")
+    }
+}

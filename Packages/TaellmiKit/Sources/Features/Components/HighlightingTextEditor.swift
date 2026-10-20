@@ -122,9 +122,23 @@ struct HighlightingTextEditor: NSViewRepresentable {
     private func apply(_ highlights: [TextHighlight], to textView: NSTextView, strong: Bool) {
         guard let layout = textView.layoutManager else { return }
         let length = (textView.string as NSString).length
-        layout.removeTemporaryAttribute(.backgroundColor, forCharacterRange: NSRange(location: 0, length: length))
+        let all = NSRange(location: 0, length: length)
+        layout.removeTemporaryAttribute(.backgroundColor, forCharacterRange: all)
+        layout.removeTemporaryAttribute(.underlineStyle, forCharacterRange: all)
+        layout.removeTemporaryAttribute(.underlineColor, forCharacterRange: all)
+        // Concept words are underlined, so search highlights can still shade them.
+        for highlight in highlights {
+            guard case .concept = highlight.kind, highlight.range.lowerBound >= 0, highlight.range.upperBound <= length,
+                let color = brand?.nsFill(.concept, increaseContrast: strong)
+            else { continue }
+            let range = NSRange(location: highlight.range.lowerBound, length: highlight.range.count)
+            layout.addTemporaryAttribute(
+                .underlineStyle, value: NSUnderlineStyle.thick.rawValue, forCharacterRange: range)
+            layout.addTemporaryAttribute(.underlineColor, value: color, forCharacterRange: range)
+        }
         // Passages first, so words drawn on top stay visible inside a shaded passage.
         for highlight in highlights.sorted(by: { $0.kind == .passage && $1.kind == .word }) {
+            if case .concept = highlight.kind { continue }
             guard highlight.range.lowerBound >= 0, highlight.range.upperBound <= length else { continue }
             let fill: BrandFillName = highlight.kind == .word ? .matchCurrent : .related
             guard let color = brand?.nsFill(fill, increaseContrast: strong) else { continue }

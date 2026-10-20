@@ -25,5 +25,14 @@
     "conditions": {},
     "enabled": true,
     "seed_version": 1
+  },
+  {
+    "id": "understand",
+    "step": "understand",
+    "ordinal": 4,
+    "role": "entities",
+    "conditions": {},
+    "enabled": true,
+    "seed_version": 1
   }
 ]

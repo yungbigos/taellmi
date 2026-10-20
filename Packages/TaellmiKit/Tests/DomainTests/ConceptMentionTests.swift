@@ -1,0 +1,61 @@
+import Domain
+import Testing
+
+@Suite("Finding the model's concepts in your own words")
+struct ConceptMentionTests {
+    private let kinds: Set<String> = ["person", "place", "topic", "emotion"]
+
+    private func answer(_ concepts: [(String, String, String)]) -> JSONValue {
+        .object([
+            "concepts": .array(
+                concepts.map { name, kind, words in
+                    .object(["name": .string(name), "kind": .string(kind), "mention": .string(words)])
+                })
+        ])
+    }
+
+    @Test("each concept points to every place its words appear, as UTF-16 positions")
+    func locates() {
+        let text = "Mit Marleen in Giesing. Später rief Marleen nochmal an."
+        let mentions = ConceptMentions.locate(
+            in: text, answer: answer([("Marleen", "person", "Marleen"), ("Giesing", "place", "Giesing")]), kinds: kinds)
+        let marleen = mentions.filter { $0.name == "Marleen" }
+        #expect(marleen.map(\.utf16Range) == [4..<11, 36..<43])
+        #expect(mentions.contains { $0.kind == "place" && $0.utf16Range == 15..<22 })
+    }
+
+    @Test("a concept whose words aren't in the thought is dropped, never invented")
+    func dropsInvented() {
+        let mentions = ConceptMentions.locate(
+            in: "Die Heizung gluckert.", answer: answer([("Einsamkeit", "emotion", "einsam")]), kinds: kinds)
+        #expect(mentions.isEmpty)
+    }
+
+    @Test("a concept whose name isn't in the thought is dropped: no feeling is inferred from other words")
+    func noInferredNames() {
+        let mentions = ConceptMentions.locate(
+            in: "Ich habe heute geweint.", answer: answer([("traurig", "emotion", "geweint")]), kinds: kinds)
+        #expect(mentions.isEmpty)
+    }
+
+    @Test("matching ignores case but not word boundaries")
+    func wordBoundaries() {
+        let text = "Ich bin müde. Jonasson ist nicht Jonas."
+        let mentions = ConceptMentions.locate(
+            in: text, answer: answer([("müde", "emotion", "Müde"), ("Jonas", "person", "Jonas")]), kinds: kinds)
+        #expect(mentions.first { $0.kind == "emotion" }?.utf16Range == 8..<12)
+        #expect(mentions.filter { $0.kind == "person" }.map(\.utf16Range) == [33..<38])
+    }
+
+    @Test("unknown kinds and empty names are dropped; umlauts and emoji keep positions exact")
+    func cleans() {
+        let text = "😀 Straße nach Köln"
+        let mentions = ConceptMentions.locate(
+            in: text,
+            answer: answer([("Köln", "place", "Köln"), ("x", "mood", "Straße"), ("", "topic", "Straße")]),
+            kinds: kinds)
+        #expect(mentions.count == 2)
+        #expect(mentions.first { $0.kind == "place" }?.utf16Range == 15..<19)
+        #expect(mentions.first { $0.kind == "topic" }?.name == "Straße")
+    }
+}

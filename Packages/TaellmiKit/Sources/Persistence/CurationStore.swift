@@ -30,9 +30,28 @@ public struct CurationStore: Sendable {
         try setVocabulary(Set(try vocabulary().map(\.text)).subtracting([text]))
     }
 
+    /// The summary you wrote for a thought, which replaces the generated one for good (ADR 0012).
+    public func summary(for entryID: String) throws -> String? {
+        try document()["summaries"]?.objectValue?[entryID]?.stringValue
+    }
+
+    /// Saves your summary; `nil` or blank brings back the generated one.
+    public func setSummary(_ text: String?, for entryID: String) throws {
+        var document = try document()
+        var summaries = document["summaries"]?.objectValue ?? [:]
+        let trimmed = text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        summaries[entryID] = trimmed.isEmpty ? nil : .string(trimmed)
+        document["summaries"] = .object(summaries)
+        try write(document)
+    }
+
     private func setVocabulary(_ terms: Set<String>) throws {
         var document = try document()
         document["vocabulary"] = .array(terms.sorted().map(JSONValue.string))
+        try write(document)
+    }
+
+    private func write(_ document: [String: JSONValue]) throws {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
         try storage.write(try encoder.encode(document), to: Self.fileName)

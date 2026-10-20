@@ -2,6 +2,16 @@ import Domain
 import Foundation
 import Observation
 
+/// Asks flow to scroll to a thought; each request is new, even for the same thought.
+nonisolated public struct ScrollRequest: Sendable, Equatable {
+    public let entryID: String
+    public let id = UUID()
+
+    public init(entryID: String) {
+        self.entryID = entryID
+    }
+}
+
 /// One Entry opened in Explore.
 nonisolated public struct EntryDetail: Sendable, Equatable {
     public var entry: Entry
@@ -44,11 +54,18 @@ public struct TextHighlight: Sendable, Equatable {
         case word
         /// The passage that made a related thought match by meaning.
         case passage
+        /// Words that name a concept of this kind (person, place, topic, emotion).
+        case concept(String)
     }
 
     /// UTF-16 range in the text.
     public var range: Range<Int>
     public var kind: Kind
+
+    public init(range: Range<Int>, kind: Kind) {
+        self.range = range
+        self.kind = kind
+    }
 }
 
 /// What the Explore window needs from the Archive. Implemented in the composition root.
@@ -66,6 +83,15 @@ public protocol ExploreLibrary: Sendable {
     func restore(trashedFolder: String) async throws
     func trashed() async throws -> [TrashedEntry]
     func deleteForever(trashedFolder: String) async throws
+    /// A thought's summary, concepts and related thoughts (ADR 0012).
+    func meaning(id: String) async throws -> ThoughtMeaning
+    /// Every concept, most-mentioned first.
+    func concepts() async throws -> [ConceptSummary]
+    /// The kinds of concept, in order, with their words and symbols (config).
+    func conceptKinds() async throws -> [ConceptKind]
+    func conceptDetail(id: String) async throws -> ConceptDetail
+    /// Your own summary for a thought; `nil` brings back the generated one.
+    func saveSummary(id: String, text: String?) async throws
 }
 
 /// State and actions of the Explore window.
@@ -77,8 +103,16 @@ public final class ExploreViewModel {
     /// In flow: thoughts matching the search, in reading order, and the one jumped to.
     public private(set) var flowMatches: [String] = []
     public private(set) var currentMatch: String?
-    /// The thought the window was opened on (e.g. from the menu bar); flow scrolls to it.
-    public private(set) var scrollTarget: String?
+    /// The thought flow should scroll to (opened from the menu bar, space or a related thought). A new
+    /// request each time, so asking for the same thought twice still scrolls.
+    public private(set) var scrollRequest: ScrollRequest?
+    public var scrollTarget: String? { scrollRequest?.entryID }
+    /// Summary, concepts and related thoughts of the thoughts on screen, by id; loaded as they appear.
+    public private(set) var meanings: [String: ThoughtMeaning] = [:]
+    /// In space: every concept, and the one chosen with everything connected to it.
+    public private(set) var concepts: [ConceptSummary] = []
+    public private(set) var conceptKinds: [ConceptKind] = []
+    public private(set) var conceptDetail: ConceptDetail?
     /// In time: the span on screen.
     public var timeRange = TimelineRange(zoom: .week, anchor: Date())
     /// Current shortcut of every command, from config.
@@ -142,11 +176,12 @@ public final class ExploreViewModel {
     /// thought selected. Independent of the view, so flow and time never open empty.
     public func open(selecting entryID: String?) async {
         if observation == nil { startObserving() }
+        if conceptKinds.isEmpty { conceptKinds = (try? await library.conceptKinds()) ?? [] }
         if entryID != nil { showsTrash = false }
         await refresh()
         guard let entryID else { return }
         await select(entryID)
-        scrollTarget = entryID
+        scrollRequest = ScrollRequest(entryID: entryID)
     }
 
     public func startObserving() {
@@ -169,6 +204,7 @@ public final class ExploreViewModel {
         case .showStack: await show(view: .stack)
         case .showFlow: await show(view: .flow)
         case .showTime: await show(view: .time)
+        case .showSpace: await show(view: .space)
         case .nextMatch: jumpMatch(by: 1)
         case .previousMatch: jumpMatch(by: -1)
         case .zoomInTime: timeRange.zoomIn()
@@ -267,8 +303,8 @@ public final class ExploreViewModel {
     /// was opened from (⌘K). Recomputed from the text, so highlights follow your typing; they are only drawn,
     /// never saved.
     public func highlights(in text: String, entryID: String) -> [TextHighlight] {
-        guard let search = search(for: entryID) else { return [] }
-        var highlights: [TextHighlight] = []
+        var highlights = conceptHighlights(in: text, entryID: entryID)
+        guard let search = search(for: entryID) else { return highlights }
         if let hit = search.hit, hit.match == .related, let passage = hit.passage,
             let range = Self.locate(passage, of: hit.entry.text, in: text)
         {
@@ -296,6 +332,21 @@ public final class ExploreViewModel {
         if !query.words.isEmpty { return (query.text, query.words, matches[entryID]) }
         guard let opened = openedSearch, opened.hit.id == entryID else { return nil }
         return (opened.text, EntryQuery(text: opened.text).words, opened.hit)
+    }
+
+    /// Concept words, as analysed. Only while the text is still the one that was analysed: after an edit
+    /// the positions would be wrong, and the thought is analysed again shortly anyway.
+    private func conceptHighlights(in text: String, entryID: String) -> [TextHighlight] {
+        guard let meaning = meanings[entryID], entries.first(where: { $0.id == entryID })?.text == text else {
+            return []
+        }
+        let length = text.utf16.count
+        return meaning.concepts.flatMap { concept in
+            concept.utf16Ranges.filter { $0.upperBound <= length }.map {
+                TextHighlight(range: $0, kind: .concept(concept.kind))
+            }
+        }
+        .sorted { $0.range.lowerBound < $1.range.lowerBound }
     }
 
     /// Where the passage from the searched text now is in the edited text, if it is still there unchanged.
@@ -354,6 +405,8 @@ public final class ExploreViewModel {
                 let trashed = try await library.trashed()
                 guard generation == refreshGeneration else { return }
                 trashedEntries = trashed
+            } else if view == .space {
+                // space lists concepts (loaded below); it shows no thoughts of its own.
             } else if view == .stack {
                 let asked = query
                 let found = try await library.search(asked)
@@ -374,9 +427,60 @@ public final class ExploreViewModel {
                 matches = Dictionary(found.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
                 updateMatches()
             }
+            await reloadMeaning(generation: generation)
         } catch {
             guard generation == refreshGeneration else { return }
             errorMessage = "couldn't load your thoughts. try again."
+        }
+    }
+
+    /// Loads a thought's summary, concepts and related thoughts, once; Archive changes reload them.
+    public func loadMeaning(for id: String) async {
+        guard meanings[id] == nil, let meaning = try? await library.meaning(id: id) else { return }
+        meanings[id] = meaning
+    }
+
+    /// Opens a concept in space, with its thoughts and the concepts that appear with it.
+    public func openConcept(_ id: String) async {
+        if view != .space { await show(view: .space) }
+        do {
+            conceptDetail = try await library.conceptDetail(id: id)
+        } catch {
+            errorMessage = "couldn't open that concept. try again."
+        }
+    }
+
+    /// Shows a thought in flow, scrolled to it (from space, or a related thought).
+    public func reveal(_ id: String) async {
+        if view != .flow { await show(view: .flow) }
+        scrollRequest = ScrollRequest(entryID: id)
+    }
+
+    /// A thought scrolled out of flow: its meaning is dropped, so refreshes only reload what is on screen.
+    public func forgetMeaning(for id: String) {
+        meanings[id] = nil
+    }
+
+    public func saveSummary(_ text: String?, for id: String) async {
+        do {
+            try await library.saveSummary(id: id, text: text)
+            meanings[id] = try await library.meaning(id: id)
+        } catch {
+            errorMessage = "couldn't save the summary. try again."
+        }
+    }
+
+    private func reloadMeaning(generation: Int) async {
+        for id in meanings.keys {
+            let meaning = try? await library.meaning(id: id)
+            guard generation == refreshGeneration else { return }
+            if let meaning { meanings[id] = meaning }
+        }
+        guard view == .space, let concepts = try? await library.concepts(), generation == refreshGeneration
+        else { return }
+        self.concepts = concepts
+        if let open = conceptDetail?.concept.id {
+            conceptDetail = try? await library.conceptDetail(id: open)
         }
     }
 

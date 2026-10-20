@@ -5,6 +5,10 @@ import Foundation
 /// An in-memory Archive for Explore tests.
 public actor FakeLibrary: ExploreLibrary {
     public private(set) var savedTexts: [String: String] = [:]
+    public private(set) var savedSummaries: [String: String?] = [:]
+    private var meanings: [String: ThoughtMeaning] = [:]
+    private var conceptList: [ConceptSummary] = []
+    private var conceptDetails: [String: ConceptDetail] = [:]
     private var entries: [Entry]
     private var trash: [String: Entry] = [:]
     private var continuations: [AsyncStream<Void>.Continuation] = []
@@ -33,6 +37,47 @@ public actor FakeLibrary: ExploreLibrary {
     /// passage that matched, unless it already matches by words.
     public func relate(_ id: String, passage: Range<Int>) {
         related.append((id, passage))
+    }
+
+    /// What `meaning(id:)` returns for a thought; a change is announced like any Archive change.
+    public func setMeaning(_ meaning: ThoughtMeaning, for id: String) {
+        meanings[id] = meaning
+        publish()
+    }
+
+    public func setConcepts(_ concepts: [ConceptSummary], details: [ConceptDetail] = []) {
+        conceptList = concepts
+        conceptDetails = Dictionary(uniqueKeysWithValues: details.map { ($0.concept.id, $0) })
+    }
+
+    public func meaning(id: String) async throws -> ThoughtMeaning {
+        var meaning = meanings[id] ?? .empty
+        if let saved = savedSummaries[id] {
+            meaning.summary = saved
+            meaning.summaryIsEdited = saved != nil
+        }
+        return meaning
+    }
+
+    public func concepts() async throws -> [ConceptSummary] { conceptList }
+
+    public func conceptKinds() async throws -> [ConceptKind] {
+        [
+            ConceptKind(id: "person", plural: "people", symbol: "person"),
+            ConceptKind(id: "place", plural: "places", symbol: "mappin"),
+            ConceptKind(id: "topic", plural: "topics", symbol: "number"),
+            ConceptKind(id: "emotion", plural: "feelings", symbol: "heart"),
+        ]
+    }
+
+    public func conceptDetail(id: String) async throws -> ConceptDetail {
+        guard let detail = conceptDetails[id] else { throw CocoaError(.fileNoSuchFile) }
+        return detail
+    }
+
+    public func saveSummary(id: String, text: String?) async throws {
+        savedSummaries[id] = text
+        publish()
     }
 
     public func releaseHeldSearches() {

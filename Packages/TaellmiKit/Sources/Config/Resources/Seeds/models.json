@@ -173,5 +173,26 @@
     "license": "Apache-2.0",
     "enabled": true,
     "seed_version": 2
+  },
+  {
+    "id": "apple-foundation-system",
+    "name": "Apple Foundation Models (on-device, Apple Intelligence)",
+    "engine": "apple_foundation",
+    "provider_id": "apple_system",
+    "source_ref": null,
+    "revision": null,
+    "files": [],
+    "params": {
+      "temperature": 0.2
+    },
+    "capabilities": [
+      "summary",
+      "entities",
+      "lang:de",
+      "lang:en"
+    ],
+    "est_memory_mb": null,
+    "enabled": true,
+    "seed_version": 1
   }
 ]

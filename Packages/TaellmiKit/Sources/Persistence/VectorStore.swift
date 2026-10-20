@@ -55,6 +55,33 @@ public struct VectorStore: Sendable {
         }
     }
 
+    /// The stored vectors of these nodes in `space`.
+    public func vectors(nodeIDs: some Collection<String>, space: String) throws -> [String: [Float]] {
+        guard !nodeIDs.isEmpty else { return [:] }
+        return try database.reader.read { db in
+            let placeholders = nodeIDs.map { _ in "?" }.joined(separator: ",")
+            let sizes = try Int.fetchAll(
+                db,
+                sql: "SELECT DISTINCT dimensions FROM vector_meta WHERE space = ? AND node_id IN (\(placeholders))",
+                arguments: StatementArguments([space] + Array(nodeIDs)))
+            var result: [String: [Float]] = [:]
+            for size in sizes where try db.tableExists(Self.tableName(dimensions: size)) {
+                let rows = try Row.fetchAll(
+                    db,
+                    sql: """
+                        SELECT node_id, embedding FROM \(Self.tableName(dimensions: size))
+                        WHERE model_id = ? AND node_id IN (\(placeholders))
+                        """,
+                    arguments: StatementArguments([space] + Array(nodeIDs)))
+                for row in rows {
+                    let data: Data = row["embedding"]
+                    result[row["node_id"]] = data.withUnsafeBytes { Array($0.bindMemory(to: Float.self)) }
+                }
+            }
+            return result
+        }
+    }
+
     /// Every node that has a vector in `space`.
     public func nodeIDs(space: String) throws -> Set<String> {
         try database.reader.read { db in

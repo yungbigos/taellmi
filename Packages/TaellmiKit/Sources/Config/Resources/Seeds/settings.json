@@ -1,6 +1,7 @@
 [
   {"key": "app.maintenance_interval_s", "type": "number", "value": 30, "seed_version": 1},
   {"key": "appearance.text_case", "type": "string", "value": "normal", "seed_version": 1},
+  {"key": "summary.min_words", "type": "number", "value": 40, "seed_version": 1},
   {"key": "archive.location_bookmark", "type": "string", "value": "", "seed_version": 1},
   {"key": "archive.pending_move_bookmark", "type": "string", "value": "", "seed_version": 1},
   {"key": "capture.discard_silent_recordings", "type": "bool", "value": true, "seed_version": 1},
@@ -25,6 +26,7 @@
   {"key": "pipeline.wait_for_model_s", "type": "number", "value": 300, "seed_version": 1},
   {"key": "privacy.lock_window", "type": "bool", "value": false, "seed_version": 1},
   {"key": "search.min_similarity", "type": "number", "value": 0.35, "seed_version": 2},
+  {"key": "explore.related_count", "type": "number", "value": 3, "seed_version": 1},
   {"key": "search.relative_similarity_window", "type": "number", "value": 0, "seed_version": 1},
   {"key": "search.rrf_k", "type": "number", "value": 60, "seed_version": 1},
   {"key": "search.vector_candidates", "type": "number", "value": 50, "seed_version": 1},
@@ -43,6 +45,7 @@
   {"key": "shortcut.view.flow", "type": "string", "value": "command+2", "seed_version": 1},
   {"key": "shortcut.view.stack", "type": "string", "value": "command+1", "seed_version": 1},
   {"key": "shortcut.view.time", "type": "string", "value": "command+3", "seed_version": 1},
+  {"key": "shortcut.view.space", "type": "string", "value": "command+4", "seed_version": 1},
   {"key": "transcription.segment_max_pause_s", "type": "number", "value": 1.5, "seed_version": 1},
   {"key": "vocabulary.min_similarity_names", "type": "number", "value": 0.6, "seed_version": 1},
   {"key": "vocabulary.min_similarity_other", "type": "number", "value": 0.8, "seed_version": 1},

@@ -31,6 +31,8 @@ public struct ExploreView: View {
             ComposerView(model: model)
         } else if model.view == .stack || model.showsTrash {
             splitView
+        } else if model.view == .space {
+            SpaceView(model: model, ground: AnyView(readingGround))
         } else {
             wideView
         }
@@ -56,6 +58,7 @@ public struct ExploreView: View {
             Text("stack").tag(ExploreViewKind.stack)
             Text("flow").tag(ExploreViewKind.flow)
             Text("time").tag(ExploreViewKind.time)
+            Text("space").tag(ExploreViewKind.space)
         }
         .pickerStyle(.segmented)
         .labelsHidden()
@@ -67,6 +70,7 @@ public struct ExploreView: View {
             case .stack: .showStack
             case .flow: .showFlow
             case .time: .showTime
+            case .space: .showSpace
             }
         Task { await model.perform(command) }
     }

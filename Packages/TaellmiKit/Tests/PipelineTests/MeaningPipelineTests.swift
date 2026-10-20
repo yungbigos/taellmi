@@ -122,7 +122,7 @@ extension MeaningPipelineTests {
 
         await harness.engines.release(fakeEmbeddingModel)
         await harness.runUntilSettled()
-        #expect(try harness.jobs.jobs(entryID: entry.id).map(\.state) == [.done, .done, .done])
+        #expect(try harness.jobs.jobs(entryID: entry.id).map(\.state) == [.done, .done, .done, .done])
     }
 
     @Test("a different vector size for the same model embeds every passage again")

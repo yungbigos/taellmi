@@ -25,5 +25,23 @@
     "conditions": {},
     "enabled": true,
     "seed_version": 1
+  },
+  {
+    "id": "summary-1",
+    "role": "summary",
+    "priority": 1,
+    "model_id": "apple-foundation-system",
+    "conditions": {},
+    "enabled": true,
+    "seed_version": 1
+  },
+  {
+    "id": "entities-1",
+    "role": "entities",
+    "priority": 1,
+    "model_id": "apple-foundation-system",
+    "conditions": {},
+    "enabled": true,
+    "seed_version": 1
   }
 ]

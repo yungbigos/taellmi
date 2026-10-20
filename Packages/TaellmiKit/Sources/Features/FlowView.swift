@@ -21,11 +21,17 @@ struct FlowView: View {
                             FlowBlock(
                                 entry: entry, isCurrentMatch: model.currentMatch == entry.id,
                                 isRelated: model.isRelated(entry.id),
-                                highlights: { text in model.highlights(in: text, entryID: entry.id) }
+                                highlights: { text in model.highlights(in: text, entryID: entry.id) },
+                                meaning: model.meanings[entry.id], kinds: model.conceptKinds,
+                                openConcept: { id in Task { await model.openConcept(id) } },
+                                reveal: { id in Task { await model.reveal(id) } },
+                                saveSummary: { text in Task { await model.saveSummary(text, for: entry.id) } }
                             ) { text in
                                 await model.saveFlowText(id: entry.id, text: text)
                             }
                             .id(entry.id)
+                            .task { await model.loadMeaning(for: entry.id) }
+                            .onDisappear { model.forgetMeaning(for: entry.id) }
                         }
                     }
                     Color.clear.frame(height: 1).id("flow-end")
@@ -39,9 +45,15 @@ struct FlowView: View {
                     ContentUnavailableView("no thoughts yet.", systemImage: "text.alignleft")
                 }
             }
-            .onAppear { proxy.scrollTo("flow-end", anchor: .bottom) }
-            .onChange(of: model.scrollTarget) { _, id in
-                if let id { proxy.scrollTo(id, anchor: .center) }
+            .onAppear {
+                if let id = model.scrollTarget {
+                    proxy.scrollTo(id, anchor: .center)
+                } else {
+                    proxy.scrollTo("flow-end", anchor: .bottom)
+                }
+            }
+            .onChange(of: model.scrollRequest) { _, request in
+                if let request { proxy.scrollTo(request.entryID, anchor: .center) }
             }
             .onChange(of: model.currentMatch) { _, id in
                 if let id {
@@ -61,6 +73,11 @@ private struct FlowBlock: View {
     let isCurrentMatch: Bool
     let isRelated: Bool
     let highlights: (String) -> [TextHighlight]
+    let meaning: ThoughtMeaning?
+    let kinds: [ConceptKind]
+    let openConcept: (String) -> Void
+    let reveal: (String) -> Void
+    let saveSummary: (String?) -> Void
     let save: (String) async -> Void
     @State private var text = ""
     /// The text last handed to save; a newer text from the Archive is only taken while nothing newer is typed.
@@ -89,6 +106,11 @@ private struct FlowBlock: View {
                             await save(newText)
                         }
                     }
+                if let meaning {
+                    ThoughtMeaningView(
+                        meaning: meaning, kinds: kinds, openConcept: openConcept, reveal: reveal,
+                        saveSummary: saveSummary)
+                }
             }
         }
         .padding(10)

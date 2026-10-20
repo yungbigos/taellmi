@@ -18,7 +18,7 @@ Visual identity (logo, colour values, type scale, tälli's look and motion) deci
 
 The promise is **finding and understanding**, never rewriting.
 - Your words stay exactly as you said or typed them ([ADR 0006](decisions/0006-no-slop.md), and the rule that the user's Text is sacred).
-- Polished versions or summaries may come later. They are only ever extra copies next to your thought: made when you ask, marked as generated, and never replacing the original.
+- A one-sentence summary sits under longer thoughts (ADR 0012). It is only ever an extra next to your thought: made on this Mac, marked as generated, editable, and never replacing the original. Polished versions may come later, made only when you ask.
 
 **Tagline:** `think out loud.`
 **The wink:** `äh included.`, always with the explainer in small type: *(äh: german for "uh", the sound of thinking.)*

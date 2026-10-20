@@ -4,6 +4,8 @@ import Foundation
 /// Which Explore view is showing.
 nonisolated public enum ExploreViewKind: String, Sendable, CaseIterable {
     case stack, flow, time
+    /// For now a list of all concepts; later the 3D world of your thoughts (docs/brand.md).
+    case space
 }
 
 /// One day in the flow, with its thoughts in reading order.

@@ -19,6 +19,8 @@ public enum SettingKeys {
     public static let vocabularyMinSimilarityOther = "vocabulary.min_similarity_other"
     public static let vocabularyUseContacts = "vocabulary.use_contacts"
     public static let textCase = "appearance.text_case"
+    /// Thoughts shorter than this get concepts but no summary (ADR 0012).
+    public static let summaryMinWords = "summary.min_words"
     public static let archiveLocationBookmark = "archive.location_bookmark"
     public static let archivePendingMoveBookmark = "archive.pending_move_bookmark"
     public static let lockWindow = "privacy.lock_window"
@@ -38,13 +40,15 @@ public enum SettingKeys {
     public static let searchRRFK = "search.rrf_k"
     public static let searchVectorCandidates = "search.vector_candidates"
     public static let searchMinSimilarity = "search.min_similarity"
+    /// How many related thoughts are shown next to a thought.
+    public static let relatedThoughtsCount = "explore.related_count"
     /// Meaning matches more than this below the best one are dropped (0 = off).
     public static let searchRelativeSimilarityWindow = "search.relative_similarity_window"
 
     /// Settings of the meaning layer (passages, embeddings, search).
     static let meaning = [
         fragmentTargetLength, fragmentMaxLength, embedBatchSize, searchRRFK, searchVectorCandidates,
-        searchMinSimilarity, searchRelativeSimilarityWindow,
+        searchMinSimilarity, searchRelativeSimilarityWindow, relatedThoughtsCount,
     ]
     /// Colours, type, tälli's look and motion (docs/brand/tokens.json), shipped as `Seeds/brand.json`.
     public static let brandTokens = "brand.tokens"
@@ -55,7 +59,8 @@ public enum SettingKeys {
             hotkey, sampleRate, minimumRecordingSeconds, discardSilentRecordings, idleUnloadSeconds, maxJobAttempts,
             segmentMaxPauseSeconds, retryBackoffSeconds,
             waitForModelSeconds, maintenanceIntervalSeconds, vocabularyMinSimilarityNames, vocabularyMinSimilarityOther,
-            vocabularyUseContacts, textCase, archiveLocationBookmark, archivePendingMoveBookmark, lockWindow,
+            vocabularyUseContacts, textCase, summaryMinWords, archiveLocationBookmark, archivePendingMoveBookmark,
+            lockWindow,
             exploreHotkey,
             exploreAutosaveDelaySeconds, exploreStartView,
             companionCursorOffset,

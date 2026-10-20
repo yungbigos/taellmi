@@ -81,6 +81,11 @@ _Avoid_: Relation, edge (in conversation)
 Everything you decide by hand that shapes the Archive's meaning: Links; merging, renaming and hiding Concepts; edited Atoms; your Vocabulary; and weights that give certain Concepts or Atoms more or less focus. Curation is never recomputed; recomputation respects it.
 _Avoid_: Manual edits, overrides, annotations
 
+**Summary**:
+One generated sentence about what a longer Entry says, shown next to it. Marked as generated. Once you edit it, it is yours (part of Curation) and never regenerated.
+_In the app_: summary
+_Avoid_: Insight, takeaway, abstract
+
 **Vocabulary**:
 The words the app should spell exactly your way, mostly names (e.g. "Marleen"). It comes from your own list (part of Curation) and, if you opt in, your contacts. The Text of a new voice Entry is corrected towards it, and each correction is recorded on the Entry.
 _In the app_: spellings

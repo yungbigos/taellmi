@@ -5,6 +5,7 @@ import Domain
 import Features
 import FluidAudioEngine
 import Foundation
+import FoundationModelsEngine
 import IOKit.ps
 import MLXEmbedderEngine
 import Persistence
@@ -26,6 +27,10 @@ public final class AppEnvironment {
     /// Live-preview engines, by engine key.
     public static let livePreviewEngines: [String: LivePreviewFactory] = [
         AppleSpeechLivePreview.engineKey: AppleSpeechLivePreview.factory
+    ]
+    /// Language-model engines, by engine key.
+    public static let liveLanguageModels: [String: LanguageModelFactory] = [
+        AppleFoundationModel.engineKey: AppleFoundationModel.factory
     ]
 
     public let journal: any Journal
@@ -87,6 +92,7 @@ public final class AppEnvironment {
         let environment = try AppEnvironment(
             paths: paths, archiveRoot: root, storage: storage, archiveKey: key, vault: vault, database: database,
             engines: liveEngines, embedders: liveEmbedders, livePreviews: livePreviewEngines,
+            languageModels: liveLanguageModels,
             recorder: MicrophoneRecorder(scratchFolder: paths.scratch, sampleRate: sampleRate))
         environment.pendingRecoveryKey = newRecoveryKey
         return environment
@@ -103,20 +109,21 @@ public final class AppEnvironment {
 
     public convenience init(
         paths: AppPaths, engines: [String: TranscriberFactory], embedders: [String: EmbedderFactory] = [:],
-        livePreviews: [String: LivePreviewFactory] = [:], recorder: any AudioRecording
+        livePreviews: [String: LivePreviewFactory] = [:], languageModels: [String: LanguageModelFactory] = [:],
+        recorder: any AudioRecording
     ) throws {
         try self.init(
             paths: paths, archiveRoot: paths.archive, storage: PlainFolderStorage(root: paths.archive), archiveKey: nil,
             vault: nil,
             database: AppDatabase.open(at: paths.database), engines: engines, embedders: embedders,
-            livePreviews: livePreviews, recorder: recorder)
+            livePreviews: livePreviews, languageModels: languageModels, recorder: recorder)
     }
 
     init(
         paths: AppPaths, archiveRoot: URL, storage: any ArchiveStorage, archiveKey: SymmetricKey?, vault: ArchiveVault?,
         database: AppDatabase,
         engines factories: [String: TranscriberFactory], embedders: [String: EmbedderFactory],
-        livePreviews: [String: LivePreviewFactory],
+        livePreviews: [String: LivePreviewFactory], languageModels: [String: LanguageModelFactory],
         recorder: any AudioRecording
     ) throws {
         self.paths = paths
@@ -139,8 +146,10 @@ public final class AppEnvironment {
             factories: factories, embedders: embedders, installation: installation, clock: ContinuousClock(),
             // If the setting cannot be read, unload right away: the resource-safe choice.
             idleUnload: { (try? settings.number(SettingKeys.idleUnloadSeconds)).map { .seconds($0) } ?? .zero })
+        let languageModelProvider = LanguageModels(factories: languageModels)
         let resolver = ModelResolver(
-            database: database, registeredEngines: engines.registeredEngines.union(livePreviews.keys),
+            database: database,
+            registeredEngines: engines.registeredEngines.union(livePreviews.keys).union(languageModels.keys),
             installation: installation,
             conditions: { RuntimeConditions(onBattery: PowerSource.isOnBattery) })
         runner = PipelineRunner(
@@ -153,7 +162,12 @@ public final class AppEnvironment {
                 SettingGatedSource(
                     settings: settings, key: SettingKeys.vocabularyUseContacts, source: ContactsVocabularySource()),
             ],
-            classifier: NaturalLanguageClassifier())
+            classifier: NaturalLanguageClassifier(),
+            understanding: languageModels.isEmpty
+                ? nil
+                : UnderstandingWork(
+                    store: UnderstandingStore(database: database), prompts: PromptStore(database: database),
+                    models: languageModelProvider))
         let kick = PipelineKick(runner: runner)
         pipelineKick = kick
         journal = LiveJournal(
@@ -176,7 +190,12 @@ public final class AppEnvironment {
                     index: index, fragments: FragmentStore(database: database),
                     vectors: VectorStore(database: database), resolver: resolver, embedders: engines,
                     settings: settings),
-                onChange: { kick.kick() }),
+                onChange: { kick.kick() },
+                understandings: UnderstandingStore(database: database),
+                related: RelatedThoughts(
+                    index: index, fragments: FragmentStore(database: database),
+                    vectors: VectorStore(database: database), resolver: resolver, settings: settings),
+                curation: CurationStore(storage: storage)),
             autosaveDelay: .seconds((try? settings.number(SettingKeys.exploreAutosaveDelaySeconds)) ?? 0),
             startView: (try? settings.string(SettingKeys.exploreStartView)).flatMap(ExploreViewKind.init) ?? .stack,
             capture: captureModel)

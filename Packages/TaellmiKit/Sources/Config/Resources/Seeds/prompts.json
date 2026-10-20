@@ -5,7 +5,84 @@
     "role": "title",
     "language": "de",
     "template": "Gib diesem Tagebucheintrag einen kurzen, treffenden Titel (höchstens 8 Wörter), in der Sprache des Eintrags.\n\nEintrag:\n{{transcript}}",
-    "output_schema": {"type": "object", "properties": {"title": {"type": "string"}}, "required": ["title"]},
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "title"
+      ]
+    },
+    "seed_version": 1
+  },
+  {
+    "id": "concepts",
+    "version": 1,
+    "role": "entities",
+    "language": "de",
+    "template": "Du liest einen Gedanken aus einem privaten Tagebuch (Deutsch, manchmal mit Englisch gemischt). Finde, was darin vorkommt:\n- person: Menschen, mit Namen oder als Rolle (z. B. \"Marleen\", \"meine Mutter\", \"mein Chef\")\n- place: Orte (Städte, Viertel, Gebäude, Länder)\n- topic: worum es geht, höchstens 5, jeweils ein kurzes Hauptwort (z. B. \"Heizung\", \"Job\", \"Schlaf\")\n- emotion: Gefühle, aber nur wenn sie im Text ausdrücklich genannt werden (z. B. \"müde\", \"traurig\", \"einsam\"). Errate nie Gefühle aus dem Ton.\n\nRegeln:\n- \"mention\" sind die genauen Wörter, wie sie im Text stehen.\n- \"name\" ist dieselbe Sache in Grundform, in der Sprache des Textes.\n- Nichts hinzufügen, was nicht im Text steht. Keine Deutung.\n\nText:\n{{text}}",
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "concepts": {
+          "type": "array",
+          "maxItems": 20,
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Grundform, z. B. Marleen, Heizung, müde"
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "person",
+                  "place",
+                  "topic",
+                  "emotion"
+                ]
+              },
+              "mention": {
+                "type": "string",
+                "description": "die genauen Wörter aus dem Text"
+              }
+            },
+            "required": [
+              "name",
+              "kind",
+              "mention"
+            ]
+          }
+        }
+      },
+      "required": [
+        "concepts"
+      ]
+    },
+    "seed_version": 1
+  },
+  {
+    "id": "summary",
+    "version": 1,
+    "role": "summary",
+    "language": "de",
+    "template": "Fasse diesen Gedanken aus einem privaten Tagebuch in einem einzigen kurzen Satz zusammen, in seiner Sprache und aus der Ich-Sicht, wie er geschrieben ist. Nur was dasteht: keine Deutung, kein Rat, keine Gefühle, die nicht genannt werden.\n\nText:\n{{text}}",
+    "output_schema": {
+      "type": "object",
+      "properties": {
+        "summary": {
+          "type": "string",
+          "description": "ein Satz"
+        }
+      },
+      "required": [
+        "summary"
+      ]
+    },
     "seed_version": 1
   }
 ]

@@ -59,7 +59,8 @@ public struct JobQueue: Sendable {
     }
 
     /// Claims the next runnable job: pending, past its `not_before`, and every earlier step of the
-    /// same entry is finished, done or failed for good. A later step then works with whatever input exists
+    /// same entry is finished, done or failed for good. Earlier pipeline steps go first across all thoughts, so
+    /// a new recording is transcribed before a backlog of slow later steps (e.g. understanding old thoughts). A later step then works with whatever input exists
     /// (e.g. Text you typed into a recording that could not be transcribed). Claiming counts as an attempt.
     public func claimNext(now: Date = Date()) throws -> Job? {
         try database.writer.write { db in
@@ -67,13 +68,13 @@ public struct JobQueue: Sendable {
                 let row = try Row.fetchOne(
                     db,
                     sql: """
-                        SELECT * FROM job j
-                        WHERE state = 'pending'
-                          AND (not_before IS NULL OR not_before <= ?)
+                        SELECT j.* FROM job j LEFT JOIN pipeline_step p ON p.step = j.step
+                        WHERE j.state = 'pending'
+                          AND (j.not_before IS NULL OR j.not_before <= ?)
                           AND NOT EXISTS (
                             SELECT 1 FROM job e WHERE e.entry_id = j.entry_id AND e.id < j.id
                                 AND e.state NOT IN ('done', 'failed'))
-                        ORDER BY id LIMIT 1
+                        ORDER BY COALESCE(p.ordinal, 0), j.id LIMIT 1
                         """, arguments: [now])
             else { return nil }
             var job = Self.job(from: row)

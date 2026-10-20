@@ -6,6 +6,8 @@ public enum GraphKinds {
     public static let atom = "atom"
     public static let concept = "concept"
     public static let cluster = "cluster"
+    /// A generated one-sentence summary of an Entry (ADR 0012).
+    public static let summary = "summary"
 
     /// A part contained in a whole: Entry → Fragment, Fragment → Atom.
     public static let contains = "contains"
@@ -20,6 +22,6 @@ public enum GraphKinds {
     /// A connection made by hand (a Link).
     public static let link = "link"
 
-    public static let systemNodeKinds: Set<String> = [entry, fragment, atom, concept, cluster]
+    public static let systemNodeKinds: Set<String> = [entry, fragment, atom, concept, cluster, summary]
     public static let systemEdgeKinds: Set<String> = [contains, mentions, coOccurs, similar, memberOf, link]
 }

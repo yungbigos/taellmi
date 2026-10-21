@@ -61,6 +61,9 @@ struct StackView: View {
     private var column: some View {
         columnScroll
             .scrollPosition($position)
+            .onScrollPhaseChange { _, phase in
+                if phase == .interacting { landing.stop() }
+            }
             .onAppear { if let id = model.scrollTarget { land(on: id) } }
             .onChange(of: model.scrollRequest) { _, request in
                 if let request { land(on: request.entryID) }

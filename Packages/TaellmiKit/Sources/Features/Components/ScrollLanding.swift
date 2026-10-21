@@ -7,9 +7,15 @@ import SwiftUI
 struct ScrollLanding {
     private var task: Task<Void, Never>?
 
+    /// You scrolled yourself: the jump stops correcting, so it never fights you.
+    mutating func stop() {
+        task?.cancel()
+        task = nil
+    }
+
     mutating func land(
         on id: String, position: Binding<ScrollPosition>, animation: Animation?,
-        retries: [Int] = [120, 250, 450]
+        retries: [Int] = [100, 200, 350, 550, 800, 1200]
     ) {
         task?.cancel()
         withAnimation(animation) { position.wrappedValue.scrollTo(id: id, anchor: .top) }

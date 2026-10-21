@@ -32,6 +32,9 @@ struct FlowView: View {
             .frame(maxWidth: .infinity)
         }
         .scrollPosition($position)
+        .onScrollPhaseChange { _, phase in
+            if phase == .interacting { landing.stop() }
+        }
         // Which thoughts are on screen, top first: the month rail follows.
         .onScrollTargetVisibilityChange(idType: String.self, threshold: 0.2) { ids in model.flowVisible(ids) }
         .overlay {

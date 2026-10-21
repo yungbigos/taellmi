@@ -87,13 +87,54 @@ struct ListKeyboardTests {
         }
         let model = ExploreViewModel(library: FakeLibrary(entries: entries), autosaveDelay: .zero, startView: .stack)
         await model.open(selecting: nil)
-        model.moveSelection(by: 1)
         #expect(model.selectedID == "a")
         model.moveSelection(by: 1)
+        #expect(model.selectedID == "b")
         model.moveSelection(by: 1)
         model.moveSelection(by: 1)
         #expect(model.selectedID == "c")
         model.moveSelection(by: -1)
         #expect(model.selectedID == "b")
+    }
+}
+
+@Suite("stack always shows a thought")
+struct StackAutoSelectTests {
+    private func library() -> FakeLibrary {
+        FakeLibrary(
+            entries: ["a", "b"].enumerated().map { index, id in
+                Entry(
+                    id: id, createdAt: sampleDate.addingTimeInterval(-Double(index) * 60), durationSeconds: nil,
+                    source: .typed, folder: id, text: "Gedanke \(id)")
+            })
+    }
+
+    @Test("opening in stack with nothing chosen opens the newest thought")
+    func opensNewest() async {
+        let model = ExploreViewModel(library: library(), autosaveDelay: .zero, startView: .stack)
+        await model.open(selecting: nil)
+        #expect(model.selectedID == "a")
+        #expect(model.detail?.entry.id == "a")
+    }
+
+    @Test("switching to stack with nothing open opens the newest thought; a chosen one stays")
+    func onSwitch() async {
+        let model = ExploreViewModel(library: library(), autosaveDelay: .zero, startView: .flow)
+        await model.open(selecting: nil)
+        #expect(model.detail == nil)
+        await model.perform(.showStack)
+        #expect(model.detail?.entry.id == "a")
+
+        await model.select("b")
+        await model.perform(.showFlow)
+        await model.perform(.showStack)
+        #expect(model.detail?.entry.id == "b")
+    }
+
+    @Test("a chosen thought from outside wins over the newest")
+    func explicitWins() async {
+        let model = ExploreViewModel(library: library(), autosaveDelay: .zero, startView: .stack)
+        await model.open(selecting: "b")
+        #expect(model.detail?.entry.id == "b")
     }
 }

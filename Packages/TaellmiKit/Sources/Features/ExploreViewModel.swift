@@ -203,7 +203,10 @@ public final class ExploreViewModel {
         if conceptKinds.isEmpty { conceptKinds = (try? await library.conceptKinds()) ?? [] }
         if entryID != nil { showsTrash = false }
         await refresh()
-        guard let entryID else { return }
+        guard let entryID else {
+            await openNewestIfNothingOpen()
+            return
+        }
         await select(entryID)
         scrollRequest = ScrollRequest(entryID: entryID)
     }
@@ -537,9 +540,21 @@ public final class ExploreViewModel {
         conceptDetail = nil
     }
 
+    /// Switching views keeps the open thought; leaving trash or opening stack with nothing open shows the newest.
     private func show(view: ExploreViewKind) async {
         self.view = view
-        await show(trash: false)
+        if showsTrash {
+            await show(trash: false)
+        } else {
+            await refresh()
+        }
+        await openNewestIfNothingOpen()
+    }
+
+    /// stack always shows a thought: with nothing chosen, the newest one opens.
+    private func openNewestIfNothingOpen() async {
+        guard view == .stack, !showsTrash, selectedID == nil, let newest = entries.first else { return }
+        await select(newest.id)
     }
 
     private func jumpMatch(by step: Int) {

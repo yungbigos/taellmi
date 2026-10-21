@@ -132,8 +132,7 @@ public struct ExploreView: View {
         HStack(spacing: brand.space(.l)) {
             entryList
                 .frame(width: brand.map { CGFloat($0.space.listWidthPt.ideal) } ?? 300)
-                .clipShape(listShape)
-                .glassEffect(.regular, in: listShape)
+                .floatingPanel()
                 .padding([.leading, .top, .bottom], brand.space(.l))
             Group {
                 if let detail = model.detail {
@@ -146,10 +145,6 @@ public struct ExploreView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .background { readingGround }
-    }
-
-    private var listShape: RoundedRectangle {
-        RoundedRectangle(cornerRadius: brand?.radius(.panel) ?? 16, style: .continuous)
     }
 
     /// The page under your thoughts. It runs on under the toolbar and the bar, so both float over it as glass.
@@ -249,6 +244,24 @@ struct EntryDetailView: View {
     @AppStorage("explore.showsDetails") private var showsDetails = true
 
     var body: some View {
+        // The details float as a glass panel on the right, like the list on the left.
+        HStack(spacing: brand.space(.l)) {
+            reading
+            if showsDetails {
+                ThoughtDetailsView(
+                    detail: detail, playbackRequest: model.playbackRequest,
+                    changeDate: model.canChangeDate ? { date in Task { await model.changeDate(to: date) } } : nil
+                )
+                .frame(width: brand.map { CGFloat($0.space.inspectorWidthPt.ideal) } ?? 260)
+                .floatingPanel()
+                .padding([.trailing, .top, .bottom], brand.space(.l))
+                .transition(.move(edge: .trailing).combined(with: .opacity))
+            }
+        }
+        .brandAnimation(\.crossfade, value: showsDetails)
+    }
+
+    private var reading: some View {
         VStack(alignment: .leading, spacing: brand.space(.l)) {
             Text(
                 ThoughtMeta.line(
@@ -290,15 +303,6 @@ struct EntryDetailView: View {
                 }
                 .help(showsDetails ? "hide details" : "show details")
             }
-        }
-        .inspector(isPresented: $showsDetails) {
-            ThoughtDetailsView(
-                detail: detail, playbackRequest: model.playbackRequest,
-                changeDate: model.canChangeDate ? { date in Task { await model.changeDate(to: date) } } : nil
-            )
-            .inspectorColumnWidth(
-                min: brand?.space.inspectorWidthPt.min ?? 220, ideal: brand?.space.inspectorWidthPt.ideal ?? 260,
-                max: brand?.space.inspectorWidthPt.max ?? 340)
         }
         .onDisappear { Task { await model.saveIfNeeded() } }
     }

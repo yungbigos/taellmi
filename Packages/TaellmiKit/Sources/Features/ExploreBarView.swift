@@ -133,8 +133,7 @@ struct ExploreBarView: View {
                     .brandForeground(.blue)
                     .padding(.horizontal, brand.space(.s))
                     .padding(.vertical, brand.space(.xxs))
-                    .background { BrandFillBackground(name: .selection, radius: nil).clipShape(Capsule()) }
-                    .contentShape(Capsule())
+                    .selectionPill(true)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("remove \(name)")
@@ -185,41 +184,4 @@ struct ExploreBarView: View {
 /// "1 thought", "3 thoughts".
 enum ThoughtCount {
     static func words(_ count: Int) -> String { count == 1 ? "1 thought" : "\(count) thoughts" }
-}
-
-/// A round symbol button in the bar; a toggle when it can be selected, with an optional count.
-private struct BarIconButton: View {
-    let symbol: String
-    let label: String
-    var selected = false
-    var badge = 0
-    let action: () -> Void
-    @Environment(\.brand) private var brand
-
-    var body: some View {
-        Button(action: action) {
-            Image(systemName: symbol)
-                .brandForeground(selected ? .blue : .quiet)
-                .frame(width: brand.space(.xxl), height: brand.space(.xxl))
-                .background {
-                    if selected { BrandFillBackground(name: .selection, radius: nil).clipShape(Circle()) }
-                }
-                .overlay(alignment: .topTrailing) {
-                    if badge > 0 {
-                        Text("\(badge)")
-                            .brandFont("text.label")
-                            .monospacedDigit()
-                            .brandForeground(.paper)
-                            .padding(.horizontal, brand.space(.xxs))
-                            .background(Capsule().fill(brand?.color(.quiet) ?? .secondary))
-                            .offset(x: brand.space(.xxs) ?? 2, y: -(brand.space(.xxs) ?? 2))
-                    }
-                }
-                .contentShape(Circle())
-        }
-        .buttonStyle(.plain)
-        .help(label)
-        .accessibilityLabel(label)
-        .accessibilityAddTraits(selected ? .isSelected : [])
-    }
 }

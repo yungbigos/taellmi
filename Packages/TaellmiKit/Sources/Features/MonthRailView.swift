@@ -17,7 +17,7 @@ struct MonthRailView: View {
             }
             .padding(.vertical, brand.space(.s))
             .padding(.horizontal, brand.space(.xs))
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: brand?.radius(.bubble) ?? 14, style: .continuous))
+            .floatingPanel(radius: .bubble)
             .fixedSize(horizontal: true, vertical: false)
             .padding(.trailing, brand.space(.l))
             .padding(.vertical, brand.space(.xl))
@@ -61,10 +61,7 @@ struct MonthRailView: View {
             .frame(minWidth: brand.space(.xxxl))
             .padding(.horizontal, brand.space(.s))
             .padding(.vertical, brand.space(.xxs))
-            .background {
-                if current { BrandFillBackground(name: .selection, radius: nil).clipShape(Capsule()) }
-            }
-            .contentShape(Capsule())
+            .selectionPill(current)
         }
         .buttonStyle(.plain)
         .disabled(model.view == .flow && month.count == 0)

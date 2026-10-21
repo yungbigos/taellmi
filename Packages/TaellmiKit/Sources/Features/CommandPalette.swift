@@ -68,7 +68,9 @@ public final class CommandPaletteModel {
         // Formats are offered only while a thought was being edited as ⌘K opened (ADR 0014).
         let canFormat = explore.formatting.canFormatFromPalette
         let commands = Commands.all
-            .filter { command in (canFormat || !command.isFormatting) && words.allSatisfy { command.title.contains($0) }
+            .filter { command in
+                (canFormat || !command.isFormatting) && explore.isAvailable(command)
+                    && words.allSatisfy { command.title.contains($0) }
             }
             .map { PaletteItem(kind: .command($0), title: $0.title, shortcut: explore.shortcuts[$0]?.displayLabel) }
         let found = await explore.findThoughts(text, limit: thoughtLimit)

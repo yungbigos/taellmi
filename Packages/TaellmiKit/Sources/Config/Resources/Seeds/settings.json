@@ -21,6 +21,7 @@
   {"key": "explore.hotkey", "type": "string", "value": "control+option+a", "seed_version": 1},
   {"key": "import.note_extensions", "type": "string", "value": "md,markdown,txt", "seed_version": 1},
   {"key": "explore.start_view", "type": "string", "value": "flow", "seed_version": 1},
+  {"key": "explore.views", "type": "json", "value": ["stack", "flow", "space"], "seed_version": 1},
   {"key": "fragment.max_chars", "type": "number", "value": 1200, "seed_version": 1},
   {"key": "fragment.target_chars", "type": "number", "value": 600, "seed_version": 1},
   {"key": "models.idle_unload_s", "type": "number", "value": 60, "seed_version": 1},

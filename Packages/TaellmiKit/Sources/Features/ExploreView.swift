@@ -112,7 +112,7 @@ public struct ExploreView: View {
     }
 
     private var viewPicker: some View {
-        ViewSwitcher(current: model.view) { view in switchTo(view) }
+        ViewSwitcher(current: model.view, views: model.availableViews) { view in switchTo(view) }
     }
 
     private func switchTo(_ view: ExploreViewKind) {

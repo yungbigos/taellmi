@@ -203,7 +203,9 @@ public final class AppEnvironment {
             autosaveDelay: .seconds((try? settings.number(SettingKeys.exploreAutosaveDelaySeconds)) ?? 0),
             startView: (try? settings.string(SettingKeys.exploreStartView)).flatMap(ExploreViewKind.init) ?? .stack,
             capture: captureModel,
-            changeDebounce: .milliseconds(Int((try? settings.number(SettingKeys.exploreChangeDebounceMs)) ?? 300)))
+            changeDebounce: .milliseconds(Int((try? settings.number(SettingKeys.exploreChangeDebounceMs)) ?? 300)),
+            availableViews: ((try? settings.value(SettingKeys.exploreViews))?.arrayValue ?? [])
+                .compactMap { $0.stringValue.flatMap(ExploreViewKind.init) })
         vocabularyModel = VocabularyViewModel(
             settings: LiveVocabularySettings(
                 curation: CurationStore(storage: storage), settings: settings,

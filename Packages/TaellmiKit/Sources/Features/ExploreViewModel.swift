@@ -194,6 +194,8 @@ public final class ExploreViewModel {
     @ObservationIgnored private var lastTrashed: String?
     @ObservationIgnored private var observation: Task<Void, Never>?
     @ObservationIgnored private let changeDebounce: Duration
+    /// The views the window offers, in switcher order (config: `explore.views`).
+    public let availableViews: [ExploreViewKind]
     /// Thoughts whose meaning is on screen right now (flow and stack blocks).
     @ObservationIgnored private var visibleMeanings: Set<String> = []
     @ObservationIgnored private var refreshGeneration = 0
@@ -207,10 +209,13 @@ public final class ExploreViewModel {
     ///     pipeline writes many in a row while it works through thoughts.
     public init(
         library: any ExploreLibrary, autosaveDelay: Duration, startView: ExploreViewKind = .stack,
-        capture: CaptureViewModel? = nil, changeDebounce: Duration = .zero
+        capture: CaptureViewModel? = nil, changeDebounce: Duration = .zero,
+        availableViews: [ExploreViewKind] = ExploreViewKind.allCases
     ) {
         self.changeDebounce = changeDebounce
-        self.view = startView
+        let offered = availableViews.isEmpty ? ExploreViewKind.allCases : availableViews
+        self.availableViews = offered
+        self.view = offered.contains(startView) ? startView : offered[0]
         self.capture = capture
         self.library = library
         self.autosaveDelay = autosaveDelay
@@ -622,7 +627,19 @@ public final class ExploreViewModel {
     }
 
     /// Switching views keeps the open thought; leaving trash or opening stack with nothing open shows the newest.
+    /// Whether a command can run here: switching to a view the window doesn't offer can't.
+    public func isAvailable(_ command: Command) -> Bool {
+        switch command {
+        case .showStack: availableViews.contains(.stack)
+        case .showFlow: availableViews.contains(.flow)
+        case .showTime, .zoomInTime, .zoomOutTime, .showEarlier, .showLater: availableViews.contains(.time)
+        case .showSpace: availableViews.contains(.space)
+        default: true
+        }
+    }
+
     private func show(view: ExploreViewKind) async {
+        guard availableViews.contains(view) else { return }
         self.view = view
         if showsTrash {
             await show(trash: false)

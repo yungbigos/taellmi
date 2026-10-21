@@ -139,10 +139,23 @@ struct FormattingStyler {
         return decorations
     }
 
+    /// The brand's line height as space between lines rather than taller lines: same look, but the cursor
+    /// stays the height of the text instead of the whole line.
     private func paragraph(_ token: String) -> NSMutableParagraphStyle {
         let paragraph = NSMutableParagraphStyle()
-        paragraph.lineHeightMultiple = brand.lineHeightMultiple(token)
+        let natural = Self.naturalLineHeight(brand.nsFont(token))
+        paragraph.lineSpacing = max(0, natural * (brand.lineHeightMultiple(token) - 1))
         return paragraph
+    }
+
+    @MainActor private static var naturalHeights: [String: CGFloat] = [:]
+
+    @MainActor private static func naturalLineHeight(_ font: NSFont) -> CGFloat {
+        let key = "\(font.fontName)-\(font.pointSize)"
+        if let known = naturalHeights[key] { return known }
+        let height = NSLayoutManager().defaultLineHeight(for: font)
+        naturalHeights[key] = height
+        return height
     }
 }
 

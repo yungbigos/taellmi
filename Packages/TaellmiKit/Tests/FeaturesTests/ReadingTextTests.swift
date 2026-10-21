@@ -49,3 +49,15 @@ struct ReadingTextTests {
         #expect(try read("Mit Malin an der Isar.").string == "Mit Malin an der Isar.")
     }
 }
+
+@Suite("Line spacing that keeps the cursor the size of the text")
+struct LineSpacingTests {
+    @Test("the brand's line height is added as space between lines, not as taller lines")
+    func spacingBetweenLines() throws {
+        let brand = try shippedTokens()
+        let shown = ReadingText.make(text: "Eins\nZwei", highlights: [], brand: brand, token: "text.thought")
+        let paragraph = try #require(shown.attribute(.paragraphStyle, at: 0, effectiveRange: nil) as? NSParagraphStyle)
+        #expect(paragraph.lineHeightMultiple == 0 || paragraph.lineHeightMultiple == 1)
+        if brand.lineHeightMultiple("text.thought") > 1 { #expect(paragraph.lineSpacing > 0) }
+    }
+}

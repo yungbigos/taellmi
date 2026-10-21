@@ -150,7 +150,7 @@ struct FormattingStyler {
 
     @MainActor private static var naturalHeights: [String: CGFloat] = [:]
 
-    @MainActor private static func naturalLineHeight(_ font: NSFont) -> CGFloat {
+    @MainActor static func naturalLineHeight(_ font: NSFont) -> CGFloat {
         let key = "\(font.fontName)-\(font.pointSize)"
         if let known = naturalHeights[key] { return known }
         let height = NSLayoutManager().defaultLineHeight(for: font)

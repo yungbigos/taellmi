@@ -218,6 +218,7 @@ struct HighlightingTextEditor: NSViewRepresentable {
             let decorations = styler.apply(to: storage, formatting: formatting, visibility: visibility)
             (textView.layoutManager as? FormattingLayoutManager)?.update(decorations, length: storage.length)
             textView.typingAttributes = styler.baseAttributes
+            textView.cursorHeight = FormattingStyler.naturalLineHeight(brand.nsFont(token))
             textView.insertionPointColor = brand.nsColor(.blue)
             shown = visibility
             styledWith = key

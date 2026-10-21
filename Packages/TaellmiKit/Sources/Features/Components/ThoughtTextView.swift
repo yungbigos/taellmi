@@ -15,6 +15,32 @@ final class ThoughtTextView: NSTextView {
         didSet { needsDisplay = true }
     }
 
+    /// The height of a line of text without the space between lines. macOS sizes its cursor to the whole line,
+    /// that space included, which looks huge; the cursor is trimmed to this.
+    var cursorHeight: CGFloat?
+    private var isTrimmingCursor = false
+
+    override func didAddSubview(_ subview: NSView) {
+        super.didAddSubview(subview)
+        guard let indicator = subview as? NSTextInsertionIndicator else { return }
+        indicator.postsFrameChangedNotifications = true
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(cursorMoved(_:)), name: NSView.frameDidChangeNotification, object: indicator)
+        trimCursor(indicator)
+    }
+
+    @objc private func cursorMoved(_ notification: Notification) {
+        if let indicator = notification.object as? NSTextInsertionIndicator { trimCursor(indicator) }
+    }
+
+    /// The space between lines sits below each line, so the cursor keeps its top and loses only that space.
+    private func trimCursor(_ indicator: NSTextInsertionIndicator) {
+        guard !isTrimmingCursor, let height = cursorHeight, indicator.frame.height > height + 0.5 else { return }
+        isTrimmingCursor = true
+        indicator.frame.size.height = height
+        isTrimmingCursor = false
+    }
+
     /// While the mouse is selecting, hidden markup stays as it is, so the text doesn't jump under the pointer.
     private(set) var isSelectingWithMouse = false
 

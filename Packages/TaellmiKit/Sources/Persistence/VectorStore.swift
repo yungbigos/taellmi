@@ -82,6 +82,16 @@ public struct VectorStore: Sendable {
         }
     }
 
+    /// Changes whenever a vector in `space` is added, replaced or removed: a cheap key for caches.
+    public func signature(space: String) throws -> String {
+        try database.reader.read { db in
+            let row = try Row.fetchOne(
+                db, sql: "SELECT COUNT(*) AS n, MAX(rowid) AS last FROM vector_meta WHERE space = ?",
+                arguments: [space])
+            return "\(row?["n"] as Int? ?? 0)-\(row?["last"] as Int? ?? 0)"
+        }
+    }
+
     /// Every node that has a vector in `space`.
     public func nodeIDs(space: String) throws -> Set<String> {
         try database.reader.read { db in

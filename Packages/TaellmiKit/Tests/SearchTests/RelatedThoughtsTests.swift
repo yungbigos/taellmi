@@ -50,4 +50,16 @@ struct RelatedThoughtsTests {
             transcript: nil)
         #expect(try related(harness).related(to: "x").isEmpty)
     }
+
+    @Test("a repeated question gets the same answer, and a new thought counts as soon as it has vectors")
+    func cachedUntilVectorsChange() throws {
+        let harness = try Harness()
+        try harness.add("heizung", "Die Heizung in der Wohnung gluckert und wird nicht warm.")
+        try harness.add("wohnung", "Die Wohnung ist kalt.")
+        let related = related(harness)
+        #expect(try related.related(to: "heizung").map(\.id) == ["wohnung"])
+        #expect(try related.related(to: "heizung").map(\.id) == ["wohnung"])
+        try harness.add("heizung2", "Heizung gluckert wieder, Wohnung bleibt kalt.")
+        #expect(try related.related(to: "heizung").map(\.id).first == "heizung2")
+    }
 }

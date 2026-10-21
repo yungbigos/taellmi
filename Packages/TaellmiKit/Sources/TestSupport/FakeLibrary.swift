@@ -103,7 +103,12 @@ public actor FakeLibrary: ExploreLibrary {
         publish()
     }
 
+    /// How often each thought's meaning was asked for, to check that scrolling doesn't reload it.
+    public private(set) var meaningCalls: [String: Int] = [:]
+    public private(set) var searchCalls = 0
+
     public func meaning(id: String) async throws -> ThoughtMeaning {
+        meaningCalls[id, default: 0] += 1
         var meaning = meanings[id] ?? .empty
         if let saved = savedSummaries[id] {
             meaning.summary = saved
@@ -140,6 +145,7 @@ public actor FakeLibrary: ExploreLibrary {
     }
 
     public func search(_ query: EntryQuery) async throws -> [SearchHit] {
+        searchCalls += 1
         // The answer is computed now and handed back later, like a slow search over the Archive as it was.
         let hits = answer(query)
         if heldTexts.remove(query.text) != nil {

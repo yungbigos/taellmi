@@ -191,6 +191,9 @@ public final class ExploreViewModel {
     @ObservationIgnored private var savedText = ""
     @ObservationIgnored private var lastTrashed: String?
     @ObservationIgnored private var observation: Task<Void, Never>?
+    @ObservationIgnored private let changeDebounce: Duration
+    /// Thoughts whose meaning is on screen right now (flow and stack blocks).
+    @ObservationIgnored private var visibleMeanings: Set<String> = []
     @ObservationIgnored private var refreshGeneration = 0
     /// The search the open thought was opened from (⌘K), while the window's own search field is empty.
     private var openedSearch: OpenedSearch?
@@ -198,10 +201,13 @@ public final class ExploreViewModel {
     /// - Parameters:
     ///   - autosaveDelay: pause after the last keystroke before saving (from config).
     ///   - startView: the view the window opens in (from config).
+    ///   - changeDebounce: Archive changes this close together refresh the window once (from config); the
+    ///     pipeline writes many in a row while it works through thoughts.
     public init(
         library: any ExploreLibrary, autosaveDelay: Duration, startView: ExploreViewKind = .stack,
-        capture: CaptureViewModel? = nil
+        capture: CaptureViewModel? = nil, changeDebounce: Duration = .zero
     ) {
+        self.changeDebounce = changeDebounce
         self.view = startView
         self.capture = capture
         self.library = library
@@ -227,8 +233,21 @@ public final class ExploreViewModel {
     public func startObserving() {
         observation?.cancel()
         let changes = library.changes()
+        let debounce = changeDebounce
         observation = Task { [weak self] in
-            for await _ in changes { await self?.refresh() }
+            var pending: Task<Void, Never>?
+            for await _ in changes {
+                guard debounce > .zero else {
+                    await self?.refresh()
+                    continue
+                }
+                pending?.cancel()
+                pending = Task { [weak self] in
+                    try? await Task.sleep(for: debounce)
+                    guard !Task.isCancelled else { return }
+                    await self?.refresh()
+                }
+            }
         }
     }
 
@@ -678,6 +697,7 @@ public final class ExploreViewModel {
 
     /// Loads a thought's summary, concepts and related thoughts, once; Archive changes reload them.
     public func loadMeaning(for id: String) async {
+        visibleMeanings.insert(id)
         guard meanings[id] == nil, let meaning = try? await library.meaning(id: id) else { return }
         meanings[id] = meaning
     }
@@ -696,8 +716,10 @@ public final class ExploreViewModel {
     }
 
     /// A thought scrolled out of flow: its meaning is dropped, so refreshes only reload what is on screen.
+    /// A thought scrolled out of view: its meaning is kept (scrolling back costs nothing), but it is no longer
+    /// reloaded on every Archive change; after one it is loaded again when it comes back.
     public func forgetMeaning(for id: String) {
-        meanings[id] = nil
+        visibleMeanings.remove(id)
     }
 
     public func saveSummary(_ text: String?, for id: String) async {
@@ -710,7 +732,9 @@ public final class ExploreViewModel {
     }
 
     private func reloadMeaning(generation: Int) async {
-        for id in meanings.keys {
+        // Off-screen ones may be out of date now: dropped, and loaded again when they come back.
+        for id in meanings.keys where !visibleMeanings.contains(id) { meanings[id] = nil }
+        for id in visibleMeanings {
             let meaning = try? await library.meaning(id: id)
             guard generation == refreshGeneration else { return }
             if let meaning { meanings[id] = meaning }

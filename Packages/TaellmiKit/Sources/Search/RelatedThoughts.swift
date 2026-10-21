@@ -2,6 +2,7 @@ import Config
 import Domain
 import Foundation
 import Persistence
+import Synchronization
 
 /// The thoughts closest in meaning to a thought, from the passage vectors already stored. Needs no model at
 /// all, so it never waits: a thought without vectors yet simply has none.
@@ -11,6 +12,13 @@ public struct RelatedThoughts: Sendable {
     private let vectors: VectorStore
     private let resolver: ModelResolver
     private let settings: SettingsStore
+    /// Answers already found, until the stored vectors change (a thought added, edited or deleted). Scrolling
+    /// asks for the same thoughts again and again; each answer costs a nearest-neighbour search per passage.
+    private let cache = Cache()
+
+    final class Cache: Sendable {
+        let answers = Mutex<(signature: String, byEntry: [String: [String]])>(("", [:]))
+    }
 
     public init(
         index: EntryIndex, fragments: FragmentStore, vectors: VectorStore, resolver: ModelResolver,
@@ -26,6 +34,20 @@ public struct RelatedThoughts: Sendable {
     /// Other thoughts, ranked by their closest passage to any of this thought's passages.
     public func related(to entryID: String) throws -> [Entry] {
         guard let space = try? resolver.resolve(.embed).vectorSpace else { return [] }
+        let signature = try vectors.signature(space: space)
+        let known = cache.answers.withLock { state -> [String]? in
+            if state.signature != signature { state = (signature, [:]) }
+            return state.byEntry[entryID]
+        }
+        if let known { return try known.compactMap { try index.entry(id: $0) } }
+        let found = try search(entryID: entryID, space: space)
+        cache.answers.withLock { state in
+            if state.signature == signature { state.byEntry[entryID] = found.map(\.id) }
+        }
+        return found
+    }
+
+    private func search(entryID: String, space: String) throws -> [Entry] {
         let limit = Int(try settings.number(SettingKeys.relatedThoughtsCount))
         let minimum = try settings.number(SettingKeys.searchMinSimilarity)
         let candidates = Int(try settings.number(SettingKeys.searchVectorCandidates))

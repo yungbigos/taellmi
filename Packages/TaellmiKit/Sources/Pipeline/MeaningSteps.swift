@@ -20,7 +20,7 @@ struct PassageMethod {
         splitter = PassageSplitter(
             targetLength: Int(try settings.number(SettingKeys.fragmentTargetLength)),
             maxLength: Int(try settings.number(SettingKeys.fragmentMaxLength)))
-        name = "passage_splitter@1(target=\(splitter.targetLength),max=\(splitter.maxLength))"
+        name = "passage_splitter@2(target=\(splitter.targetLength),max=\(splitter.maxLength))"
     }
 }
 

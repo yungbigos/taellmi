@@ -59,3 +59,18 @@ struct ConceptMentionTests {
         #expect(mentions.first { $0.kind == "topic" }?.name == "Straße")
     }
 }
+
+@Suite("Concepts in a formatted thought")
+struct FormattedConceptMentionTests {
+    @Test("a concept's words are found through markup, and point at the Text's own characters")
+    func throughMarkup() throws {
+        let text = "- Der Ver**mieter** kommt"
+        let answer = JSONValue.object([
+            "concepts": .array([
+                .object(["name": .string("Vermieter"), "kind": .string("person"), "mention": .string("Vermieter")])
+            ])
+        ])
+        let mention = try #require(ConceptMentions.locate(in: text, answer: answer, kinds: ["person"]).first)
+        #expect(String(decoding: Array(text.utf16)[mention.utf16Range], as: UTF16.self) == "Ver**mieter")
+    }
+}

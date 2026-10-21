@@ -19,6 +19,8 @@ struct BarChip: View {
     var symbol: String?
     var selected = false
     var count: Int?
+    /// Off for a chip that is only its symbol, like the formats; the title is then its accessibility label.
+    var showsTitle = true
     let action: () -> Void
     @Environment(\.brand) private var brand
 
@@ -26,7 +28,7 @@ struct BarChip: View {
         Button(action: action) {
             HStack(spacing: brand.space(.xs)) {
                 if let symbol { Image(systemName: symbol).imageScale(.small) }
-                Text(title)
+                if showsTitle { Text(title) }
                 if let count { Text("\(count)").monospacedDigit() }
             }
             .fontWeight(selected ? .semibold : .medium)
@@ -41,6 +43,7 @@ struct BarChip: View {
         .buttonStyle(.plain)
         // The selection fill marks the chosen one; a system focus ring on top looked broken.
         .focusEffectDisabled()
+        .accessibilityLabel(title)
         .accessibilityAddTraits(selected ? .isSelected : [])
     }
 }

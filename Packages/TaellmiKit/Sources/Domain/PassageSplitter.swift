@@ -12,8 +12,12 @@ public struct TextSpan: Sendable, Equatable {
     }
 }
 
-/// Splits Text into passages (Fragments) by its own structure: blank lines always separate, and long
-/// paragraphs are grouped into runs of whole sentences of about `targetLength` characters.
+/// Splits Text into passages (Fragments) by its own structure: blank lines always separate, each list item is
+/// a passage of its own, a heading starts a new one, and long paragraphs are grouped into runs of whole
+/// sentences of about `targetLength` characters (ADR 0011, ADR 0014).
+///
+/// Passages hold the Text's words without their Formatting, which is what gets embedded; their ranges point
+/// at those words in the Text, markup inside them included.
 ///
 /// This is the simple, model-free first stage. Splitting by topic (embeddings + LLM) can replace it later.
 public struct PassageSplitter: Sendable {
@@ -26,32 +30,60 @@ public struct PassageSplitter: Sendable {
     }
 
     public func passages(in text: String) -> [TextSpan] {
-        let units = Array(text.utf16)
+        let formatting = TextFormatting(text)
+        let view = WordsOnlyText(text, formatting: formatting)
+        let units = Array(view.words.utf16)
         // Where a character (emoji, letter plus accent) begins, so a hard cut never splits one.
         var boundaries = [Bool](repeating: false, count: units.count + 1)
-        for index in text.indices { boundaries[index.utf16Offset(in: text)] = true }
+        for index in view.words.indices { boundaries[index.utf16Offset(in: view.words)] = true }
         boundaries[units.count] = true
-        return paragraphs(units).flatMap { paragraph in
-            group(sentences(units, in: paragraph).flatMap { cut(units, boundaries, $0) }, units)
+        return blocks(formatting).flatMap { block in
+            paragraphs(units, in: view.wordsRange(fromSource: block)).flatMap { paragraph in
+                group(sentences(units, in: paragraph).flatMap { cut(units, boundaries, $0) }, units)
+            }
         }
-        .map { TextSpan(text: String(decoding: units[$0], as: UTF16.self), utf16Range: $0) }
+        .map { TextSpan(text: String(decoding: units[$0], as: UTF16.self), utf16Range: view.sourceRange($0)) }
     }
 
     // MARK: - Steps, all working on UTF-16 ranges
 
-    private func paragraphs(_ units: [UInt16]) -> [Range<Int>] {
+    /// Parts of the Text that never share a passage: each list item, and a heading with what follows it.
+    private func blocks(_ formatting: TextFormatting) -> [Range<Int>] {
         var result: [Range<Int>] = []
-        var start = 0
-        var index = 0
-        while index < units.count {
+        var open: Range<Int>?
+        func close() {
+            if let block = open { result.append(block) }
+            open = nil
+        }
+        for line in formatting.lines {
+            switch line.kind {
+            case .listItem:
+                close()
+                result.append(line.content)
+            case .heading:
+                close()
+                open = line.content
+            default:
+                open = (open?.lowerBound ?? line.range.lowerBound)..<line.range.upperBound
+            }
+        }
+        close()
+        return result
+    }
+
+    private func paragraphs(_ units: [UInt16], in range: Range<Int>) -> [Range<Int>] {
+        var result: [Range<Int>] = []
+        var start = range.lowerBound
+        var index = range.lowerBound
+        while index < range.upperBound {
             guard units[index] == newline else {
                 index += 1
                 continue
             }
             // A blank line: a newline followed by only whitespace up to the next newline.
             var probe = index + 1
-            while probe < units.count, isSpace(units[probe]), units[probe] != newline { probe += 1 }
-            if probe < units.count, units[probe] == newline {
+            while probe < range.upperBound, isSpace(units[probe]), units[probe] != newline { probe += 1 }
+            if probe < range.upperBound, units[probe] == newline {
                 result.append(start..<index)
                 start = probe + 1
                 index = probe + 1
@@ -59,7 +91,7 @@ public struct PassageSplitter: Sendable {
                 index += 1
             }
         }
-        result.append(start..<units.count)
+        result.append(start..<range.upperBound)
         return result.compactMap { trimmed($0, units) }
     }
 

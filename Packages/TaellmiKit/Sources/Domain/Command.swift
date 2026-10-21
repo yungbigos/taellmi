@@ -20,10 +20,19 @@ public enum Command: String, Sendable, CaseIterable, Hashable {
     case showTrash = "trash.show"
     case playRecording = "recording.toggle"
     case importNotes = "notes.import"
+    case formatBold = "format.bold"
+    case formatItalic = "format.italic"
+    case formatUnderline = "format.underline"
+    case formatStrikethrough = "format.strikethrough"
+    case formatBulletList = "format.bullet_list"
+    case formatNumberedList = "format.numbered_list"
+    case indentListItem = "format.indent"
+    case outdentListItem = "format.outdent"
 
     public var id: String { rawValue }
 
-    /// The words users see (brand book: lowercase, verb + object).
+    /// The words users see (brand book: lowercase, verb + object; formats are named, since they switch on
+    /// and off).
     public var title: String {
         switch self {
         case .openPalette: "search or run a command"
@@ -43,8 +52,32 @@ public enum Command: String, Sendable, CaseIterable, Hashable {
         case .showTrash: "show trash"
         case .playRecording: "play or pause recording"
         case .importNotes: "import from apple notes …"
+        case .formatBold: "bold"
+        case .formatItalic: "italic"
+        case .formatUnderline: "underline"
+        case .formatStrikethrough: "strike through"
+        case .formatBulletList: "bullet list"
+        case .formatNumberedList: "numbered list"
+        case .indentListItem: "indent list item"
+        case .outdentListItem: "outdent list item"
         }
     }
+
+    /// The format this command switches, if it is one (ADR 0014).
+    public var format: Format? {
+        switch self {
+        case .formatBold: .bold
+        case .formatItalic: .italic
+        case .formatUnderline: .underline
+        case .formatStrikethrough: .strikethrough
+        case .formatBulletList: .bulletList
+        case .formatNumberedList: .numberedList
+        default: nil
+        }
+    }
+
+    /// Formatting commands act on the thought you are typing in, so only the editor handles their keys.
+    public var isFormatting: Bool { format != nil || self == .indentListItem || self == .outdentListItem }
 
     /// The setting that holds this command's shortcut.
     public var settingKey: String { "shortcut.\(rawValue)" }

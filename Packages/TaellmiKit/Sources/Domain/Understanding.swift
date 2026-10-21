@@ -29,20 +29,23 @@ public struct Understanding: Sendable, Equatable {
 /// Turns a model's list of concepts into Mentions of your own words. A concept whose words don't appear in
 /// the thought is dropped: everything shown must point back to what you said (ADR 0006).
 public enum ConceptMentions {
-    /// `answer` is `{"concepts": [{"name", "kind", "mention"}]}`, the shape of the concepts prompt.
+    /// `answer` is `{"concepts": [{"name", "kind", "mention"}]}`, the shape of the concepts prompt. The words
+    /// are looked for in the Text without its Formatting; the Mentions point at the Text itself.
     public static func locate(in text: String, answer: JSONValue, kinds: Set<String>) -> [ConceptMention] {
+        let view = WordsOnlyText(text)
+        let words = view.words
         let items = answer.objectValue?["concepts"]?.arrayValue ?? []
         var result: [ConceptMention] = []
         for item in items {
             guard let fields = item.objectValue, let kind = fields["kind"]?.stringValue, kinds.contains(kind),
-                let words = fields["mention"]?.stringValue?.trimmingCharacters(in: .whitespacesAndNewlines),
-                !words.isEmpty
+                let mention = fields["mention"]?.stringValue?.trimmingCharacters(in: .whitespacesAndNewlines),
+                !mention.isEmpty
             else { continue }
             let given = fields["name"]?.stringValue?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-            let name = given.isEmpty ? words : given
+            let name = given.isEmpty ? mention : given
             // The name must be your words too, so nothing is inferred from them (e.g. "traurig" from "geweint").
-            guard text.range(of: name, options: .caseInsensitive) != nil else { continue }
-            for range in occurrences(of: words, in: text)
+            guard words.range(of: name, options: .caseInsensitive) != nil else { continue }
+            for range in occurrences(of: mention, in: words).map(view.sourceRange)
             where !result.contains(where: { $0.kind == kind && $0.utf16Range == range }) {
                 result.append(ConceptMention(kind: kind, name: name, utf16Range: range))
             }

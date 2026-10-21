@@ -41,12 +41,28 @@ extension BrandTokens {
     /// A type style from the scale as a native font, for AppKit text views.
     public func nsFont(_ token: String) -> NSFont {
         guard let style = type.scale[token] else { return .systemFont(ofSize: NSFont.systemFontSize) }
+        return nsFont(style)
+    }
+
+    /// A type style with bold or italic on top, for formatted words in a thought (ADR 0014). Bold takes its
+    /// weight from `text.thought.bold`.
+    public func nsFont(_ token: String, bold: Bool, italic: Bool) -> NSFont {
+        guard var style = type.scale[token] else { return .systemFont(ofSize: NSFont.systemFontSize) }
+        if bold, let boldWeight = type.scale[Self.boldToken]?.weight { style.weight = max(style.weight, boldWeight) }
+        if italic { style.italic = true }
+        return nsFont(style)
+    }
+
+    static let boldToken = "text.thought.bold"
+
+    private func nsFont(_ style: TypeTokens.Style) -> NSFont {
         let family = style.family == "display" ? type.families.display : type.families.text
         let size = type.base.sizePt * style.size * Self.textSizeScale
         let weight = Self.nsWeight(style.weight)
-        var descriptor = NSFontDescriptor(fontAttributes: [.family: family])
-            .addingAttributes([.traits: [NSFontDescriptor.TraitKey.weight: weight]])
-        if style.italic == true { descriptor = descriptor.withSymbolicTraits(.italic) }
+        // Weight and italic go into one traits entry; setting italic separately would drop the weight.
+        var traits: [NSFontDescriptor.TraitKey: Any] = [.weight: weight]
+        if style.italic == true { traits[.symbolic] = NSFontDescriptor.SymbolicTraits.italic.rawValue }
+        let descriptor = NSFontDescriptor(fontAttributes: [.family: family, .traits: traits])
         return NSFont(descriptor: descriptor, size: size) ?? .systemFont(ofSize: size, weight: weight)
     }
 

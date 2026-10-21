@@ -51,6 +51,17 @@ struct EntrySearchTests {
                 == ["a"])
     }
 
+    @Test("search reads the words, not the formatting: markup inside a word or around it doesn't get in the way")
+    func readsWordsOnly() throws {
+        let index = try indexed([("f", "- Der Ver**mieter** kommt\n- <u>Oma</u> rief an", 0, .typed)])
+        let found = { (text: String) in
+            try index.search(EntryQuery(text: text), now: sampleDate, calendar: berlinCalendar).map(\.id)
+        }
+        #expect(try found("vermieter") == ["f"])
+        #expect(try found("oma") == ["f"])
+        #expect(try found("u").isEmpty)
+    }
+
     @Test("an empty search lists everything, newest first")
     func emptyQuery() throws {
         #expect(

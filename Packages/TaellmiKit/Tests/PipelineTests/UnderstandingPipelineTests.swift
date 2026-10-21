@@ -51,6 +51,35 @@ struct UnderstandingPipelineTests {
         #expect(read.concepts.map(\.name) == ["Marleen"])
     }
 
+    @Test("the models read the thought's words, not its formatting; concepts still point at the Text")
+    func readsWordsOnly() async throws {
+        let model = FakeLanguageModel(concepts: [("Vermieter", "person", "Vermieter")])
+        let harness = try Harness(languageModel: model)
+        let text = "- Der Ver**mieter** kommt morgen\n- **Heizung** prüfen"
+        let entry = try addTypedEntry(harness, text: text)
+
+        await harness.runUntilSettled()
+
+        let prompt = try #require(await model.prompts.first)
+        #expect(prompt.contains("Der Vermieter kommt morgen\nHeizung prüfen"))
+        #expect(!prompt.contains("**"))
+        let read = try #require(try harness.understandings.understanding(entryID: entry.id))
+        let range = try #require(read.concepts.first?.utf16Ranges.first)
+        #expect(String(decoding: Array(text.utf16)[range], as: UTF16.self) == "Ver**mieter")
+    }
+
+    @Test("a thought that is only markup counts as empty: nothing is asked")
+    func onlyMarkup() async throws {
+        let model = FakeLanguageModel(concepts: [("Brot", "topic", "Brot")])
+        let harness = try Harness(languageModel: model)
+        let entry = try addTypedEntry(harness, text: "- [ ] ")
+
+        await harness.runUntilSettled()
+
+        #expect(await model.prompts.isEmpty)
+        #expect(try harness.understandings.understanding(entryID: entry.id)?.concepts.isEmpty == true)
+    }
+
     @Test("a short thought gets concepts but no summary")
     func short() async throws {
         let model = FakeLanguageModel(concepts: [("Marleen", "person", "Marleen")])

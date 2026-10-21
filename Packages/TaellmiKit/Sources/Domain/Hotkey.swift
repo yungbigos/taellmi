@@ -10,6 +10,7 @@ public struct Hotkey: Sendable, Equatable {
         case delete
         case left, right, up, down
         case equal, minus
+        case leftBracket, rightBracket
         case letter(Character)
         case digit(Int)
         case function(Int)
@@ -105,10 +106,22 @@ public struct Hotkey: Sendable, Equatable {
         case .down: return symbols + "↓"
         case .equal: return symbols + "="
         case .minus: return symbols + "-"
+        case .leftBracket: return symbols + "["
+        case .rightBracket: return symbols + "]"
         case .letter(let letter): return symbols + String(letter).uppercased()
         case .digit(let digit): return symbols + String(digit)
         case .function(let number): return symbols + "F\(number)"
         }
+    }
+
+    /// Whether a key press is this shortcut. Letters match by the letter typed, so ⌘B is ⌘B on every
+    /// layout; other keys (digits with ⇧, brackets) match by the key itself, as Apple Notes does.
+    public func matches(keyCode: Int, characters: String?, modifiers: Modifiers) -> Bool {
+        guard modifiers == self.modifiers else { return false }
+        if case .letter(let letter) = key, let typed = characters?.lowercased().first, typed.isASCII, typed.isLetter {
+            return typed == letter
+        }
+        return keyCode == Int(self.keyCode)
     }
 
     /// macOS virtual key code.
@@ -138,6 +151,8 @@ public struct Hotkey: Sendable, Equatable {
         case .down: "down"
         case .equal: "equal"
         case .minus: "minus"
+        case .leftBracket: "leftbracket"
+        case .rightBracket: "rightbracket"
         case .letter(let letter): String(letter)
         case .digit(let digit): String(digit)
         case .function(let number): "f\(number)"
@@ -156,6 +171,8 @@ public struct Hotkey: Sendable, Equatable {
         case "down": return .down
         case "equal": return .equal
         case "minus": return .minus
+        case "leftbracket": return .leftBracket
+        case "rightbracket": return .rightBracket
         case let letter where letter.count == 1 && letter.first?.isLetter == true:
             let key = Key.letter(letter.first ?? "a")
             return keysByCode.values.contains(key) ? key : nil
@@ -170,7 +187,7 @@ public struct Hotkey: Sendable, Equatable {
     private static let keysByCode: [Int: Key] = {
         var keys: [Int: Key] = [
             49: .space, 53: .escape, 36: .enter, 51: .delete, 123: .left, 124: .right, 125: .down, 126: .up,
-            24: .equal, 27: .minus,
+            24: .equal, 27: .minus, 33: .leftBracket, 30: .rightBracket,
         ]
         let letters: [Character: Int] = [
             "a": 0, "s": 1, "d": 2, "f": 3, "h": 4, "g": 5, "z": 6, "x": 7, "c": 8, "v": 9, "b": 11, "q": 12,

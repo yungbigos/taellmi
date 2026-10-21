@@ -179,11 +179,20 @@ public struct BrandTokens: Sendable, Equatable, Codable {
         public var timeOfDay: TimeOfDay
         /// How tälli watches the cursor while it sits still. Optional, so tokens edited before it existed still load.
         public var attention: Attention?
+        /// The formatting bar over a selection (ADR 0014). Optional, so tokens edited before it existed still load.
+        public var formatBar: FormatBar?
 
         enum CodingKeys: String, CodingKey {
             case appearCursor = "appear.cursor"
             case appearLaunch = "appear.launch"
-            case breath, voice, pause, thinking, saving, blink, crossfade, scroll, timeOfDay, attention
+            case breath, voice, pause, thinking, saving, blink, crossfade, scroll, timeOfDay, attention, formatBar
+        }
+
+        public struct FormatBar: Sendable, Equatable, Codable {
+            /// Seconds the selection must stay still before the bar appears.
+            public var delay: Double
+            public var duration: Double
+            public var easing: String
         }
 
         public struct Appear: Sendable, Equatable, Codable {

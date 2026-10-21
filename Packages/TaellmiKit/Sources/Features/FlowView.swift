@@ -28,7 +28,8 @@ struct FlowView: View {
                                 reveal: { id in Task { await model.reveal(id) } },
                                 saveSummary: { text in Task { await model.saveSummary(text, for: entry.id) } },
                                 changeDate: entry.source.isImported
-                                    ? { date in Task { await model.changeDate(of: entry.id, to: date) } } : nil
+                                    ? { date in Task { await model.changeDate(of: entry.id, to: date) } } : nil,
+                                formatting: model.formatting, shortcuts: model.shortcuts
                             ) { text in
                                 await model.saveFlowText(id: entry.id, text: text)
                             }
@@ -78,6 +79,8 @@ private struct FlowBlock: View {
     let saveSummary: (String?) -> Void
     /// Set for imported thoughts: clicking the time changes their date.
     let changeDate: ((Date) -> Void)?
+    let formatting: FormattingFocus
+    let shortcuts: [Command: Hotkey]
     let save: (String) async -> Void
     @State private var text = ""
     /// The text last handed to save; a newer text from the Archive is only taken while nothing newer is typed.
@@ -105,17 +108,20 @@ private struct FlowBlock: View {
             .frame(width: 44)
             VStack(alignment: .leading, spacing: 4) {
                 if isRelated { RelatedLabel() }
-                HighlightingTextEditor(text: $text, highlights: highlights(text), grows: true)
-                    .onChange(of: text) { _, newText in
-                        guard newText != entry.text else { return }
-                        saveTask?.cancel()
-                        saveTask = Task {
-                            try? await Task.sleep(for: .milliseconds(800))
-                            guard !Task.isCancelled else { return }
-                            lastSaved = newText
-                            await save(newText)
-                        }
+                HighlightingTextEditor(
+                    text: $text, highlights: highlights(text), grows: true, formatting: formatting,
+                    shortcuts: shortcuts
+                )
+                .onChange(of: text) { _, newText in
+                    guard newText != entry.text else { return }
+                    saveTask?.cancel()
+                    saveTask = Task {
+                        try? await Task.sleep(for: .milliseconds(800))
+                        guard !Task.isCancelled else { return }
+                        lastSaved = newText
+                        await save(newText)
                     }
+                }
                 if let meaning {
                     ThoughtMeaningView(
                         meaning: meaning, kinds: kinds, openConcept: openConcept, reveal: reveal,

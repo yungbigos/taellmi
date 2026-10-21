@@ -71,3 +71,48 @@ struct PassageSplitterTests {
         }
     }
 }
+
+@Suite("Passages in a formatted Text")
+struct FormattedPassageTests {
+    private let splitter = PassageSplitter(targetLength: 80, maxLength: 140)
+
+    private func texts(_ text: String) -> [String] {
+        splitter.passages(in: text).map(\.text)
+    }
+
+    @Test("every list item is a passage of its own, at every level; the line before the list stays with its text")
+    func listItems() {
+        let text =
+            "Heute war viel los. Für morgen drei Dinge:\n1. Steuer abgeben.\n2. Oma anrufen.\n\t- Geschenk kaufen\n3. Milch."
+        #expect(
+            texts(text) == [
+                "Heute war viel los. Für morgen drei Dinge:", "Steuer abgeben.", "Oma anrufen.", "Geschenk kaufen",
+                "Milch.",
+            ])
+    }
+
+    @Test("a heading starts a new passage, together with the text under it")
+    func headings() {
+        #expect(
+            texts("Vorher.\n# Urlaub\nWir waren am See.\n# Arbeit\nViel zu tun.") == [
+                "Vorher.", "Urlaub\nWir waren am See.", "Arbeit\nViel zu tun.",
+            ])
+    }
+
+    @Test("a passage's words leave out the markup, and its range covers those words in the Text")
+    func wordsAndRanges() throws {
+        let text = "- Der Ver**mieter** kommt morgen."
+        let passage = try #require(splitter.passages(in: text).first)
+        #expect(passage.text == "Der Vermieter kommt morgen.")
+        let slice = String(decoding: Array(text.utf16)[passage.utf16Range], as: UTF16.self)
+        #expect(slice == "Der Ver**mieter** kommt morgen.")
+    }
+
+    @Test("a long list item is split between its sentences")
+    func longItem() {
+        let sentence = "Ich muss unbedingt noch die Steuererklärung für das letzte Jahr fertig machen."
+        let passages = texts("- " + Array(repeating: sentence, count: 3).joined(separator: " "))
+        #expect(passages.count > 1)
+        #expect(passages.allSatisfy { $0.hasPrefix("Ich muss") })
+    }
+}

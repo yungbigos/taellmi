@@ -95,3 +95,26 @@ struct SnippetTests {
         #expect(!snippet.text.contains("\u{FFFD}"))
     }
 }
+
+@Suite("Search words and snippets read the words, not the Formatting")
+struct FormattedMatchTests {
+    @Test("a word is found through markup inside it, and highlighted on the Text's own characters")
+    func throughMarkup() {
+        let text = "Der Ver**mieter** kommt. - <u>Oma</u> anrufen"
+        let units = Array(text.utf16)
+        let found = TextMatch.ranges(of: ["vermieter", "oma"], in: text).map {
+            String(decoding: units[$0], as: UTF16.self)
+        }
+        #expect(found == ["Ver**mieter", "Oma"])
+    }
+
+    @Test("a snippet shows the words without markup, and a match in it points at the right words")
+    func snippetWithoutMarkup() {
+        let text = "- sehr **wichtig** heute\n- <u>Oma</u> anrufen"
+        let match = TextMatch.ranges(of: ["wichtig"], in: text)
+        let snippet = Snippet(of: text, around: match.first, maxLength: 90)
+        #expect(snippet.text == "sehr wichtig heute\nOma anrufen")
+        let units = Array(snippet.text.utf16)
+        #expect(snippet.ranges(match).map { String(decoding: units[$0], as: UTF16.self) } == ["wichtig"])
+    }
+}

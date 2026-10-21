@@ -15,13 +15,13 @@ struct CommandPaletteTests {
         return (ExploreViewModel(library: library, autosaveDelay: .zero), library)
     }
 
-    @Test("with nothing typed it lists every command with its shortcut")
+    @Test("with nothing typed it lists every command with its shortcut (formatting only while editing a thought)")
     func listsCommands() async {
         let (explore, _) = makeExplore()
         explore.shortcuts = [.deleteThought: try? Hotkey(parsing: "command+delete")].compactMapValues { $0 }
         let palette = CommandPaletteModel(explore: explore)
         await palette.update(query: "")
-        #expect(palette.results.count == Commands.all.count)
+        #expect(palette.results.count == Commands.all.filter { !$0.isFormatting }.count)
         #expect(palette.results.contains { $0.title == "delete thought" && $0.shortcut == "⌘⌫" })
     }
 
@@ -107,4 +107,41 @@ struct ExploreCommandTests {
         #expect(checker.conflict(for: try Hotkey(parsing: "command+f")) == nil)
     }
 
+}
+
+/// Stands in for a thought editor and records what it was asked to do.
+@MainActor
+private final class RecordingEditor: FormattingTarget {
+    var actions: [FormattingAction] = []
+    func applyFormatting(_ action: FormattingAction) { actions.append(action) }
+}
+
+@Suite("⌘K formats the thought you were typing in")
+struct PaletteFormattingTests {
+    private func makePalette() -> (ExploreViewModel, CommandPaletteModel) {
+        let explore = ExploreViewModel(library: FakeLibrary(entries: []), autosaveDelay: .zero)
+        return (explore, CommandPaletteModel(explore: explore))
+    }
+
+    @Test("without a thought being edited, formats are not offered")
+    func notWhileNotEditing() async {
+        let (explore, palette) = makePalette()
+        explore.isPaletteOpen = true
+        await palette.update(query: "bold")
+        #expect(!palette.results.contains { $0.kind == .command(.formatBold) })
+    }
+
+    @Test("while typing in a thought, ⌘K offers the formats and applies the chosen one to that thought")
+    func whileEditing() async throws {
+        let (explore, palette) = makePalette()
+        let editor = RecordingEditor()
+        explore.formatting.editorDidFocus(editor)
+        explore.isPaletteOpen = true
+        explore.formatting.editorDidBlur(editor)
+
+        await palette.update(query: "numbered")
+        let item = try #require(palette.results.first { $0.kind == .command(.formatNumberedList) })
+        await palette.choose(item)
+        #expect(editor.actions == [.toggle(.numberedList)])
+    }
 }

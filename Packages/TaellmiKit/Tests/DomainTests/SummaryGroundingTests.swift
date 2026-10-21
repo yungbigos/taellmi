@@ -40,6 +40,14 @@ struct SummaryGroundingTests {
                 stemLength: 5))
     }
 
+    @Test("the thought's words count through its formatting")
+    func formattedThought() {
+        #expect(
+            SummaryGrounding.isGrounded(
+                "Morgen den Vermieter anrufen.", in: "- Morgen den Ver**mieter** anrufen", classifier: Classifier(),
+                stemLength: 5))
+    }
+
     @Test("a separable verb joined up (\"anrufen\" for \"rufe … an\") is not recognised, so that summary stays hidden")
     func separableVerb() {
         #expect(

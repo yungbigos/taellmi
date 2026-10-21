@@ -40,7 +40,7 @@ public struct EntryIndex: Sendable {
                 conditions.append("id IN (SELECT entry_id FROM entry_search WHERE entry_search MATCH ?)")
                 arguments += ["\"" + word.replacingOccurrences(of: "\"", with: "\"\"") + "\""]
             } else {
-                conditions.append("instr(lower(text), ?) > 0")
+                conditions.append("id IN (SELECT entry_id FROM entry_search WHERE instr(text, ?) > 0)")
                 arguments += [word]
             }
         }
@@ -160,7 +160,8 @@ public struct EntryIndex: Sendable {
         try db.execute(sql: "DELETE FROM entry_search WHERE entry_id = ?", arguments: [entry.id])
         try db.execute(
             sql: "INSERT INTO entry_search (entry_id, text) VALUES (?, ?)",
-            arguments: [entry.id, entry.text.lowercased()])
+            // Search reads the words, not the Formatting (ADR 0014).
+            arguments: [entry.id, WordsOnlyText(entry.text).words.lowercased()])
         try db.execute(sql: "DELETE FROM segment WHERE entry_id = ?", arguments: [entry.id])
         guard let transcript else { return }
         for (ordinal, segment) in transcript.segments.enumerated() {

@@ -132,7 +132,11 @@ public final class ExploreViewModel {
     public var timeRange = TimelineRange(zoom: .week, anchor: Date())
     /// Current shortcut of every command, from config.
     public var shortcuts: [Command: Hotkey] = [:]
-    public var isPaletteOpen = false
+    public var isPaletteOpen = false {
+        didSet { if isPaletteOpen, !oldValue { formatting.paletteWillOpen() } }
+    }
+    /// The thought editor formatting from ⌘K goes to.
+    @ObservationIgnored public let formatting = FormattingFocus()
     /// Bumped when the recording should play or pause.
     public private(set) var playbackRequest = 0
     /// Bumped when the window should ask which notes to import.
@@ -233,6 +237,9 @@ public final class ExploreViewModel {
         case .showTrash: await show(trash: true)
         case .playRecording: playbackRequest += 1
         case .importNotes: noteImportRequest += 1
+        case .formatBold, .formatItalic, .formatUnderline, .formatStrikethrough, .formatBulletList,
+            .formatNumberedList, .indentListItem, .outdentListItem:
+            if let action = command.formattingAction { formatting.applyFromPalette(action) }
         }
     }
 

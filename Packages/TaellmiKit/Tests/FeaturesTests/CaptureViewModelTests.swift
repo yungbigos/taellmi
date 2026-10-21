@@ -162,6 +162,13 @@ struct CaptureViewModelTests {
         #expect(CaptureViewModel.preview(of: done).count <= 81)
         #expect(CaptureViewModel.preview(of: done).hasSuffix("…"))
     }
+
+    @Test("a preview shows the words without their formatting; list items run on")
+    func previewWithoutFormatting() {
+        var entry = Entry(id: "a", createdAt: sampleDate, durationSeconds: nil, source: .typed, folder: "x")
+        entry.text = "# Einkauf\n- **Milch**\n- <u>Brot</u>"
+        #expect(CaptureViewModel.preview(of: entry) == "Einkauf Milch Brot")
+    }
 }
 
 /// Polls a main-actor condition until it holds, failing after a short timeout.

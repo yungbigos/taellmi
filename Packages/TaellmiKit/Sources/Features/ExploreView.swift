@@ -260,7 +260,8 @@ struct EntryDetailView: View {
             HighlightingTextEditor(
                 text: $model.editorText,
                 highlights: model.highlights(in: model.editorText, entryID: detail.entry.id),
-                scrollKey: model.highlightKey(for: detail.entry.id)
+                scrollKey: model.highlightKey(for: detail.entry.id),
+                formatting: model.formatting, shortcuts: model.shortcuts
             )
         }
         .frame(maxWidth: brand.map { CGFloat($0.space.readingWidthPt) } ?? .infinity, alignment: .leading)
@@ -326,7 +327,7 @@ struct ThoughtDetailsView: View {
                         Text("imported notes are dated by their file. set when you wrote it.")
                             .brandFont("text.label").brandForeground(.quiet)
                     }
-                    row("\(detail.entry.text.split(whereSeparator: \.isWhitespace).count) words")
+                    row("\(WordsOnlyText(detail.entry.text).wordCount) words")
                 }
                 if !detail.corrections.isEmpty {
                     section("spellings") {

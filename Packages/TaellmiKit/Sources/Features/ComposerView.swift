@@ -4,7 +4,6 @@ import SwiftUI
 /// then only your text. Saves itself as you write; ⌘↩ or esc closes it.
 struct ComposerView: View {
     @Bindable var model: ExploreViewModel
-    @FocusState private var focused: Bool
 
     private var isListening: Bool { model.capture?.isRecording ?? false }
 
@@ -18,24 +17,20 @@ struct ComposerView: View {
                     Text(spoken)
                         .brandFont("text.thought")
                         .brandForeground(spoken == Self.listening ? .quiet : .ink)
-                        .padding(.top, 8)
-                        .padding(.leading, 5)
                         .allowsHitTesting(false)
                         .brandAnimation(\.crossfade, value: spoken)
                 }
-                TextEditor(text: $model.composerText)
-                    .brandFont("text.thought")
-                    .scrollContentBackground(.hidden)
-                    .focused($focused)
-                    .onChange(of: model.composerText) { Task { await model.typingStarted() } }
+                // The same editor as every thought, so a new one looks as it will once saved (ADR 0014).
+                HighlightingTextEditor(
+                    text: $model.composerText, highlights: [], formatting: model.formatting,
+                    shortcuts: model.shortcuts, focusOnAppear: true,
+                    onCancel: { Task { await model.closeComposer() } }
+                )
+                .onChange(of: model.composerText) { Task { await model.typingStarted() } }
             }
             .frame(maxWidth: 720)
             .padding(.horizontal, 40)
             .padding(.top, 24)
-            .onKeyPress(.escape) {
-                Task { await model.closeComposer() }
-                return .handled
-            }
             HStack {
                 Spacer()
                 Text(isListening ? "speak or type · ⌘↩ save · esc discard" : "⌘↩ save · esc close")
@@ -48,7 +43,6 @@ struct ComposerView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .brandSurface(.reading)
-        .task { focused = true }
     }
 
     private static let listening = "listening …"

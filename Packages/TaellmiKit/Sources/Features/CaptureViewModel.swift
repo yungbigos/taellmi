@@ -99,9 +99,10 @@ public final class CaptureViewModel {
         }
     }
 
-    /// The short line shown for an Entry in the menu.
+    /// The short line shown for an Entry in the menu and other lists: its words, without their Formatting.
     public nonisolated static func preview(of entry: Entry, maxLength: Int = 80) -> String {
-        let text = entry.text.replacingOccurrences(of: "\n", with: " ").trimmingCharacters(in: .whitespaces)
+        let text = WordsOnlyText(entry.text).words.replacingOccurrences(of: "\n", with: " ")
+            .trimmingCharacters(in: .whitespaces)
         guard !text.isEmpty else { return "transcribing …" }
         guard text.count > maxLength else { return text }
         return text.prefix(maxLength).trimmingCharacters(in: .whitespaces) + "…"

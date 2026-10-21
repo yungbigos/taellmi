@@ -123,14 +123,14 @@ nonisolated public enum TimelineLayout {
         return entries.compactMap { entry in
             guard entry.createdAt >= range.start, entry.createdAt < range.end else { return nil }
             let isSpoken = entry.source == .voice
+            let words = WordsOnlyText(entry.text)
             let size: Double
             if isSpoken, let seconds = entry.durationSeconds {
                 size = min(1, log1p(seconds) / log1p(600))
             } else {
-                let words = entry.text.split(whereSeparator: \.isWhitespace).count
-                size = min(1, log1p(Double(words)) / log1p(300))
+                size = min(1, log1p(Double(words.wordCount)) / log1p(300))
             }
-            let preview = entry.text.split(separator: "\n", maxSplits: 1).first.map(String.init) ?? ""
+            let preview = words.words.split(separator: "\n", maxSplits: 1).first.map(String.init) ?? ""
             return TimelineMark(
                 id: entry.id, x: entry.createdAt.timeIntervalSince(range.start) / span, size: max(size, 0.15),
                 isSpoken: isSpoken, preview: String(preview.prefix(120)))

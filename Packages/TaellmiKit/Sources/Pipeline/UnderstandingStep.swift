@@ -43,8 +43,10 @@ extension PipelineRunner {
         guard let understanding else { return }
         guard let entry = try index.entry(id: entryID) else { throw PipelineError.entryMissing(entryID) }
         let text = entry.text
+        // The models read the words without their Formatting (ADR 0014).
+        let words = WordsOnlyText(text).words
         let signature = try understanding.signature(resolver)
-        guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+        guard !words.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             // Nothing to understand; stored as done, so it isn't queued again on every sweep.
             try understanding.store.replace(
                 entryID: entryID, sourceText: text, understanding: Understanding(summary: nil, mentions: []),
@@ -58,18 +60,18 @@ extension PipelineRunner {
         let conceptPrompt = try understanding.prompts.current(role: .entities)
         let language = try await understanding.models.languageModel(conceptModel)
         let answer = try await language.generate(
-            prompt: conceptPrompt.render(["text": text]), schema: conceptPrompt.outputSchema ?? .object([:]))
+            prompt: conceptPrompt.render(["text": words]), schema: conceptPrompt.outputSchema ?? .object([:]))
         let mentions = ConceptMentions.locate(
             in: text, answer: answer, kinds: try understanding.store.conceptKinds())
 
         var summary: String?
-        let words = text.split(whereSeparator: \.isWhitespace).count
-        if words >= Int(try settings.number(SettingKeys.summaryMinWords)) {
+        let wordCount = words.split(whereSeparator: \.isWhitespace).count
+        if wordCount >= Int(try settings.number(SettingKeys.summaryMinWords)) {
             let summaryModel = try resolver.resolve(.summary)
             let summaryPrompt = try understanding.prompts.current(role: .summary)
             do {
                 let result = try await understanding.models.languageModel(summaryModel).generate(
-                    prompt: summaryPrompt.render(["text": text]), schema: summaryPrompt.outputSchema ?? .object([:]))
+                    prompt: summaryPrompt.render(["text": words]), schema: summaryPrompt.outputSchema ?? .object([:]))
                 let generated =
                     result.objectValue?["summary"]?.stringValue?
                     .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""

@@ -64,3 +64,15 @@ It runs once, where the spelling corrections run: when a spoken thought's Text i
 - **Open until step 3:** how Parakeet punctuates "erstens", whether it writes a spoken "Punkt" as ".", and the pause length for a paragraph.
 - **Apple Notes' export syntax comes from one hands-on report.** A test export should confirm `++underline++` and how nested lists are indented.
 - **The thought editor gains real styling** on top of the display-only search and concept highlights it already draws.
+
+## Built (step 1, 2026-10-21)
+
+- **Reading:** `TextFormatting` (Domain) reads the Markdown line by line; `WordsOnlyText` is the words-only view with positions both ways; `FormattingEdits` holds every action as a pure edit; `TextFormatting.visibility(selection:)` says what is hidden.
+- **Details decided while building:**
+  - A number at the start of a line starts a list only at 1, or when it continues a list, so "3. Oktober war schön." stays a sentence. A blank line between items keeps the list going.
+  - Renumbering only touches the list you are editing: a run of items with no blank line or sentence between them. It keeps that list's first number (1, unless it continues a list above a blank line); a sub-list starts at 1. A list elsewhere in the thought, like "3. Oktober …" after a blank line or an imported list that skips numbers on purpose, is never rewritten.
+  - A list item's leading tabs or spaces are always hidden; the level is drawn as an indent of `l` per level. New levels are written as one tab.
+  - Shortcuts for letters match the letter typed (⌘B is ⌘B on every layout); digits and brackets match the key, as Apple Notes does (⇧⌘7 is the 7 key, also on a German keyboard).
+  - While the mouse is selecting, the markup doesn't change, so text never jumps under the pointer; it updates when the button is released.
+  - Search's own index, passages (`passage_splitter@2`, so every thought is split once more), the models' prompts, summary checks, word counts and previews read the words-only view.
+- **Not built yet:** steps 2–4 (paragraphs from pauses, the Parakeet test clips, spoken lists).

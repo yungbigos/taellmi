@@ -12,7 +12,7 @@ public enum SummaryGrounding {
     ) -> Bool {
         let words = classifier.classify(summary).filter(\.carriesMeaning).map { String(summary[$0.range]) }
         guard !words.isEmpty else { return false }
-        let haystack = thought.lowercased()
+        let haystack = WordsOnlyText(thought).words.lowercased()
         return words.allSatisfy { word in
             let lower = word.lowercased()
             return haystack.contains(String(lower.prefix(max(1, stemLength))))

@@ -16,6 +16,8 @@ extension Hotkey {
         case .down: key = .downArrow
         case .equal: key = "="
         case .minus: key = "-"
+        case .leftBracket: key = "["
+        case .rightBracket: key = "]"
         case .letter(let letter): key = KeyEquivalent(letter)
         case .digit(let digit): key = KeyEquivalent(Character(String(digit)))
         case .function: return nil
@@ -35,7 +37,8 @@ struct CommandShortcutButtons: View {
 
     var body: some View {
         ZStack {
-            ForEach(Commands.all, id: \.self) { command in
+            // Formatting keys belong to the thought editor you type in, which handles them itself.
+            ForEach(Commands.all.filter { !$0.isFormatting }, id: \.self) { command in
                 if let shortcut = model.shortcuts[command]?.keyboardShortcut {
                     Button(command.title) { Task { await model.perform(command) } }
                         .keyboardShortcut(shortcut)

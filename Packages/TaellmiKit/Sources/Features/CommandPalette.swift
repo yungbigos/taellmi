@@ -65,8 +65,11 @@ public final class CommandPaletteModel {
     public func update(query text: String) async {
         query = text
         let words = text.lowercased().split(whereSeparator: \.isWhitespace).map(String.init)
+        // Formats are offered only while a thought was being edited as ⌘K opened (ADR 0014).
+        let canFormat = explore.formatting.canFormatFromPalette
         let commands = Commands.all
-            .filter { command in words.allSatisfy { command.title.contains($0) } }
+            .filter { command in (canFormat || !command.isFormatting) && words.allSatisfy { command.title.contains($0) }
+            }
             .map { PaletteItem(kind: .command($0), title: $0.title, shortcut: explore.shortcuts[$0]?.displayLabel) }
         let found = await explore.findThoughts(text, limit: thoughtLimit)
         let thoughts = found.map(Self.item)

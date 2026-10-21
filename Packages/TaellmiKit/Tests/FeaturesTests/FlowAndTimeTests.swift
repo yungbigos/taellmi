@@ -117,4 +117,12 @@ struct TimelineTests {
         #expect(marks.first { $0.id == "typed" }?.isSpoken == false)
         #expect(long.isSpoken)
     }
+
+    @Test("a mark's preview is the first line's words, without formatting")
+    func markPreview() {
+        let range = TimelineRange(zoom: .week, anchor: sampleDate, calendar: berlinCalendar)
+        let marks = TimelineLayout.marks(
+            for: [thought("f", "# Ein *Titel*\n- Milch", daysAgo: 1, source: .typed, seconds: nil)], in: range)
+        #expect(marks.first?.preview == "Ein Titel")
+    }
 }

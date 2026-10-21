@@ -24,7 +24,7 @@ nonisolated public struct RailMonth: Sendable, Equatable, Identifiable {
 }
 
 nonisolated public enum MonthRail {
-    /// Every month from the newest thought's back to the oldest thought's, newest first.
+    /// The months that have thoughts, newest first.
     public static func months(for entries: [Entry], calendar: Calendar) -> [RailMonth] {
         guard let newest = entries.map(\.createdAt).max(), let oldest = entries.map(\.createdAt).min(),
             let first = startOfMonth(newest, calendar: calendar), let last = startOfMonth(oldest, calendar: calendar)
@@ -36,7 +36,7 @@ nonisolated public enum MonthRail {
         var months: [RailMonth] = []
         var month = first
         while month >= last {
-            months.append(RailMonth(start: month, count: counts[month] ?? 0))
+            if let count = counts[month] { months.append(RailMonth(start: month, count: count)) }
             guard let earlier = calendar.date(byAdding: .month, value: -1, to: month) else { break }
             month = earlier
         }

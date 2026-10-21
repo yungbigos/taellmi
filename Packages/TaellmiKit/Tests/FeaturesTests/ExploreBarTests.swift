@@ -131,7 +131,7 @@ extension ExploreBarTests {
 
 @Suite("The month rail")
 struct MonthRailTests {
-    @Test("every month from the newest thought back to the oldest, newest first, with how many thoughts each")
+    @Test("only months that have thoughts, newest first, with how many thoughts each (owner, 2026-10-21)")
     func months() {
         let entries = [
             thought("a", "x", at: day(2026, 10, 20, calendar: berlinCalendar)),
@@ -141,10 +141,10 @@ struct MonthRailTests {
         let months = MonthRail.months(for: entries, calendar: berlinCalendar)
         #expect(
             months.map(\.start)
-                == [10, 9, 8].map { day(2026, $0, 1, calendar: berlinCalendar) }.map {
+                == [10, 8].map { day(2026, $0, 1, calendar: berlinCalendar) }.map {
                     berlinCalendar.startOfDay(for: $0)
                 })
-        #expect(months.map(\.count) == [2, 0, 1])
+        #expect(months.map(\.count) == [2, 1])
         #expect(MonthRail.months(for: [], calendar: berlinCalendar).isEmpty)
     }
 
@@ -160,6 +160,19 @@ struct MonthRailTests {
         #expect(september != nil)
         if let september { await model.jump(to: september) }
         #expect(model.scrollTarget == "sep-late")
+    }
+
+    @Test("in flow, the rail marks the month of the topmost thought on screen as you scroll")
+    func followsScrolling() async {
+        let library = FakeLibrary(entries: [
+            thought("oct", "x", at: day(2026, 10, 20)), thought("sep", "x", at: day(2026, 9, 28)),
+        ])
+        let model = ExploreViewModel(library: library, autosaveDelay: .zero, startView: .flow)
+        await model.open(selecting: nil)
+        model.flowVisible(["sep"])
+        #expect(model.currentRailMonth.map { Calendar.current.component(.month, from: $0) } == 9)
+        model.flowVisible(["oct", "sep"])
+        #expect(model.currentRailMonth.map { Calendar.current.component(.month, from: $0) } == 10)
     }
 
     @Test("in time, choosing a month shows that whole month and marks it on the rail")

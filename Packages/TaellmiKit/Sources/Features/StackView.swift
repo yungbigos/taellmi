@@ -10,6 +10,8 @@ struct StackView: View {
     @AppStorage("explore.showsDetails") private var showsDetails = true
     @State private var newFolderName: String?
     @State private var renaming: (id: String, name: String)?
+    @State private var position = ScrollPosition(idType: String.self)
+    @State private var landing = ScrollLanding()
 
     var body: some View {
         HStack(spacing: brand.space(.l)) {
@@ -57,19 +59,16 @@ struct StackView: View {
     // MARK: The chosen group, like flow
 
     private var column: some View {
-        ScrollViewReader { proxy in
-            columnScroll
-                .onAppear { if let id = model.scrollTarget { proxy.scrollTo(id, anchor: .center) } }
-                .onChange(of: model.scrollRequest) { _, request in
-                    guard let request else { return }
-                    proxy.scrollTo(request.entryID, anchor: .center)
-                    // A far thought is laid out only on the way; a second jump lands it exactly.
-                    Task { @MainActor in
-                        try? await Task.sleep(for: .milliseconds(250))
-                        proxy.scrollTo(request.entryID, anchor: .center)
-                    }
-                }
-        }
+        columnScroll
+            .scrollPosition($position)
+            .onAppear { if let id = model.scrollTarget { land(on: id) } }
+            .onChange(of: model.scrollRequest) { _, request in
+                if let request { land(on: request.entryID) }
+            }
+    }
+
+    private func land(on id: String) {
+        landing.land(on: id, position: $position, animation: brand?.animation(\.scroll) ?? .default)
     }
 
     private var columnScroll: some View {
@@ -90,6 +89,7 @@ struct StackView: View {
                         .id(entry.id)
                 }
             }
+            .scrollTargetLayout()
             .frame(maxWidth: 720)
             .padding(32)
             .frame(maxWidth: .infinity)

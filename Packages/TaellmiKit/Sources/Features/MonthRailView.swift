@@ -13,7 +13,17 @@ struct MonthRailView: View {
         if !months.isEmpty {
             ViewThatFits(in: .vertical) {
                 list(months)
-                ScrollView { list(months) }.scrollIndicators(.never)
+                // Too many months to show at once: the rail scrolls along with the month you are in.
+                ScrollViewReader { proxy in
+                    ScrollView { list(months) }
+                        .scrollIndicators(.never)
+                        .onChange(of: model.currentRailMonth) { _, month in
+                            guard let month else { return }
+                            withAnimation(brand?.animation(\.scroll) ?? .default) {
+                                proxy.scrollTo(month, anchor: .center)
+                            }
+                        }
+                }
             }
             .padding(.vertical, brand.space(.s))
             .padding(.horizontal, brand.space(.xs))
@@ -35,7 +45,7 @@ struct MonthRailView: View {
                         .padding(.horizontal, brand.space(.s))
                         .padding(.top, index == 0 ? 0 : brand.space(.xs))
                 }
-                row(month)
+                row(month).id(month.start)
             }
         }
     }
@@ -48,7 +58,7 @@ struct MonthRailView: View {
             HStack(spacing: brand.space(.s)) {
                 Text(month.start.formatted(.dateTime.month(.abbreviated)).lowercased())
                     .brandFont("text.label")
-                    .brandForeground(current ? .blue : (month.count == 0 ? .quiet : .ink))
+                    .brandForeground(current ? .blue : .ink)
                 Spacer(minLength: 0)
                 HStack(spacing: brand.space(.xxs)) {
                     ForEach(0..<min(month.count, brand?.space.railMaxDots ?? 0), id: \.self) { _ in
@@ -64,7 +74,6 @@ struct MonthRailView: View {
             .selectionPill(current)
         }
         .buttonStyle(.plain)
-        .disabled(model.view == .flow && month.count == 0)
         .accessibilityLabel(
             "\(month.start.formatted(.dateTime.month(.wide).year())), \(ThoughtCount.words(month.count))")
     }

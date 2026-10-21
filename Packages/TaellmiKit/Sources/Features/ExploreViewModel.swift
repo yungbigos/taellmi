@@ -122,6 +122,8 @@ public final class ExploreViewModel {
     /// The thought flow should scroll to (opened from the menu bar, space or a related thought). A new
     /// request each time, so asking for the same thought twice still scrolls.
     public private(set) var scrollRequest: ScrollRequest?
+    /// The topmost thought on screen in flow.
+    public private(set) var flowTopID: String?
     public var scrollTarget: String? { scrollRequest?.entryID }
     /// Summary, concepts and related thoughts of the thoughts on screen, by id; loaded as they appear.
     public private(set) var meanings: [String: ThoughtMeaning] = [:]
@@ -537,8 +539,19 @@ public final class ExploreViewModel {
 
     /// In time: the month the span ends in, marked on the rail.
     public var currentRailMonth: Date? {
-        guard view == .time else { return nil }
-        return MonthRail.startOfMonth(timeRange.end.addingTimeInterval(-1), calendar: .current)
+        switch view {
+        case .time: return MonthRail.startOfMonth(timeRange.end.addingTimeInterval(-1), calendar: .current)
+        case .flow:
+            guard let top = flowTopID, let entry = flowEntries.first(where: { $0.id == top }) else { return nil }
+            return MonthRail.startOfMonth(entry.createdAt, calendar: .current)
+        default: return nil
+        }
+    }
+
+    /// flow reports which thoughts are on screen, top first; the rail marks the topmost one's month.
+    public func flowVisible(_ ids: [String]) {
+        let top = flowEntries.first { ids.contains($0.id) }?.id
+        if top != flowTopID { flowTopID = top }
     }
 
     /// flow scrolls to the month's newest thought; time shows the whole month.

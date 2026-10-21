@@ -94,7 +94,6 @@ struct HighlightingTextEditor: NSViewRepresentable {
             coordinator.applied = highlights
             coordinator.appliedStrong = strong
         }
-        if grows { textView.invalidateIntrinsicContentSize() }
         if !grows, coordinator.scrolledKey != scrollKey {
             coordinator.scrolledKey = scrollKey
             if let first = highlights.first {
@@ -116,16 +115,24 @@ struct HighlightingTextEditor: NSViewRepresentable {
         guard grows, let width = proposal.width, width.isFinite, width > 0,
             let textView = context.coordinator.textView, let storage = textView.textStorage
         else { return nil }
-        let measuring = NSTextStorage(attributedString: storage)
-        let layout = FormattingLayoutManager()
-        layout.decorations = (textView.layoutManager as? FormattingLayoutManager)?.decorations ?? .init()
-        let container = NSTextContainer(size: NSSize(width: width, height: .greatestFiniteMagnitude))
-        container.lineFragmentPadding = 0
-        layout.addTextContainer(container)
-        measuring.addLayoutManager(layout)
-        layout.ensureLayout(for: container)
-        let lineHeight = textView.font.map { layout.defaultLineHeight(for: $0) } ?? 0
-        return CGSize(width: width, height: max(layout.usedRect(for: container).height, lineHeight))
+        let coordinator = context.coordinator
+        // Measured once per text, width and look: SwiftUI asks constantly while a long flow scrolls, and laying
+        // out every thought each time froze the app when scrolling up.
+        let height = coordinator.heights.height(
+            text: textView.string, width: width, style: coordinator.styleVersion
+        ) {
+            let measuring = NSTextStorage(attributedString: storage)
+            let layout = FormattingLayoutManager()
+            layout.decorations = (textView.layoutManager as? FormattingLayoutManager)?.decorations ?? .init()
+            let container = NSTextContainer(size: NSSize(width: width, height: .greatestFiniteMagnitude))
+            container.lineFragmentPadding = 0
+            layout.addTextContainer(container)
+            measuring.addLayoutManager(layout)
+            layout.ensureLayout(for: container)
+            let lineHeight = textView.font.map { layout.defaultLineHeight(for: $0) } ?? 0
+            return max(layout.usedRect(for: container).height, lineHeight)
+        }
+        return CGSize(width: width, height: height)
     }
 
     /// What the text was last styled with; a change restyles it.
@@ -148,6 +155,9 @@ struct HighlightingTextEditor: NSViewRepresentable {
         var applied: [TextHighlight]?
         var appliedStrong = false
         var focusedOnAppear = false
+        /// Bumped whenever the look changes, so measured heights are taken again.
+        var styleVersion = 0
+        var heights = MeasuredHeights()
 
         private var isFocused = false
         /// The Formatting of the text as it is, read once per change.
@@ -203,6 +213,9 @@ struct HighlightingTextEditor: NSViewRepresentable {
             textView.insertionPointColor = brand.nsColor(.blue)
             shown = visibility
             styledWith = key
+            // Only now can the height have changed; ask SwiftUI to measure again (not on every redraw).
+            styleVersion += 1
+            textView.invalidateIntrinsicContentSize()
             textView.window?.invalidateCursorRects(for: textView)
             if let applied { apply(applied, strong: appliedStrong) }
         }

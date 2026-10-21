@@ -31,6 +31,60 @@ public enum TextMatch {
     }
 }
 
+extension TextMatch {
+    /// What a search found, as whole sections: the search as a phrase wherever it appears as typed (case and
+    /// spacing aside); otherwise each sentence that holds every word. Never single words of a longer search,
+    /// so "book of life" never marks a lone "of". A one-word search marks the word.
+    public static func sections(for words: [String], in text: String) -> [Range<Int>] {
+        let words = words.filter { !$0.isEmpty }
+        guard words.count > 1 else { return ranges(of: words, in: text) }
+        let view = WordsOnlyText(text)
+        let string = view.words as NSString
+        let pattern = words.map(NSRegularExpression.escapedPattern(for:)).joined(separator: "\\s+")
+        if let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) {
+            let found = regex.matches(in: view.words, range: NSRange(location: 0, length: string.length))
+                .map { view.sourceRange($0.range.location..<($0.range.location + $0.range.length)) }
+            if !found.isEmpty { return found }
+        }
+        return sentences(in: view.words).filter { range in
+            let sentence = string.substring(with: NSRange(location: range.lowerBound, length: range.count))
+            return words.allSatisfy { sentence.range(of: $0, options: .caseInsensitive) != nil }
+        }
+        .map(view.sourceRange)
+    }
+
+    /// Sentences in UTF-16 offsets, ending after . ! ? or at a line break, without surrounding spaces.
+    static func sentences(in text: String) -> [Range<Int>] {
+        let units = Array(text.utf16)
+        var result: [Range<Int>] = []
+        var start = 0
+        func close(_ end: Int) {
+            var lower = start
+            var upper = end
+            while lower < upper, Character(UnicodeScalar(units[lower]) ?? " ").isWhitespace { lower += 1 }
+            while upper > lower, Character(UnicodeScalar(units[upper - 1]) ?? " ").isWhitespace { upper -= 1 }
+            if lower < upper { result.append(lower..<upper) }
+        }
+        for (index, unit) in units.enumerated() {
+            switch unit {
+            case 0x0A:
+                close(index)
+                start = index + 1
+            case 0x2E, 0x21, 0x3F:
+                // A sentence ends after the mark, when a space or the end follows.
+                let next = index + 1
+                if next == units.count || units[next] == 0x20 || units[next] == 0x0A {
+                    close(next)
+                    start = next
+                }
+            default: break
+            }
+        }
+        close(units.count)
+        return result
+    }
+}
+
 /// A short excerpt of a Text around a match, cut at word boundaries, for lists and the palette. It shows the
 /// Text's words without their Formatting markup.
 public struct Snippet: Sendable, Equatable {

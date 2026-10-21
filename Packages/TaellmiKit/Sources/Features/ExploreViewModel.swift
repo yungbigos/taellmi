@@ -365,7 +365,7 @@ public final class ExploreViewModel {
         {
             highlights.append(TextHighlight(range: range, kind: .passage))
         }
-        highlights += TextMatch.ranges(of: search.words, in: text).map { TextHighlight(range: $0, kind: .word) }
+        highlights += TextMatch.sections(for: search.words, in: text).map { TextHighlight(range: $0, kind: .word) }
         return highlights
     }
 

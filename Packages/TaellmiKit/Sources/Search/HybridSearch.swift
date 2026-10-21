@@ -69,11 +69,11 @@ public struct HybridSearch: Sendable {
         let results = fused.values.filter { wordIDs.contains($0.entry.id) }
             .sorted { $0.score != $1.score ? $0.score > $1.score : $0.entry.createdAt > $1.entry.createdAt }
             .map {
-                SearchHit(entry: $0.entry, match: .words, wordRanges: TextMatch.ranges(of: words, in: $0.entry.text))
+                SearchHit(entry: $0.entry, match: .words, wordRanges: TextMatch.sections(for: words, in: $0.entry.text))
             }
         let related = meaning.filter { !wordIDs.contains($0.entry.id) }.map {
             SearchHit(
-                entry: $0.entry, match: .related, wordRanges: TextMatch.ranges(of: words, in: $0.entry.text),
+                entry: $0.entry, match: .related, wordRanges: TextMatch.sections(for: words, in: $0.entry.text),
                 passage: $0.passage)
         }
         return results + related

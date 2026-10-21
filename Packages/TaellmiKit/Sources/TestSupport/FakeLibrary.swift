@@ -161,7 +161,7 @@ public actor FakeLibrary: ExploreLibrary {
                 query.earliestDate(now: Date(), calendar: .current).map { entry.createdAt >= $0 } ?? true
             }
             .sorted { $0.createdAt > $1.createdAt }
-            .map { SearchHit(entry: $0, match: .words, wordRanges: TextMatch.ranges(of: query.words, in: $0.text)) }
+            .map { SearchHit(entry: $0, match: .words, wordRanges: TextMatch.sections(for: query.words, in: $0.text)) }
         guard !query.words.isEmpty else { return words }
         let wordIDs = Set(words.map(\.id))
         let relatedHits = related.compactMap { item -> SearchHit? in

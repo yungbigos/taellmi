@@ -61,3 +61,27 @@ struct LineSpacingTests {
         if brand.lineHeightMultiple("text.thought") > 1 { #expect(paragraph.lineSpacing > 0) }
     }
 }
+
+@Suite("Links in read mode")
+struct ReadingLinkTests {
+    @Test("a click on a link's words finds its address; a click elsewhere finds none")
+    func findsLink() throws {
+        let brand = try shippedTokens()
+        let shown = ReadingText.make(
+            text: "[ZEIT](https://www.zeit.de/politik) über die Wahl", highlights: [], brand: brand,
+            token: "text.thought")
+        #expect(shown.string.hasPrefix("ZEIT über"))
+        #expect(
+            ReadingText.link(at: CGPoint(x: 4, y: 6), in: shown, width: 600)?.absoluteString
+                == "https://www.zeit.de/politik")
+        #expect(ReadingText.link(at: CGPoint(x: 300, y: 6), in: shown, width: 600) == nil)
+    }
+
+    @Test("only web and mail addresses open")
+    func onlyWebAndMail() throws {
+        let brand = try shippedTokens()
+        let shown = ReadingText.make(
+            text: "[x](file:///etc/hosts)", highlights: [], brand: brand, token: "text.thought")
+        #expect(ReadingText.link(at: CGPoint(x: 2, y: 6), in: shown, width: 600) == nil)
+    }
+}

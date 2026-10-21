@@ -55,12 +55,7 @@ struct ThoughtBlock: View {
                             menuItems: menuItems, onEndEditing: { isEditing = false }
                         )
                     } else {
-                        ReadingTextView(text: text, highlights: highlights(text))
-                            .overlay {
-                                Color.clear
-                                    .contentShape(Rectangle())
-                                    .onTapGesture { isEditing = true }
-                            }
+                        ReadingTextView(text: text, highlights: highlights(text)) { isEditing = true }
                             .accessibilityAddTraits(.isButton)
                             .accessibilityHint("edit this thought")
                     }

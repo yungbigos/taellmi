@@ -73,6 +73,28 @@ enum ReadingText {
 }
 
 extension ReadingText {
+    /// The web or mail address under a point of the read-mode text laid out at `width`, if a link is there.
+    static func link(at point: CGPoint, in text: NSAttributedString, width: CGFloat) -> URL? {
+        guard text.length > 0 else { return nil }
+        let storage = NSTextStorage(attributedString: text)
+        let layout = NSLayoutManager()
+        let container = NSTextContainer(size: NSSize(width: width, height: .greatestFiniteMagnitude))
+        container.lineFragmentPadding = 0
+        layout.addTextContainer(container)
+        storage.addLayoutManager(layout)
+        var fraction: CGFloat = 0
+        let index = layout.characterIndex(
+            for: point, in: container, fractionOfDistanceBetweenInsertionPoints: &fraction)
+        // Past the end of a line the nearest character is reported; only a hit on the words counts.
+        let glyph = layout.glyphIndexForCharacter(at: index)
+        guard index < storage.length,
+            layout.boundingRect(forGlyphRange: NSRange(location: glyph, length: 1), in: container).contains(point),
+            let address = storage.attribute(.thoughtLink, at: index, effectiveRange: nil) as? String,
+            let url = URL(string: address), ["http", "https", "mailto"].contains(url.scheme?.lowercased() ?? "")
+        else { return nil }
+        return url
+    }
+
     /// Built read-mode texts, so scrolling and redraws reuse them; a few hundred thoughts at most.
     private static var cache: [CacheKey: NSAttributedString] = [:]
     private static var order: [CacheKey] = []
@@ -107,10 +129,44 @@ extension ReadingText {
 
 /// A thought's text in read mode, drawn by AppKit with exactly the editor's attributes (line height, indents,
 /// lists), so switching to the editor changes nothing you see. Cheap: no editor, height measured once.
-struct ReadingTextView: NSViewRepresentable {
+struct ReadingTextView: View {
     let text: String
     let highlights: [TextHighlight]
     var token = "text.thought"
+    /// A click on the words, not on a link: flow and stack turn the thought into the editor.
+    var onTap: () -> Void = {}
+    @Environment(\.brand) private var brand
+    @Environment(\.openURL) private var openURL
+
+    var body: some View {
+        ReadingTextBody(text: text, highlights: highlights, token: token)
+            .overlay {
+                GeometryReader { proxy in
+                    Color.clear
+                        .contentShape(Rectangle())
+                        .onTapGesture { location in
+                            // A link opens; anywhere else starts editing.
+                            if let brand,
+                                let url = ReadingText.link(
+                                    at: location,
+                                    in: ReadingText.cached(
+                                        text: text, highlights: highlights, brand: brand, token: token),
+                                    width: proxy.size.width)
+                            {
+                                openURL(url)
+                            } else {
+                                onTap()
+                            }
+                        }
+                }
+            }
+    }
+}
+
+private struct ReadingTextBody: NSViewRepresentable {
+    let text: String
+    let highlights: [TextHighlight]
+    let token: String
     @Environment(\.brand) private var brand
 
     func makeNSView(context: Context) -> ReadingTextNSView { ReadingTextNSView() }

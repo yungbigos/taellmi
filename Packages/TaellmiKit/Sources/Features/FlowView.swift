@@ -30,6 +30,7 @@ struct FlowView: View {
             .frame(maxWidth: 720)
             .padding(32)
             .frame(maxWidth: .infinity)
+            .endsEditingOnClick()
         }
         .scrollPosition($position)
         .onScrollPhaseChange { _, phase in

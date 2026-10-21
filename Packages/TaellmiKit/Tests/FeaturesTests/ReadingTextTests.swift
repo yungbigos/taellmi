@@ -20,14 +20,14 @@ struct ReadingTextTests {
     @Test("markup is hidden: bold stays bold without its stars, a list shows bullets")
     func markup() throws {
         let shown = try read("Heute **wichtig**:\n- Heizung\n- Vermieter")
-        #expect(shown.string == "Heute wichtig:\n• Heizung\n• Vermieter")
+        #expect(shown.string == "Heute wichtig:\n•\tHeizung\n•\tVermieter")
         let bold = shown.attribute(.font, at: 7, effectiveRange: nil) as? NSFont
         #expect(bold?.fontDescriptor.symbolicTraits.contains(.bold) == true)
     }
 
     @Test("a checklist shows open and ticked boxes")
     func checklist() throws {
-        #expect(try read("- [ ] Milch\n- [x] Brot").string == "☐ Milch\n☑ Brot")
+        #expect(try read("- [ ] Milch\n- [x] Brot").string == "☐\tMilch\n☑\tBrot")
     }
 
     @Test("search marks and concept underlines land on the same words after the markup is gone")

@@ -96,6 +96,7 @@ struct StackView: View {
             .frame(maxWidth: 720)
             .padding(32)
             .frame(maxWidth: .infinity)
+            .endsEditingOnClick()
         }
         .overlay {
             if model.entries.isEmpty {

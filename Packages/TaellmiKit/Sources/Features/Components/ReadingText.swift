@@ -33,16 +33,31 @@ enum ReadingText {
                 }
             }
         }
-        // Bullets and boxes go before the item's words; everything the editor hides is left out.
-        var inserts: [Int: String] = [:]
-        for bullet in decorations.bullets { inserts[bullet.anchor] = "• " }
-        for box in decorations.boxes { inserts[box.marker.anchor] = box.checked ? "☑ " : "☐ " }
+        // Bullets and boxes sit in the indent before the item's words, where the editor draws them: the line
+        // starts at the marker's indent and a tab takes the words to where they start in the editor.
+        var inserts: [Int: (mark: String, indent: CGFloat)] = [:]
+        for bullet in decorations.bullets { inserts[bullet.anchor] = ("•", bullet.indent) }
+        for box in decorations.boxes { inserts[box.marker.anchor] = (box.checked ? "☑" : "☐", box.marker.indent) }
+        for (anchor, insert) in inserts where anchor < length {
+            let line = (storage.string as NSString).lineRange(for: NSRange(location: anchor, length: 0))
+            let current = storage.attribute(.paragraphStyle, at: anchor, effectiveRange: nil) as? NSParagraphStyle
+            let paragraph = (current?.mutableCopy() as? NSMutableParagraphStyle) ?? NSMutableParagraphStyle()
+            paragraph.firstLineHeadIndent = insert.indent
+            paragraph.tabStops = [NSTextTab(textAlignment: .left, location: paragraph.headIndent)]
+            storage.addAttribute(.paragraphStyle, value: paragraph, range: line)
+        }
         let shown = NSMutableAttributedString()
-        let quiet: [NSAttributedString.Key: Any] = styler.baseAttributes.merging(
-            [.foregroundColor: brand.nsColor(.quiet)]) { _, new in new }
         var index = 0
         while index <= length {
-            if let marker = inserts[index] { shown.append(NSAttributedString(string: marker, attributes: quiet)) }
+            if let insert = inserts[index] {
+                var attributes =
+                    index < length ? storage.attributes(at: index, effectiveRange: nil) : styler.baseAttributes
+                attributes[.foregroundColor] = brand.nsColor(.quiet)
+                for key in [NSAttributedString.Key.underlineStyle, .backgroundColor, .strikethroughStyle] {
+                    attributes[key] = nil
+                }
+                shown.append(NSAttributedString(string: insert.mark + "\t", attributes: attributes))
+            }
             guard index < length else { break }
             var end = index
             while end < length, !decorations.hidden.contains(end), inserts[end] == nil || end == index { end += 1 }
@@ -59,21 +74,21 @@ enum ReadingText {
 
 extension ReadingText {
     /// Built read-mode texts, so scrolling and redraws reuse them; a few hundred thoughts at most.
-    private static var cache: [CacheKey: AttributedString] = [:]
+    private static var cache: [CacheKey: NSAttributedString] = [:]
     private static var order: [CacheKey] = []
     private static let cacheLimit = 400
+    /// The look the cache was built with; another one empties it.
+    private static var cachedBrand: BrandTokens?
 
     private struct CacheKey: Hashable {
         var text: String
         var highlights: [TextHighlight]
         var token: String
     }
-    /// The look the cache was built with; another one empties it.
-    private static var cachedBrand: BrandTokens?
 
-    /// The SwiftUI text for read mode, built once per text, marks and look.
-    static func attributed(text: String, highlights: [TextHighlight], brand: BrandTokens, token: String)
-        -> AttributedString
+    /// `make`, built once per text, marks and look.
+    static func cached(text: String, highlights: [TextHighlight], brand: BrandTokens, token: String)
+        -> NSAttributedString
     {
         if cachedBrand != brand {
             cache = [:]
@@ -82,47 +97,62 @@ extension ReadingText {
         }
         let key = CacheKey(text: text, highlights: highlights, token: token)
         if let known = cache[key] { return known }
-        let built = swiftUI(make(text: text, highlights: highlights, brand: brand, token: token))
+        let built = make(text: text, highlights: highlights, brand: brand, token: token)
         cache[key] = built
         order.append(key)
         if order.count > cacheLimit { cache[order.removeFirst()] = nil }
         return built
     }
-
-    /// Carries the editor's fonts, colours, marks and lines over to SwiftUI's text attributes.
-    private static func swiftUI(_ source: NSAttributedString) -> AttributedString {
-        var result = AttributedString()
-        source.enumerateAttributes(in: NSRange(location: 0, length: source.length)) { attributes, range, _ in
-            var run = AttributedString(source.attributedSubstring(from: range).string)
-            if let font = attributes[.font] as? NSFont { run.font = Font(font as CTFont) }
-            if let color = attributes[.foregroundColor] as? NSColor { run.foregroundColor = Color(nsColor: color) }
-            if let color = attributes[.backgroundColor] as? NSColor { run.backgroundColor = Color(nsColor: color) }
-            if attributes[.underlineStyle] != nil {
-                let color = (attributes[.underlineColor] as? NSColor).map { Color(nsColor: $0) }
-                run.underlineStyle = Text.LineStyle(pattern: .solid, color: color)
-            }
-            if attributes[.strikethroughStyle] != nil { run.strikethroughStyle = .single }
-            result.append(run)
-        }
-        return result
-    }
 }
 
-/// A thought's text in read mode.
-struct ReadingTextView: View {
+/// A thought's text in read mode, drawn by AppKit with exactly the editor's attributes (line height, indents,
+/// lists), so switching to the editor changes nothing you see. Cheap: no editor, height measured once.
+struct ReadingTextView: NSViewRepresentable {
     let text: String
     let highlights: [TextHighlight]
     var token = "text.thought"
     @Environment(\.brand) private var brand
 
-    var body: some View {
-        if let brand {
-            Text(ReadingText.attributed(text: text, highlights: highlights, brand: brand, token: token))
-                .lineSpacing(0)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .fixedSize(horizontal: false, vertical: true)
-        } else {
-            Text(text).frame(maxWidth: .infinity, alignment: .leading)
+    func makeNSView(context: Context) -> ReadingTextNSView { ReadingTextNSView() }
+
+    func updateNSView(_ view: ReadingTextNSView, context: Context) {
+        guard let brand else { return }
+        let shown = ReadingText.cached(text: text, highlights: highlights, brand: brand, token: token)
+        if !view.text.isEqual(to: shown) { view.text = shown }
+    }
+
+    func sizeThatFits(_ proposal: ProposedViewSize, nsView: ReadingTextNSView, context: Context) -> CGSize? {
+        guard let width = proposal.width, width.isFinite, width > 0 else { return nil }
+        return CGSize(width: width, height: nsView.height(for: width))
+    }
+}
+
+final class ReadingTextNSView: NSView {
+    var text = NSAttributedString() {
+        didSet {
+            heights = MeasuredHeights()
+            needsDisplay = true
+            invalidateIntrinsicContentSize()
         }
     }
+    private var heights = MeasuredHeights()
+    private static let options: NSString.DrawingOptions = [.usesLineFragmentOrigin, .usesFontLeading]
+
+    override var isFlipped: Bool { true }
+
+    func height(for width: CGFloat) -> CGFloat {
+        let text = text
+        return heights.height(text: text.string, width: width, style: 0) {
+            ceil(
+                text.boundingRect(with: CGSize(width: width, height: .greatestFiniteMagnitude), options: Self.options)
+                    .height)
+        }
+    }
+
+    override func draw(_ dirtyRect: NSRect) {
+        text.draw(with: bounds, options: Self.options)
+    }
+
+    /// Clicks go to SwiftUI, which turns the thought into the editor.
+    override func hitTest(_ point: NSPoint) -> NSView? { nil }
 }

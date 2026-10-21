@@ -51,13 +51,16 @@ struct ThoughtBlock: View {
                     if isEditing {
                         HighlightingTextEditor(
                             text: $text, highlights: highlights(text), grows: true, formatting: formatting,
-                            shortcuts: shortcuts, focusOnAppear: true, menuItems: menuItems,
-                            onEndEditing: { isEditing = false }
+                            shortcuts: shortcuts, focusOnAppear: true, onCancel: { EditingFocus.end() },
+                            menuItems: menuItems, onEndEditing: { isEditing = false }
                         )
                     } else {
                         ReadingTextView(text: text, highlights: highlights(text))
-                            .contentShape(Rectangle())
-                            .onTapGesture { isEditing = true }
+                            .overlay {
+                                Color.clear
+                                    .contentShape(Rectangle())
+                                    .onTapGesture { isEditing = true }
+                            }
                             .accessibilityAddTraits(.isButton)
                             .accessibilityHint("edit this thought")
                     }

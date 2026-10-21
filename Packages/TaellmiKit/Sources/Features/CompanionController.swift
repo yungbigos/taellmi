@@ -14,12 +14,15 @@ public struct CompanionSettings: Sendable {
     public var cancelKey: Hotkey
     /// Where you last dropped tälli, as config text ("x,y"); empty means beside the cursor.
     public var position: String
+    /// How much of what you're saying the bubble shows: its last this many characters.
+    public var previewCharacters: Int
 
     public init(
         cursorOffset: Double, savedDisplaySeconds: Double, talliSize: Double, finishKey: Hotkey, cancelKey: Hotkey,
-        position: String = ""
+        position: String = "", previewCharacters: Int = 140
     ) {
         self.position = position
+        self.previewCharacters = previewCharacters
         self.talliSize = talliSize
         self.finishKey = finishKey
         self.cancelKey = cancelKey
@@ -276,7 +279,8 @@ public final class CompanionController {
                 hint: "\(settings.finishKey.displayLabel) save · \(settings.cancelKey.displayLabel) discard",
                 isShown: isShown,
                 cursor: { [weak self] in self?.cursorInPanel() },
-                talliSize: settings.talliSize, panelSize: panelSize, pokes: pokes, stirs: stirs,
+                talliSize: settings.talliSize, previewCharacters: settings.previewCharacters, panelSize: panelSize,
+                pokes: pokes, stirs: stirs,
                 onSubmitTyped: { [weak self] in Task { await self?.submitTyped() } },
                 onOpenSaved: { [weak self] in self?.openSavedEntry() },
                 onDrag: { [weak self] in self?.drag() },

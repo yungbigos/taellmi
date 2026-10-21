@@ -14,6 +14,7 @@ struct CompanionView: View {
     /// The pointer in the panel's SwiftUI global coordinates, for tälli to watch.
     var cursor: @MainActor () -> CGPoint?
     var talliSize: CGFloat
+    var previewCharacters: Int
     var panelSize: CGSize
     /// Clicks on tälli and moments it was carried, counted by the controller.
     var pokes: Int
@@ -63,11 +64,16 @@ struct CompanionView: View {
             } else if let error = model.errorMessage {
                 Text(error).brandStatus(.problem)
             } else {
-                Text(model.livePreviewText.isEmpty ? "listening …" : model.livePreviewText)
-                    .foregroundStyle(model.livePreviewText.isEmpty ? .secondary : .primary)
-                    .lineLimit(4)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .brandAnimation(\.crossfade, value: model.livePreviewText)
+                // The end of what you're saying, so the newest words are always in view.
+                Text(
+                    model.livePreviewText.isEmpty
+                        ? "listening …"
+                        : LivePreviewTail.tail(of: model.livePreviewText, maxCharacters: previewCharacters)
+                )
+                .foregroundStyle(model.livePreviewText.isEmpty ? .secondary : .primary)
+                .lineLimit(4)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .brandAnimation(\.crossfade, value: model.livePreviewText)
                 TextField("or type …", text: $model.typedText)
                     .textFieldStyle(.plain)
                     .focused($typingFocused)

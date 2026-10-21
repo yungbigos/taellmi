@@ -259,7 +259,8 @@ public final class AppEnvironment {
                 ?? .enter,
             cancelKey: (try? settings.string(SettingKeys.companionCancelKey)).flatMap { try? Hotkey(parsingKey: $0) }
                 ?? .escape,
-            position: (try? settings.string(SettingKeys.companionPosition)) ?? "")
+            position: (try? settings.string(SettingKeys.companionPosition)) ?? "",
+            previewCharacters: Int((try? settings.number(SettingKeys.companionPreviewCharacters)) ?? 140))
     }
 
     /// Remembers where you dropped tälli.

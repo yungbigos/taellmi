@@ -102,6 +102,8 @@ public protocol ExploreLibrary: Sendable {
     func renameFolder(_ id: String, to name: String) async throws
     func deleteFolder(_ id: String) async throws
     func file(_ entryID: String, in folderID: String?) async throws
+    /// The folder a thought is filed in, if any.
+    func folderID(of entryID: String) async throws -> String?
     /// Gives a thought another date and time; its Text stays as it is.
     func setDate(id: String, to date: Date) async throws
     /// Turns the chosen note files and folders into thoughts from Apple Notes, skipping notes already here.
@@ -374,10 +376,46 @@ public final class ExploreViewModel {
     }
 
     /// Opens a search result and keeps showing what was searched for in it, e.g. after choosing it in ⌘K.
+    /// Goes to a search result in the view you're in, with what was searched for kept marked in it (⌘K):
+    /// flow scrolls to it, stack opens its folder (or the loose thoughts) and the thought, time moves to its
+    /// day, space opens its first concept (or flow, when it has none).
     public func open(_ hit: SearchHit, searchedFor text: String) async {
-        await select(hit.id)
-        guard detail?.entry.id == hit.id else { return }
+        switch view {
+        case .flow:
+            await goInFlow(to: hit.id)
+        case .stack:
+            let inGroup = (try? await library.thoughtIDs(in: stackGroup)) ?? []
+            if !inGroup.contains(hit.id) {
+                let folder = try? await library.folderID(of: hit.id)
+                stackGroup = folder.map(StackGroup.folder) ?? .loose
+                await refresh()
+            }
+            await select(hit.id)
+            scrollRequest = ScrollRequest(entryID: hit.id)
+        case .time:
+            timeRange = TimelineRange(zoom: timeRange.zoom, anchor: hit.entry.createdAt)
+            await refresh()
+            await select(hit.id)
+        case .space:
+            if let concept = (try? await library.meaning(id: hit.id))?.concepts.first {
+                await openConcept(concept.id)
+            } else {
+                await goInFlow(to: hit.id)
+            }
+        }
         openedSearch = OpenedSearch(text: text, hit: hit)
+    }
+
+    /// flow, scrolled to a thought; a filter that hides it is dropped.
+    private func goInFlow(to id: String) async {
+        if view != .flow { await show(view: .flow) }
+        if !flowEntries.contains(where: { $0.id == id }) {
+            query.period = .all
+            query.sources = nil
+            await refresh()
+        }
+        await select(id)
+        scrollRequest = ScrollRequest(entryID: id)
     }
 
     /// The search that applies to a thought: the window's search field, or the search it was opened from.

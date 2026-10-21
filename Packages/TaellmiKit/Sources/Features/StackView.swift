@@ -57,6 +57,22 @@ struct StackView: View {
     // MARK: The chosen group, like flow
 
     private var column: some View {
+        ScrollViewReader { proxy in
+            columnScroll
+                .onAppear { if let id = model.scrollTarget { proxy.scrollTo(id, anchor: .center) } }
+                .onChange(of: model.scrollRequest) { _, request in
+                    guard let request else { return }
+                    proxy.scrollTo(request.entryID, anchor: .center)
+                    // A far thought is laid out only on the way; a second jump lands it exactly.
+                    Task { @MainActor in
+                        try? await Task.sleep(for: .milliseconds(250))
+                        proxy.scrollTo(request.entryID, anchor: .center)
+                    }
+                }
+        }
+    }
+
+    private var columnScroll: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 18) {
                 VStack(alignment: .leading, spacing: brand.space(.xs)) {

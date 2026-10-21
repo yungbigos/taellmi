@@ -6,6 +6,11 @@ import SwiftUI
 struct TimeView: View {
     @Bindable var model: ExploreViewModel
     @State private var hovered: TimelineMark?
+    @Environment(\.brand) private var brand
+
+    private var chosenPreview: String? {
+        model.detail.map { CaptureViewModel.preview(of: $0.entry) }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -28,7 +33,7 @@ struct TimeView: View {
                     }
                 }
             }
-            Text(hovered?.preview ?? " ")
+            Text(hovered?.preview ?? chosenPreview ?? " ")
                 .lineLimit(2)
                 .brandForeground(.quiet)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -46,6 +51,12 @@ struct TimeView: View {
             }
         }
         .frame(width: side, height: side)
+        .overlay {
+            // The thought you went to (e.g. from ⌘K) is ringed.
+            if mark.id == model.selectedID {
+                Circle().strokeBorder(brand?.color(.blue) ?? .accentColor, lineWidth: 2).padding(-5)
+            }
+        }
         .onHover { inside in hovered = inside ? mark : (hovered == mark ? nil : hovered) }
         .onTapGesture {
             Task {

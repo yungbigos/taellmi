@@ -96,6 +96,8 @@ public actor FakeLibrary: ExploreLibrary {
         publish()
     }
 
+    public func folderID(of entryID: String) async throws -> String? { filedIn[entryID] }
+
     public func file(_ entryID: String, in folderID: String?) async throws {
         filedIn[entryID] = folderID
         publish()

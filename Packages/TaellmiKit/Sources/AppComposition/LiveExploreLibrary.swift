@@ -106,6 +106,10 @@ nonisolated struct LiveExploreLibrary: ExploreLibrary {
         try curation?.deleteFolder(id)
     }
 
+    func folderID(of entryID: String) async throws -> String? {
+        try curation?.filed()[entryID]
+    }
+
     func file(_ entryID: String, in folderID: String?) async throws {
         try curation?.file(entryID, in: folderID)
     }

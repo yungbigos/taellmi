@@ -26,6 +26,8 @@ struct HighlightingTextEditor: NSViewRepresentable {
     var onCancel: (() -> Void)?
     /// tällmi's own actions in the text's right-click menu (delete, move to folder, …).
     var menuItems: [EditorMenuItem] = []
+    /// Called when the text loses the keyboard (you clicked elsewhere): flow and stack go back to read mode.
+    var onEndEditing: (() -> Void)?
     @Environment(\.brand) private var brand
     @Environment(\.colorSchemeContrast) private var contrast
 
@@ -75,6 +77,7 @@ struct HighlightingTextEditor: NSViewRepresentable {
         coordinator.shortcuts = shortcuts
         coordinator.onCancel = onCancel
         coordinator.menuItems = menuItems
+        coordinator.onEndEditing = onEndEditing
         coordinator.formatting = formatting
         guard let textView = coordinator.textView else { return }
         // While a character is being composed (e.g. option-u for ü), leave the view alone.
@@ -153,6 +156,7 @@ struct HighlightingTextEditor: NSViewRepresentable {
         var shortcuts: [Command: Hotkey] = [:]
         var onCancel: (() -> Void)?
         var menuItems: [EditorMenuItem] = []
+        var onEndEditing: (() -> Void)?
         weak var formatting: FormattingFocus?
         var scrolledKey: String?
         var styledWith: StyleKey?
@@ -254,6 +258,10 @@ struct HighlightingTextEditor: NSViewRepresentable {
         }
 
         // MARK: Typing
+
+        func textDidEndEditing(_ notification: Notification) {
+            onEndEditing?()
+        }
 
         func textView(_ view: NSTextView, menu: NSMenu, for event: NSEvent, at charIndex: Int) -> NSMenu? {
             guard !menuItems.isEmpty else { return menu }

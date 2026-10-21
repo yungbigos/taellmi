@@ -23,6 +23,8 @@ struct ThoughtBlock: View {
     /// The text last handed to save; a newer text from the Archive is only taken while nothing newer is typed.
     @State private var lastSaved = ""
     @State private var saveTask: Task<Void, Never>?
+    /// Read mode by default; the editor only while you work in this thought.
+    @State private var isEditing = false
 
     private var when: some View {
         VStack(spacing: 4) {
@@ -45,10 +47,21 @@ struct ThoughtBlock: View {
             .frame(width: 44)
             VStack(alignment: .leading, spacing: 4) {
                 if isRelated { RelatedLabel() }
-                HighlightingTextEditor(
-                    text: $text, highlights: highlights(text), grows: true, formatting: formatting,
-                    shortcuts: shortcuts, menuItems: menuItems
-                )
+                Group {
+                    if isEditing {
+                        HighlightingTextEditor(
+                            text: $text, highlights: highlights(text), grows: true, formatting: formatting,
+                            shortcuts: shortcuts, focusOnAppear: true, menuItems: menuItems,
+                            onEndEditing: { isEditing = false }
+                        )
+                    } else {
+                        ReadingTextView(text: text, highlights: highlights(text))
+                            .contentShape(Rectangle())
+                            .onTapGesture { isEditing = true }
+                            .accessibilityAddTraits(.isButton)
+                            .accessibilityHint("edit this thought")
+                    }
+                }
                 .onChange(of: text) { _, newText in
                     guard newText != entry.text else { return }
                     saveTask?.cancel()

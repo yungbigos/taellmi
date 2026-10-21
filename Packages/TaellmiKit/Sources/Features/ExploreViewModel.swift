@@ -48,8 +48,8 @@ struct OpenedSearch: Equatable {
 }
 
 /// A part of a thought's text to highlight while a search is active.
-public struct TextHighlight: Sendable, Equatable {
-    public enum Kind: Sendable, Equatable {
+public struct TextHighlight: Sendable, Hashable {
+    public enum Kind: Sendable, Hashable {
         /// A search word.
         case word
         /// The passage that made a related thought match by meaning.

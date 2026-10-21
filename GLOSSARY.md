@@ -45,6 +45,11 @@ The folder holding every Entry. It is encrypted by default, lives in the app's L
 _In the app_: not shown; the window is just tällmi
 _Avoid_: Vault, library, database
 
+**Folder**:
+A collection of Entries you make by hand. An Entry lives in at most one Folder; one in none is loose. Folders are Curation: they live in the Archive and never change by themselves.
+_In the app_: folder; "loose thoughts" for those in none
+_Avoid_: Notebook, collection, tag, album
+
 **Retention**:
 How long Recordings are kept before they are deleted or moved elsewhere. The Text is kept forever.
 _In the app_: "keep recordings for …"

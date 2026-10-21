@@ -82,7 +82,8 @@ struct ExploreViewModelTests {
         await model.select("a")
         await model.trashSelected()
         #expect(model.entries.map(\.id) == ["b"])
-        #expect(model.detail == nil)
+        // stack always shows a thought: the next newest opens.
+        #expect(model.detail?.entry.id == "b")
         await model.undoTrash()
         #expect(model.entries.map(\.id) == ["a", "b"])
     }

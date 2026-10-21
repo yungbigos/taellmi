@@ -84,7 +84,7 @@ public struct ExploreView: View {
             trashList.background { readingGround }
         } else {
             switch model.view {
-            case .stack: splitView
+            case .stack: StackView(model: model).background { readingGround }
             case .flow:
                 // The rail floats over the page, at the side of the reading column.
                 FlowView(model: model)
@@ -126,79 +126,11 @@ public struct ExploreView: View {
         Task { await model.perform(command) }
     }
 
-    /// stack: the list of thoughts, and the open thought.
-    /// The list floats as a glass island on the left, like the bars; the open thought fills the rest.
-    private var splitView: some View {
-        HStack(spacing: brand.space(.l)) {
-            entryList
-                .frame(width: brand.map { CGFloat($0.space.listWidthPt.ideal) } ?? 300)
-                .floatingPanel()
-                .padding([.leading, .top, .bottom], brand.space(.l))
-            Group {
-                if let detail = model.detail {
-                    // One editor per thought, so undo history never crosses from one thought to another.
-                    EntryDetailView(model: model, detail: detail).id(detail.entry.id)
-                } else {
-                    ContentUnavailableView("no thought selected", systemImage: "text.alignleft")
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
-        .background { readingGround }
-    }
-
     /// The page under your thoughts. It runs on under the toolbar and the bar, so both float over it as glass.
     private var readingGround: some View {
         BrandSurfaceBackground(kind: .reading, radius: nil)
             .backgroundExtensionEffect()
             .ignoresSafeArea()
-    }
-
-    private var entryList: some View {
-        // tällmi draws the selected row itself: the system highlight turns grey whenever the list loses
-        // keyboard focus (e.g. to the open thought), which looked like a flicker.
-        List(model.entries) { entry in
-            // One line per thought: what it says, and when. Everything else is in the open thought's details.
-            // While searching, the line shows the part around the match with the words marked instead.
-            HStack(alignment: .firstTextBaseline, spacing: brand.space(.s)) {
-                if let snippet = model.snippets[entry.id] {
-                    HighlightedText(text: snippet.text, ranges: snippet.ranges)
-                        .lineLimit(1)
-                        .brandForeground(.ink)
-                } else {
-                    Text(entry.text.isEmpty ? "transcribing …" : CaptureViewModel.preview(of: entry))
-                        .lineLimit(1)
-                        .brandForeground(entry.text.isEmpty ? .quiet : .ink)
-                }
-                Spacer(minLength: brand.space(.s))
-                if model.isRelated(entry.id) { RelatedLabel() }
-                Text(ThoughtMeta.short(entry.createdAt))
-                    .brandFont("text.label").monospacedDigit().brandForeground(.quiet)
-            }
-            .padding(.vertical, brand.space(.xs))
-            .contentShape(Rectangle())
-            .onTapGesture { model.choose(entry.id) }
-            .listRowSeparator(.hidden)
-            .listRowBackground(
-                model.selectedID == entry.id ? BrandFillBackground(name: .selectedRow, radius: .field) : nil
-            )
-            .accessibilityAddTraits(model.selectedID == entry.id ? [.isSelected, .isButton] : .isButton)
-        }
-        .onMoveCommand { direction in
-            switch direction {
-            case .up: model.moveSelection(by: -1)
-            case .down: model.moveSelection(by: 1)
-            default: break
-            }
-        }
-        .scrollContentBackground(.hidden)
-        .overlay {
-            if model.entries.isEmpty {
-                ContentUnavailableView(
-                    model.query.text.isEmpty ? "no thoughts yet." : "nothing found.", systemImage: "magnifyingglass"
-                )
-            }
-        }
     }
 
     private var trashList: some View {
@@ -231,80 +163,6 @@ public struct ExploreView: View {
         case .month: "last 30 days"
         case .year: "last year"
         }
-    }
-}
-
-/// The open Entry: only your text, in a calm reading column, under one quiet line of when and how. Its details
-/// (recording, transcript, spellings) live in the inspector on the right.
-struct EntryDetailView: View {
-    @Bindable var model: ExploreViewModel
-    let detail: EntryDetail
-    @Environment(\.undoManager) private var undoManager
-    @Environment(\.brand) private var brand
-    @AppStorage("explore.showsDetails") private var showsDetails = true
-
-    var body: some View {
-        // The details float as a glass panel on the right, like the list on the left.
-        HStack(spacing: brand.space(.l)) {
-            reading
-            if showsDetails {
-                ThoughtDetailsView(
-                    detail: detail, playbackRequest: model.playbackRequest,
-                    changeDate: model.canChangeDate ? { date in Task { await model.changeDate(to: date) } } : nil
-                )
-                .frame(width: brand.map { CGFloat($0.space.inspectorWidthPt.ideal) } ?? 260)
-                .floatingPanel()
-                .padding([.trailing, .top, .bottom], brand.space(.l))
-                .transition(.move(edge: .trailing).combined(with: .opacity))
-            }
-        }
-        .brandAnimation(\.crossfade, value: showsDetails)
-    }
-
-    private var reading: some View {
-        VStack(alignment: .leading, spacing: brand.space(.l)) {
-            Text(
-                ThoughtMeta.line(
-                    createdAt: detail.entry.createdAt, source: detail.entry.source,
-                    durationSeconds: detail.entry.durationSeconds)
-            )
-            .brandFont("text.label")
-            .brandForeground(.quiet)
-            HighlightingTextEditor(
-                text: $model.editorText,
-                highlights: model.highlights(in: model.editorText, entryID: detail.entry.id),
-                scrollKey: model.highlightKey(for: detail.entry.id),
-                formatting: model.formatting, shortcuts: model.shortcuts
-            )
-        }
-        .frame(maxWidth: brand.map { CGFloat($0.space.readingWidthPt) } ?? .infinity, alignment: .leading)
-        .padding(.horizontal, brand.space(.xxxl))
-        .padding(.top, brand.space(.xl))
-        .padding(.bottom, brand.space(.l))
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .toolbar {
-            ToolbarItemGroup(placement: .primaryAction) {
-                Button(role: .destructive) {
-                    Task {
-                        await model.trashSelected()
-                        undoManager?.registerUndo(withTarget: model) { model in
-                            Task { await model.undoTrash() }
-                        }
-                        undoManager?.setActionName("delete thought")
-                    }
-                } label: {
-                    Label("delete thought", systemImage: "trash")
-                }
-                .help("delete thought")
-                Button {
-                    showsDetails.toggle()
-                } label: {
-                    Label("details", systemImage: "sidebar.right")
-                }
-                .help(showsDetails ? "hide details" : "show details")
-            }
-        }
-        .onDisappear { Task { await model.saveIfNeeded() } }
     }
 }
 

@@ -9,6 +9,9 @@ public actor FakeLibrary: ExploreLibrary {
     private var meanings: [String: ThoughtMeaning] = [:]
     private var conceptList: [ConceptSummary] = []
     private var conceptDetails: [String: ConceptDetail] = [:]
+    private var conceptMentions: [String: [String]] = [:]
+    private var folderList: [ThoughtFolder] = []
+    private var filedIn: [String: String] = [:]
     private var entries: [Entry]
     private var trash: [String: Entry] = [:]
     private var trashListingFails = false
@@ -49,9 +52,53 @@ public actor FakeLibrary: ExploreLibrary {
         publish()
     }
 
-    public func setConcepts(_ concepts: [ConceptSummary], details: [ConceptDetail] = []) {
+    /// `mentions`: which thoughts name each concept, for stack's concept groups.
+    public func setConcepts(
+        _ concepts: [ConceptSummary], details: [ConceptDetail] = [], mentions: [String: [String]] = [:]
+    ) {
         conceptList = concepts
         conceptDetails = Dictionary(uniqueKeysWithValues: details.map { ($0.concept.id, $0) })
+        conceptMentions = mentions
+    }
+
+    public func stackIndex() async throws -> StackIndex {
+        StackIndex(
+            folders: folderList.map { folder in
+                FolderSummary(folder: folder, count: filedIn.values.filter { $0 == folder.id }.count)
+            },
+            concepts: conceptList, looseCount: entries.filter { filedIn[$0.id] == nil }.count)
+    }
+
+    public func thoughtIDs(in group: StackGroup) async throws -> Set<String> {
+        switch group {
+        case .loose: Set(entries.map(\.id).filter { filedIn[$0] == nil })
+        case .folder(let id): Set(filedIn.filter { $0.value == id }.keys)
+        case .concept(let id): Set(conceptMentions[id] ?? [])
+        }
+    }
+
+    public func createFolder(named name: String) async throws -> ThoughtFolder {
+        let folder = ThoughtFolder(id: "folder-\(folderList.count + 1)", name: name)
+        folderList.append(folder)
+        publish()
+        return folder
+    }
+
+    public func renameFolder(_ id: String, to name: String) async throws {
+        guard let index = folderList.firstIndex(where: { $0.id == id }) else { throw CocoaError(.fileNoSuchFile) }
+        folderList[index].name = name
+        publish()
+    }
+
+    public func deleteFolder(_ id: String) async throws {
+        folderList.removeAll { $0.id == id }
+        filedIn = filedIn.filter { $0.value != id }
+        publish()
+    }
+
+    public func file(_ entryID: String, in folderID: String?) async throws {
+        filedIn[entryID] = folderID
+        publish()
     }
 
     public func meaning(id: String) async throws -> ThoughtMeaning {

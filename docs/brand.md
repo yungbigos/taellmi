@@ -151,7 +151,7 @@ Rules:
   Quiet fills on top (the live transcript box, the highlighted ⌘K row, search matches, marks on the time axis) are named tokens in `fill`; corner radii are in `shape`.
 - **Space on a 4 pt grid.** Views use the named steps in `space.scale` (xs 4 · s 8 · m 12 · l 16 · xl 24 · xxl 32 · xxxl 48), never their own numbers. Your text sits in a reading column of at most 680 pt.
 - **flow is where the window opens** (setting `explore.start_view`).
-- **stack keeps one line per thought**: what it says and when. The open thought shows only your text under one quiet line (day · time · spoken or typed · length). Its details (recording, transcript, spellings, and later people, places, topics and connections) live in the inspector on the right.
+- **stack sorts by meaning where flow sorts by time.** A floating index lists your folders, then people, places, topics and feelings, then the loose thoughts in no folder. The chosen group reads exactly like flow (same thought blocks, same column), so switching feels like a toggle, not another app. The open thought's details (recording, transcript, spellings) float on the right.
 - **Accessibility wins over the look.** With Reduce Transparency every surface becomes solid paper. With Increase Contrast it becomes solid paper with a thin quiet outline, and the fills get stronger. Errors and warnings stay in the macOS red and orange.
 - **All lowercase is deliberate.** Apple's guidelines ask for title case in menus and buttons. We chose lowercase, knowingly, for everything we draw.
 
@@ -268,7 +268,7 @@ Domain terms stay in code and docs. Users see the UI word. If a term has no UI w
 
 | Key | View | What it is |
 |---|---|---|
-| ⌘1 | **stack** (provisional) | the list: find, filter, edit single thoughts |
+| ⌘1 | **stack** | your thoughts by folder and by concept |
 | ⌘2 | **flow** | every thought as one long-form note you scroll through |
 | ⌘3 | **time** | zoomable time axis |
 | ⌘4 | **space** | the 3D world of your thoughts and constellations |

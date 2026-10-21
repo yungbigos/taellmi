@@ -151,3 +151,14 @@ public struct ConceptKind: Sendable, Equatable, Identifiable, Hashable {
         self.symbol = symbol
     }
 }
+
+/// A folder you made by hand to collect thoughts (Curation). A thought lives in at most one folder.
+public struct ThoughtFolder: Sendable, Equatable, Identifiable, Hashable {
+    public var id: String
+    public var name: String
+
+    public init(id: String, name: String) {
+        self.id = id
+        self.name = name
+    }
+}

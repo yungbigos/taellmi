@@ -94,6 +94,14 @@ public protocol ExploreLibrary: Sendable {
     func conceptDetail(id: String) async throws -> ConceptDetail
     /// Your own summary for a thought; `nil` brings back the generated one.
     func saveSummary(id: String, text: String?) async throws
+    /// stack's index: your folders, the concepts, and how many thoughts are loose.
+    func stackIndex() async throws -> StackIndex
+    /// The thoughts in a group of stack.
+    func thoughtIDs(in group: StackGroup) async throws -> Set<String>
+    func createFolder(named name: String) async throws -> ThoughtFolder
+    func renameFolder(_ id: String, to name: String) async throws
+    func deleteFolder(_ id: String) async throws
+    func file(_ entryID: String, in folderID: String?) async throws
     /// Gives a thought another date and time; its Text stays as it is.
     func setDate(id: String, to date: Date) async throws
     /// Turns the chosen note files and folders into thoughts from Apple Notes, skipping notes already here.
@@ -118,6 +126,9 @@ public final class ExploreViewModel {
     /// In space: every concept, and the one chosen with everything connected to it.
     public private(set) var concepts: [ConceptSummary] = []
     public private(set) var conceptKinds: [ConceptKind] = []
+    /// stack: the group shown (a folder, a concept, or the loose thoughts) and the index beside it.
+    public internal(set) var stackGroup: StackGroup = .loose
+    public internal(set) var stackIndex: StackIndex = .empty
     public private(set) var conceptDetail: ConceptDetail?
     /// In space: the concepts you picked to filter by, in the order you picked them.
     public private(set) var pickedConcepts: [String] = []
@@ -164,13 +175,13 @@ public final class ExploreViewModel {
     private static let rowSnippetLength = 90
     public private(set) var trashedEntries: [TrashedEntry] = []
     public private(set) var detail: EntryDetail?
-    public private(set) var errorMessage: String?
+    public internal(set) var errorMessage: String?
     /// The Text being edited; saved automatically shortly after you stop typing.
     public var editorText = "" {
         didSet { scheduleAutosave() }
     }
 
-    @ObservationIgnored private let library: any ExploreLibrary
+    @ObservationIgnored let library: any ExploreLibrary
     /// tälli's capture, so the composer can listen like tälli at the cursor.
     public let capture: CaptureViewModel?
     @ObservationIgnored private let autosaveDelay: Duration
@@ -552,7 +563,7 @@ public final class ExploreViewModel {
     }
 
     /// stack always shows a thought: with nothing chosen, the newest one opens.
-    private func openNewestIfNothingOpen() async {
+    func openNewestIfNothingOpen() async {
         guard view == .stack, !showsTrash, selectedID == nil, let newest = entries.first else { return }
         await select(newest.id)
     }
@@ -594,8 +605,16 @@ public final class ExploreViewModel {
                 // space lists concepts (loaded below); it shows no thoughts of its own.
             } else if view == .stack {
                 let asked = query
-                let found = try await library.search(asked)
+                let index = try await library.stackIndex()
+                var group = stackGroup
+                // A folder or concept that is gone (deleted, merged) falls back to the loose thoughts.
+                if case .folder(let id) = group, !index.folders.contains(where: { $0.id == id }) { group = .loose }
+                if case .concept(let id) = group, !index.concepts.contains(where: { $0.id == id }) { group = .loose }
+                let inGroup = try await library.thoughtIDs(in: group)
+                let found = try await library.search(asked).filter { inGroup.contains($0.id) }
                 guard generation == refreshGeneration else { return }
+                stackIndex = index
+                stackGroup = group
                 entries = found.map(\.entry)
                 matches =
                     asked.words.isEmpty ? [:] : Dictionary(found.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
@@ -750,11 +769,20 @@ public final class ExploreViewModel {
 
     public func trashSelected() async {
         guard let id = detail?.entry.id else { return }
+        await trash(id)
+    }
+
+    /// Moves a thought to trash (undo brings it back); in stack the next newest one opens.
+    public func trash(_ id: String) async {
         await saveIfNeeded()
         do {
             lastTrashed = try await library.trash(id: id)
-            setDetail(nil)
+            if selectedID == id { setDetail(nil) }
+            // Gone from the list at once, so it is never picked as the next one to open.
+            entries.removeAll { $0.id == id }
             await refresh()
+            entries.removeAll { $0.id == id }
+            await openNewestIfNothingOpen()
         } catch {
             errorMessage = "couldn't move the thought to trash. try again."
         }

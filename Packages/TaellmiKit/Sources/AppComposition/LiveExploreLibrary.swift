@@ -61,6 +61,55 @@ nonisolated struct LiveExploreLibrary: ExploreLibrary {
         try curation?.setSummary(text, for: id)
     }
 
+    // MARK: stack: folders (curation.json) and concepts
+
+    func stackIndex() async throws -> StackIndex {
+        let library = self
+        return try await Task.detached(priority: .userInitiated) {
+            let folders = try library.curation?.folders() ?? []
+            let filed = try library.curation?.filed() ?? [:]
+            let all = Set(try library.index.allIDs())
+            let live = filed.filter { all.contains($0.key) }
+            return StackIndex(
+                folders: folders.map { folder in
+                    FolderSummary(folder: folder, count: live.values.filter { $0 == folder.id }.count)
+                },
+                concepts: try library.understandings?.concepts() ?? [],
+                looseCount: all.count - live.count)
+        }.value
+    }
+
+    func thoughtIDs(in group: StackGroup) async throws -> Set<String> {
+        let library = self
+        return try await Task.detached(priority: .userInitiated) {
+            let filed = try library.curation?.filed() ?? [:]
+            switch group {
+            case .loose: return Set(try library.index.allIDs()).filter { filed[$0] == nil }
+            case .folder(let id): return Set(filed.filter { $0.value == id }.keys)
+            case .concept(let id): return Set(try library.understandings?.entryIDs(mentioning: id) ?? [])
+            }
+        }.value
+    }
+
+    func createFolder(named name: String) async throws -> ThoughtFolder {
+        guard let curation else { throw CocoaError(.featureUnsupported) }
+        let folder = try curation.createFolder(named: name)
+        onChange()
+        return folder
+    }
+
+    func renameFolder(_ id: String, to name: String) async throws {
+        try curation?.renameFolder(id, to: name)
+    }
+
+    func deleteFolder(_ id: String) async throws {
+        try curation?.deleteFolder(id)
+    }
+
+    func file(_ entryID: String, in folderID: String?) async throws {
+        try curation?.file(entryID, in: folderID)
+    }
+
     /// Newest first without search words; with them, thoughts with the words, then related ones.
     func search(_ query: EntryQuery) async throws -> [SearchHit] {
         try await search.hits(query)

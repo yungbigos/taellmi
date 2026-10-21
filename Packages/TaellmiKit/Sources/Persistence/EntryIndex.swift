@@ -78,6 +78,11 @@ public struct EntryIndex: Sendable {
         }
     }
 
+    /// Every Entry's id (Trash excluded, which isn't in the index).
+    public func allIDs() throws -> [String] {
+        try database.reader.read { db in try String.fetchAll(db, sql: "SELECT id FROM entry") }
+    }
+
     /// Fires after every change to the Entries table.
     public func changes() -> AsyncStream<Void> {
         let writer = database.writer

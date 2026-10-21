@@ -106,6 +106,16 @@ nonisolated struct LiveExploreLibrary: ExploreLibrary {
         try curation?.deleteFolder(id)
     }
 
+    func conceptCuration() async throws -> ConceptCuration {
+        try curation?.conceptCuration() ?? ConceptCuration()
+    }
+
+    func saveConceptCuration(_ concepts: ConceptCuration, addSpelling: String?) async throws {
+        try curation?.setConceptCuration(concepts, addingTerm: addSpelling)
+        let library = self
+        try await Task.detached(priority: .userInitiated) { try library.understandings?.apply(concepts) }.value
+    }
+
     func folderID(of entryID: String) async throws -> String? {
         try curation?.filed()[entryID]
     }

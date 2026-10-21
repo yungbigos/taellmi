@@ -183,3 +183,96 @@ struct ConceptKindConfigTests {
         #expect(kinds.first?.symbol == "person")
     }
 }
+
+@Suite("Your renames and merges reach the graph")
+struct ConceptCurationGraphTests {
+    typealias Harness = UnderstandingStoreTests.Harness
+
+    private func mention(_ kind: String, _ name: String, _ range: Range<Int>) -> ConceptMention {
+        ConceptMention(kind: kind, name: name, utf16Range: range)
+    }
+
+    @Test("merging moves every mention to the concept that stays, with its words still marked")
+    func merge() throws {
+        let h = try Harness()
+        try h.add("a", ["Mit Marlen."])
+        try h.add("b", ["Marlin kommt."])
+        try h.understand("a", summary: nil, [mention("person", "Marlen", 4..<10)])
+        try h.understand("b", summary: nil, [mention("person", "Marlin", 0..<6)])
+        var curation = ConceptCuration()
+        curation.merge(
+            [ConceptName(kind: "person", name: "Marlen"), ConceptName(kind: "person", name: "Marlin")],
+            into: ConceptName(kind: "person", name: "Malin"))
+        try h.store.apply(curation)
+        let concepts = try h.store.concepts()
+        #expect(concepts.map(\.name) == ["Malin"])
+        #expect(concepts.first?.thoughtCount == 2)
+        #expect(try h.store.understanding(entryID: "a")?.concepts.first?.utf16Ranges == [4..<10])
+    }
+
+    @Test("a thought understood again after a merge lands on the merged concept")
+    func newAnalysisFollows() throws {
+        let h = try Harness()
+        try h.add("a", ["Mit Marlen."])
+        var curation = ConceptCuration()
+        curation.rename(ConceptName(kind: "person", name: "Marlen"), to: "Malin")
+        let text = try #require(try h.index.entry(id: "a")).text
+        try h.store.replace(
+            entryID: "a", sourceText: text,
+            understanding: Understanding(summary: nil, mentions: [mention("person", "Marlen", 4..<10)]),
+            provenance: .init(modelID: "m", promptRefs: "p"), curation: curation)
+        #expect(try h.store.concepts().map(\.name) == ["Malin"])
+    }
+
+    @Test("a kind change moves the concept to its new kind")
+    func kind() throws {
+        let h = try Harness()
+        try h.add("a", ["Die Zeit schreibt."])
+        try h.understand("a", summary: nil, [mention("person", "Zeit", 4..<8)])
+        var curation = ConceptCuration()
+        curation.changeKind(ConceptName(kind: "person", name: "Zeit"), to: "topic")
+        try h.store.apply(curation)
+        #expect(try h.store.concepts().map(\.kind) == ["topic"])
+    }
+
+    @Test("splitting a merged name off (or undoing the merge) brings its own concept back in the graph")
+    func splitBack() throws {
+        let h = try Harness()
+        try h.add("a", ["Mit Marlen."])
+        try h.add("b", ["Malin kommt."])
+        try h.understand("a", summary: nil, [mention("person", "Marlen", 4..<10)])
+        try h.understand("b", summary: nil, [mention("person", "Malin", 0..<5)])
+        let marlen = ConceptName(kind: "person", name: "Marlen")
+        var curation = ConceptCuration()
+        curation.merge([marlen], into: ConceptName(kind: "person", name: "Malin"))
+        try h.store.apply(curation)
+        #expect(try h.store.concepts().map(\.name) == ["Malin"])
+        curation.split(marlen)
+        try h.store.apply(curation)
+        #expect(Set(try h.store.concepts().map(\.name)) == ["Malin", "Marlen"])
+        #expect(try h.store.understanding(entryID: "a")?.concepts.first?.name == "Marlen")
+    }
+
+    @Test("a passage naming both merged concepts keeps every word marked once")
+    func mergedRangesOnce() throws {
+        let h = try Harness()
+        try h.add("a", ["Marlen, also Malin."])
+        try h.understand(
+            "a", summary: nil, [mention("person", "Marlen", 0..<6), mention("person", "Malin", 13..<18)])
+        var curation = ConceptCuration()
+        curation.merge([ConceptName(kind: "person", name: "Marlen")], into: ConceptName(kind: "person", name: "Malin"))
+        try h.store.apply(curation)
+        #expect(try h.store.understanding(entryID: "a")?.concepts.first?.utf16Ranges == [0..<6, 13..<18])
+    }
+
+    @Test("a spelling-only rename changes the shown name")
+    func spellingOnly() throws {
+        let h = try Harness()
+        try h.add("a", ["Mit Malin."])
+        try h.understand("a", summary: nil, [mention("person", "Malin", 4..<9)])
+        var curation = ConceptCuration()
+        curation.rename(ConceptName(kind: "person", name: "Malin"), to: "MALIN")
+        try h.store.apply(curation)
+        #expect(try h.store.concepts().map(\.name) == ["MALIN"])
+    }
+}

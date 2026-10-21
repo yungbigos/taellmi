@@ -104,6 +104,10 @@ public protocol ExploreLibrary: Sendable {
     func file(_ entryID: String, in folderID: String?) async throws
     /// The folder a thought is filed in, if any.
     func folderID(of entryID: String) async throws -> String?
+    /// Your renames, merges and kind changes of concepts (curation.json).
+    func conceptCuration() async throws -> ConceptCuration
+    /// Saves them, rewires the concepts, and adds a spelling to your Vocabulary if given.
+    func saveConceptCuration(_ curation: ConceptCuration, addSpelling: String?) async throws
     /// Gives a thought another date and time; its Text stays as it is.
     func setDate(id: String, to date: Date) async throws
     /// Turns the chosen note files and folders into thoughts from Apple Notes, skipping notes already here.
@@ -132,7 +136,20 @@ public final class ExploreViewModel {
     public private(set) var conceptKinds: [ConceptKind] = []
     /// stack: the group shown (a folder, a concept, or the loose thoughts) and the index beside it.
     public internal(set) var stackGroup: StackGroup = .loose
-    public internal(set) var stackIndex: StackIndex = .empty
+    public internal(set) var stackIndex: StackIndex = .empty {
+        didSet { if stackIndex != oldValue { updateConceptSuggestions() } }
+    }
+    /// Your renames and merges of concepts, and the ones before each change (for undo).
+    public internal(set) var conceptCuration = ConceptCuration() {
+        didSet { if conceptCuration != oldValue { updateConceptSuggestions() } }
+    }
+    /// Concepts that may be the same one, computed when the index or your list changes (not on every redraw).
+    public internal(set) var conceptSuggestions: [[ConceptSummary]] = []
+    @ObservationIgnored var conceptQueue: Task<Bool, Never>?
+    @ObservationIgnored let suggestionRule: SuggestionRule
+    @ObservationIgnored var conceptHistory: [ConceptCuration] = []
+    /// A rename or merge being asked for (a sheet).
+    public var conceptEdit: ConceptEdit?
     public private(set) var conceptDetail: ConceptDetail?
     /// In space: the concepts you picked to filter by, in the order you picked them.
     public private(set) var pickedConcepts: [String] = []
@@ -210,8 +227,9 @@ public final class ExploreViewModel {
     public init(
         library: any ExploreLibrary, autosaveDelay: Duration, startView: ExploreViewKind = .stack,
         capture: CaptureViewModel? = nil, changeDebounce: Duration = .zero,
-        availableViews: [ExploreViewKind] = ExploreViewKind.allCases
+        availableViews: [ExploreViewKind] = ExploreViewKind.allCases, suggestionRule: SuggestionRule = SuggestionRule()
     ) {
+        self.suggestionRule = suggestionRule
         self.changeDebounce = changeDebounce
         let offered = availableViews.isEmpty ? ExploreViewKind.allCases : availableViews
         self.availableViews = offered
@@ -702,6 +720,7 @@ public final class ExploreViewModel {
                 guard generation == refreshGeneration else { return }
                 stackIndex = index
                 stackGroup = group
+                if let curation = try? await library.conceptCuration() { conceptCuration = curation }
                 entries = found.map(\.entry)
                 matches =
                     asked.words.isEmpty ? [:] : Dictionary(found.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })

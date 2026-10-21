@@ -54,6 +54,9 @@ public enum SettingKeys {
     public static let relatedThoughtsCount = "explore.related_count"
     /// Archive changes this close together (milliseconds) refresh the window once.
     public static let exploreChangeDebounceMs = "explore.change_debounce_ms"
+    /// "maybe the same": the shortest sound code that counts, and how many sounds may differ.
+    public static let conceptSuggestMinCode = "concepts.suggest_min_code"
+    public static let conceptSuggestMaxDistance = "concepts.suggest_max_distance"
     /// Meaning matches more than this below the best one are dropped (0 = off).
     public static let searchRelativeSimilarityWindow = "search.relative_similarity_window"
 
@@ -61,6 +64,7 @@ public enum SettingKeys {
     static let meaning = [
         fragmentTargetLength, fragmentMaxLength, embedBatchSize, searchRRFK, searchVectorCandidates,
         searchMinSimilarity, searchRelativeSimilarityWindow, relatedThoughtsCount, exploreChangeDebounceMs,
+        conceptSuggestMinCode, conceptSuggestMaxDistance,
     ]
     /// Colours, type, tälli's look and motion (docs/brand/tokens.json), shipped as `Seeds/brand.json`.
     public static let brandTokens = "brand.tokens"

@@ -86,6 +86,8 @@ struct ThoughtMeaningView: View {
     let openConcept: (String) -> Void
     let reveal: (String) -> Void
     let saveSummary: (String?) -> Void
+    /// The right-click menu of a badge (rename, merge, …).
+    var badgeMenu: ((ThoughtConcept) -> AnyView)?
     @State private var isEditing = false
     @State private var draft = ""
 
@@ -98,6 +100,7 @@ struct ThoughtMeaningView: View {
                         ConceptBadge(kind: concept.kind, symbol: kinds.symbol(concept.kind), name: concept.name) {
                             openConcept(concept.id)
                         }
+                        .contextMenu { badgeMenu?(concept) }
                     }
                 }
             }

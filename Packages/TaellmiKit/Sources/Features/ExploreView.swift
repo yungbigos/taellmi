@@ -46,6 +46,7 @@ public struct ExploreView: View {
             .toolbarBackgroundVisibility(.hidden, for: .windowToolbar)
             .background(CommandShortcutButtons(model: model))
             .sheet(isPresented: $model.isPaletteOpen) { CommandPaletteView(palette: palette) }
+            .sheet(item: $model.conceptEdit) { edit in ConceptEditSheet(model: model, edit: edit).brandStyle(brand) }
             .onChange(of: model.noteImportRequest) {
                 // After this view update (the ⌘K sheet may still be closing), so the picker doesn't block it.
                 Task { @MainActor in

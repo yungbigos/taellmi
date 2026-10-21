@@ -20,7 +20,14 @@ struct ThoughtBlockRow: View {
             changeDate: entry.source.isImported
                 ? { date in Task { await model.changeDate(of: entry.id, to: date) } } : nil,
             formatting: model.formatting, shortcuts: model.shortcuts,
-            menuItems: ThoughtActions.menuItems(model: model, entry: entry, undoManager: undoManager)
+            menuItems: ThoughtActions.menuItems(model: model, entry: entry, undoManager: undoManager),
+            badgeMenu: { concept in
+                AnyView(
+                    ConceptMenu(
+                        model: model,
+                        concept: ConceptSummary(id: concept.id, kind: concept.kind, name: concept.name, thoughtCount: 0)
+                    ))
+            }
         ) { text in
             await model.saveFlowText(id: entry.id, text: text)
         }

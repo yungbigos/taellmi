@@ -18,6 +18,7 @@ struct ThoughtBlock: View {
     let formatting: FormattingFocus
     let shortcuts: [Command: Hotkey]
     var menuItems: [EditorMenuItem] = []
+    var badgeMenu: ((ThoughtConcept) -> AnyView)?
     let save: (String) async -> Void
     @State private var text = ""
     /// The text last handed to save; a newer text from the Archive is only taken while nothing newer is typed.
@@ -73,7 +74,7 @@ struct ThoughtBlock: View {
                 if let meaning {
                     ThoughtMeaningView(
                         meaning: meaning, kinds: kinds, openConcept: openConcept, reveal: reveal,
-                        saveSummary: saveSummary)
+                        saveSummary: saveSummary, badgeMenu: badgeMenu)
                 }
             }
         }

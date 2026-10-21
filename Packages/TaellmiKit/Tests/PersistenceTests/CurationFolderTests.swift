@@ -54,3 +54,53 @@ struct CurationFolderTests {
         #expect(try store(dir).filed().isEmpty)
     }
 }
+
+@Suite("Concept renames kept in curation.json")
+struct CurationConceptTests {
+    @Test("renames and merges are saved next to the rest and come back after reopening")
+    func saved() throws {
+        let dir = try TemporaryDirectory()
+        let store = CurationStore(storage: PlainFolderStorage(root: dir.url))
+        try store.addToVocabulary("Malin")
+        var curation = ConceptCuration()
+        curation.rename(ConceptName(kind: "person", name: "Marlen"), to: "Malin")
+        try store.setConceptCuration(curation)
+        let reopened = CurationStore(storage: PlainFolderStorage(root: dir.url))
+        #expect(try reopened.conceptCuration() == curation)
+        #expect(try reopened.vocabulary().map(\.text) == ["Malin"])
+    }
+}
+
+@Suite("curation.json is written one change at a time")
+struct CurationConcurrencyTests {
+    @Test("many changes at once from different places all survive")
+    func concurrentWrites() async throws {
+        let dir = try TemporaryDirectory()
+        let store = CurationStore(storage: PlainFolderStorage(root: dir.url))
+        let folder = try store.createFolder(named: "Umzug")
+        await withTaskGroup(of: Void.self) { group in
+            for index in 0..<40 {
+                group.addTask {
+                    if index.isMultiple(of: 2) {
+                        try? store.file("e\(index)", in: folder.id)
+                    } else {
+                        try? store.setSummary("Satz \(index).", for: "e\(index)")
+                    }
+                }
+            }
+        }
+        #expect(try store.filed().count == 20)
+        #expect(try (0..<40).filter { !$0.isMultiple(of: 2) }.allSatisfy { try store.summary(for: "e\($0)") != nil })
+    }
+
+    @Test("a concept change and its spelling are saved together")
+    func conceptsAndSpelling() throws {
+        let dir = try TemporaryDirectory()
+        let store = CurationStore(storage: PlainFolderStorage(root: dir.url))
+        var curation = ConceptCuration()
+        curation.rename(ConceptName(kind: "person", name: "Marlen"), to: "Malin")
+        try store.setConceptCuration(curation, addingTerm: "Malin")
+        #expect(try store.conceptCuration() == curation)
+        #expect(try store.vocabulary().map(\.text) == ["Malin"])
+    }
+}

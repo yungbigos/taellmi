@@ -45,9 +45,17 @@ public struct UnderstandingStore: Sendable {
     @discardableResult
     public func replace(
         entryID: String, sourceText: String, understanding: Understanding, provenance: UnderstandingProvenance,
-        now: Date = Date()
+        curation: ConceptCuration = ConceptCuration(), now: Date = Date()
     ) throws -> Bool {
-        try database.writer.write { db in
+        // The model's names go through your renames and merges first; each word keeps the name the model used,
+        // so the graph can always be rebuilt from your list (split off, undo).
+        let origins = understanding.mentions.map { ConceptName(kind: $0.kind, name: $0.name) }
+        var understanding = understanding
+        understanding.mentions = understanding.mentions.map { mention in
+            let target = curation.resolve(ConceptName(kind: mention.kind, name: mention.name))
+            return ConceptMention(kind: target.kind, name: target.name, utf16Range: mention.utf16Range)
+        }
+        return try database.writer.write { db in
             guard
                 try String.fetchOne(db, sql: "SELECT text FROM entry WHERE id = ?", arguments: [entryID]) == sourceText
             else { return false }
@@ -83,8 +91,8 @@ public struct UnderstandingStore: Sendable {
                     provenance.modelID, provenance.promptRefs, now,
                 ])
             // Ranges per (passage, Concept); a mention outside every passage (not split yet) is skipped.
-            var ranges: [String: (fragment: String, concept: String, ranges: [[Int]])] = [:]
-            for mention in understanding.mentions {
+            var ranges: [String: (fragment: String, concept: String, ranges: [[Int]], origins: [ConceptName])] = [:]
+            for (mention, origin) in zip(understanding.mentions, origins) {
                 guard let fragment = fragments.first(where: { $0.range.contains(mention.utf16Range.lowerBound) })
                 else { continue }
                 let conceptID = Self.conceptID(kind: mention.kind, name: mention.name)
@@ -94,12 +102,12 @@ public struct UnderstandingStore: Sendable {
                         ON CONFLICT(id) DO NOTHING
                         """, arguments: [conceptID, mention.kind, mention.name, now])
                 let key = fragment.id + "\u{1}" + conceptID
-                ranges[key, default: (fragment.id, conceptID, [])].ranges.append(
+                ranges[key, default: (fragment.id, conceptID, [], [])].ranges.append(
                     [mention.utf16Range.lowerBound, mention.utf16Range.upperBound])
+                ranges[key]?.origins.append(origin)
             }
             for edge in ranges.values {
-                let evidence = String(
-                    decoding: try JSONEncoder().encode(["ranges": edge.ranges]), as: UTF8.self)
+                let evidence = try Self.encode(Evidence(ranges: edge.ranges, origins: edge.origins))
                 try db.execute(
                     sql: """
                         INSERT INTO edge (kind, from_id, to_id, evidence_json, method, model_id, prompt_ref, created_at)
@@ -127,6 +135,115 @@ public struct UnderstandingStore: Sendable {
                 continuation.yield()
             }
             continuation.onTermination = { _ in cancellable.cancel() }
+        }
+    }
+
+    /// The words a mentions edge marks, and for each the name the model used (older edges: none).
+    struct Evidence: Equatable {
+        var ranges: [[Int]]
+        var origins: [ConceptName]
+    }
+
+    static func encode(_ evidence: Evidence) throws -> String {
+        let value = JSONValue.object([
+            "ranges": .array(evidence.ranges.map { .array($0.map { .number(Double($0)) }) }),
+            "origins": .array(
+                evidence.origins.map { .object(["kind": .string($0.kind), "name": .string($0.name)]) }),
+        ])
+        return String(decoding: try JSONEncoder().encode(value), as: UTF8.self)
+    }
+
+    static func decode(_ json: String?, fallback: ConceptName) -> Evidence {
+        guard let json, let value = try? JSONDecoder().decode(JSONValue.self, from: Data(json.utf8)) else {
+            return Evidence(ranges: [], origins: [])
+        }
+        let ranges = (value.objectValue?["ranges"]?.arrayValue ?? []).map {
+            ($0.arrayValue ?? []).compactMap { $0.doubleValue.map(Int.init) }
+        }
+        let origins = (value.objectValue?["origins"]?.arrayValue ?? []).compactMap { item -> ConceptName? in
+            guard let kind = item.objectValue?["kind"]?.stringValue, let name = item.objectValue?["name"]?.stringValue
+            else { return nil }
+            return ConceptName(kind: kind, name: name)
+        }
+        // An edge from before origins were kept counts its words as the concept it points to.
+        return Evidence(
+            ranges: ranges, origins: origins.count == ranges.count ? origins : ranges.map { _ in fallback })
+    }
+
+    /// Brings the graph in line with your renames, merges and kind changes. It is rebuilt from what the model
+    /// named in each passage, sent through your list, so it follows the list both ways: a merge, a split, an
+    /// undo. Your words stay marked; nothing is written when nothing changed.
+    public func apply(_ curation: ConceptCuration) throws {
+        try database.writer.write { db in
+            let rows = try Row.fetchAll(
+                db,
+                sql: """
+                    SELECT e.id, e.from_id, e.to_id, e.evidence_json, e.model_id, e.prompt_ref, c.kind, c.label
+                    FROM edge e JOIN node c ON c.id = e.to_id WHERE e.kind = ?
+                    """, arguments: [GraphKinds.mentions])
+            struct Wanted {
+                var target: ConceptName
+                var evidence = Evidence(ranges: [], origins: [])
+                var modelID: String?
+                var promptRef: String?
+            }
+            var current: [String: Evidence] = [:]
+            var labels: [String: ConceptName] = [:]
+            var wanted: [String: Wanted] = [:]
+            for row in rows {
+                let fragment: String = row["from_id"]
+                let concept = ConceptName(kind: row["kind"], name: row["label"])
+                let evidence = Self.decode(row["evidence_json"], fallback: concept)
+                current[fragment + "\u{1}" + (row["to_id"] as String)] = evidence
+                labels[row["to_id"]] = concept
+                for (range, origin) in zip(evidence.ranges, evidence.origins) {
+                    let target = curation.resolve(origin)
+                    let key = fragment + "\u{1}" + Self.conceptID(kind: target.kind, name: target.name)
+                    var entry =
+                        wanted[key] ?? Wanted(target: target, modelID: row["model_id"], promptRef: row["prompt_ref"])
+                    if !zip(entry.evidence.ranges, entry.evidence.origins).contains(where: { $0.0 == range }) {
+                        entry.evidence.ranges.append(range)
+                        entry.evidence.origins.append(origin)
+                    }
+                    wanted[key] = entry
+                }
+            }
+            for key in wanted.keys {
+                let order = zip(wanted[key]!.evidence.ranges, wanted[key]!.evidence.origins)
+                    .sorted { ($0.0.first ?? 0) < ($1.0.first ?? 0) }
+                wanted[key]?.evidence = Evidence(ranges: order.map(\.0), origins: order.map(\.1))
+            }
+            let wantedLabels = Dictionary(
+                wanted.values.map { (Self.conceptID(kind: $0.target.kind, name: $0.target.name), $0.target) },
+                uniquingKeysWith: { first, _ in first })
+            let sameEdges =
+                Set(current.keys) == Set(wanted.keys)
+                && wanted.allSatisfy { current[$0.key] == $0.value.evidence }
+            let sameLabels = wantedLabels.allSatisfy { labels[$0.key]?.name == $0.value.name }
+            guard !(sameEdges && sameLabels) else { return }
+
+            let now = Date()
+            for (id, target) in wantedLabels {
+                try db.execute(
+                    sql: """
+                        INSERT INTO node (id, kind, label, method, created_at) VALUES (?, ?, ?, 'same_name@1', ?)
+                        ON CONFLICT(id) DO UPDATE SET label = excluded.label, kind = excluded.kind
+                        """, arguments: [id, target.kind, target.name, now])
+            }
+            try db.execute(sql: "DELETE FROM edge WHERE kind = ?", arguments: [GraphKinds.mentions])
+            for (key, entry) in wanted {
+                let fragment = String(key.split(separator: "\u{1}", maxSplits: 1).first ?? "")
+                try db.execute(
+                    sql: """
+                        INSERT INTO edge (kind, from_id, to_id, evidence_json, method, model_id, prompt_ref, created_at)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                        """,
+                    arguments: [
+                        GraphKinds.mentions, fragment, Self.conceptID(kind: entry.target.kind, name: entry.target.name),
+                        try Self.encode(entry.evidence), Self.method, entry.modelID, entry.promptRef, now,
+                    ])
+            }
+            try Self.pruneConcepts(db)
         }
     }
 
@@ -162,9 +279,9 @@ public struct UnderstandingStore: Sendable {
                     """, arguments: [GraphKinds.mentions, entryID])
             var concepts: [ThoughtConcept] = []
             for row in rows {
-                let evidence = try JSONDecoder().decode(
-                    [String: [[Int]]].self, from: Data((row["evidence_json"] as String).utf8))
-                let found = (evidence["ranges"] ?? []).compactMap { $0.count == 2 ? $0[0]..<$0[1] : nil }
+                let evidence = Self.decode(
+                    row["evidence_json"], fallback: ConceptName(kind: row["kind"], name: row["label"]))
+                let found = evidence.ranges.compactMap { $0.count == 2 ? $0[0]..<$0[1] : nil }
                 if let index = concepts.firstIndex(where: { $0.id == row["id"] as String }) {
                     concepts[index].utf16Ranges += found
                 } else {

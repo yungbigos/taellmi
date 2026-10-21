@@ -66,7 +66,7 @@ public actor FakeLibrary: ExploreLibrary {
             folders: folderList.map { folder in
                 FolderSummary(folder: folder, count: filedIn.values.filter { $0 == folder.id }.count)
             },
-            concepts: conceptList, looseCount: entries.filter { filedIn[$0.id] == nil }.count)
+            concepts: curatedConcepts, looseCount: entries.filter { filedIn[$0.id] == nil }.count)
     }
 
     public func thoughtIDs(in group: StackGroup) async throws -> Set<String> {
@@ -98,6 +98,35 @@ public actor FakeLibrary: ExploreLibrary {
 
     public func folderID(of entryID: String) async throws -> String? { filedIn[entryID] }
 
+    public private(set) var conceptCurationValue = ConceptCuration()
+    public private(set) var spellingsAdded: [String] = []
+
+    public func conceptCuration() async throws -> ConceptCuration { conceptCurationValue }
+
+    public func saveConceptCuration(_ curation: ConceptCuration, addSpelling: String?) async throws {
+        conceptCurationValue = curation
+        if let addSpelling { spellingsAdded.append(addSpelling) }
+        publish()
+    }
+
+    /// The concepts as your renames and merges make them: merged ones add up under the name that stays.
+    private var curatedConcepts: [ConceptSummary] {
+        var merged: [String: ConceptSummary] = [:]
+        var order: [String] = []
+        for concept in conceptList {
+            let source = ConceptName(kind: concept.kind, name: concept.name)
+            let target = conceptCurationValue.resolve(source)
+            // Untouched concepts keep their id; renamed and merged ones take the id of where they went.
+            let id = target == source && target.name == source.name ? concept.id : "concept:\(target.key)"
+            if merged[id] == nil {
+                order.append(id)
+                merged[id] = ConceptSummary(id: id, kind: target.kind, name: target.name, thoughtCount: 0)
+            }
+            merged[id]?.thoughtCount += concept.thoughtCount
+        }
+        return order.compactMap { merged[$0] }
+    }
+
     public func file(_ entryID: String, in folderID: String?) async throws {
         filedIn[entryID] = folderID
         publish()
@@ -117,7 +146,7 @@ public actor FakeLibrary: ExploreLibrary {
         return meaning
     }
 
-    public func concepts() async throws -> [ConceptSummary] { conceptList }
+    public func concepts() async throws -> [ConceptSummary] { curatedConcepts }
 
     public func conceptKinds() async throws -> [ConceptKind] {
         [

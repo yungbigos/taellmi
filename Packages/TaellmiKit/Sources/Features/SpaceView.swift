@@ -69,6 +69,7 @@ struct SpaceView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .contextMenu { ConceptMenu(model: model, concept: concept) }
         // Found by the model on this Mac, so marked as such (ADR 0006).
         .help(
             picked ? "stop filtering by \(concept.name)" : "found on this mac in your words. filter by \(concept.name)."

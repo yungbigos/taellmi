@@ -10,6 +10,8 @@ struct StackView: View {
     @AppStorage("explore.showsDetails") private var showsDetails = true
     @State private var newFolderName: String?
     @State private var renaming: (id: String, name: String)?
+    /// Concepts ⌘-clicked together, to merge them at once.
+    @State private var pickedConcepts: [ConceptSummary] = []
     @State private var position = ScrollPosition(idType: String.self)
     @State private var landing = ScrollLanding()
 
@@ -33,6 +35,8 @@ struct StackView: View {
             }
         }
         .brandAnimation(\.crossfade, value: showsDetails)
+        // A merge or rename changes the index; picks from before may point at concepts that are gone.
+        .onChange(of: model.stackIndex) { pickedConcepts = [] }
         .toolbar {
             ToolbarItemGroup(placement: .primaryAction) {
                 Button(role: .destructive) {
@@ -80,6 +84,11 @@ struct StackView: View {
                 VStack(alignment: .leading, spacing: brand.space(.xs)) {
                     Text(heading).brandFont("display.heading")
                     Text(subheading).brandFont("text.label").brandForeground(.quiet)
+                    if case .concept(let id) = model.stackGroup,
+                        let concept = model.stackIndex.concepts.first(where: { $0.id == id })
+                    {
+                        mergedNames(concept)
+                    }
                 }
                 .padding(.top, 24)
                 ForEach(model.entries) { entry in
@@ -102,6 +111,34 @@ struct StackView: View {
             if model.entries.isEmpty {
                 ContentUnavailableView(
                     model.query.text.isEmpty ? "nothing here yet." : "nothing found.", systemImage: "folder")
+            }
+        }
+    }
+
+    /// The names merged into this concept, each with an × to split it off again.
+    @ViewBuilder private func mergedNames(_ concept: ConceptSummary) -> some View {
+        let names = model.mergedNames(into: concept)
+        if !names.isEmpty {
+            WrappingRow {
+                Text("also").brandFont("text.label").brandForeground(.quiet)
+                ForEach(names, id: \.key) { name in
+                    Button {
+                        Task {
+                            if await model.split(name) { ConceptUndo.register(model, undoManager, "split off") }
+                        }
+                    } label: {
+                        HStack(spacing: brand.space(.xxs)) {
+                            Text(name.name)
+                            Image(systemName: "xmark").imageScale(.small)
+                        }
+                        .brandFont("text.label")
+                        .padding(.horizontal, brand.space(.s))
+                        .padding(.vertical, brand.space(.xxs))
+                        .brandFill(.field)
+                    }
+                    .buttonStyle(.plain)
+                    .help("split \(name.name) off again")
+                }
             }
         }
     }
@@ -167,15 +204,15 @@ struct StackView: View {
                     .padding(.horizontal, brand.space(.s))
                     .padding(.vertical, brand.space(.xs))
                 }
+                if !model.conceptSuggestions.isEmpty {
+                    sectionTitle("maybe the same")
+                    ForEach(model.conceptSuggestions, id: \.first?.id) { group in suggestion(group) }
+                }
                 ForEach(model.conceptKinds) { kind in
                     let concepts = model.stackIndex.concepts.filter { $0.kind == kind.id }
                     if !concepts.isEmpty {
                         sectionTitle(kind.plural)
-                        ForEach(concepts) { concept in
-                            row(
-                                concept.name, symbol: kind.symbol, count: concept.thoughtCount,
-                                group: .concept(concept.id))
-                        }
+                        ForEach(concepts) { concept in conceptRow(concept, symbol: kind.symbol) }
                     }
                 }
                 sectionTitle("not filed")
@@ -193,8 +230,50 @@ struct StackView: View {
             .padding(.top, brand.space(.m))
     }
 
-    private func row(_ name: String, symbol: String, count: Int, group: StackGroup) -> some View {
+    /// A concept in the index: click shows it, ⌘-click picks several to merge, right-click edits it.
+    private func conceptRow(_ concept: ConceptSummary, symbol: String) -> some View {
+        let picked = pickedConcepts.contains { $0.id == concept.id }
+        return row(concept.name, symbol: symbol, count: concept.thoughtCount, group: .concept(concept.id)) {
+            if NSEvent.modifierFlags.contains(.command) {
+                if picked { pickedConcepts.removeAll { $0.id == concept.id } } else { pickedConcepts.append(concept) }
+                return true
+            }
+            pickedConcepts = []
+            return false
+        }
+        .background {
+            if picked { BrandFillBackground(name: .selectedRow, radius: .field) }
+        }
+        .contextMenu { ConceptMenu(model: model, concept: concept, selection: pickedConcepts) }
+    }
+
+    /// Names that sound alike: merge them in one step, or say they are different.
+    private func suggestion(_ group: [ConceptSummary]) -> some View {
+        HStack(spacing: brand.space(.xs)) {
+            Text(group.map(\.name).joined(separator: " · ")).lineLimit(2).brandFont("text.label")
+            Spacer(minLength: brand.space(.xs))
+            Button("merge …") { model.conceptEdit = .merge(group) }
+                .buttonStyle(.link)
+                .brandFont("text.label")
+            Button {
+                Task { await model.dismissSuggestion(group) }
+            } label: {
+                Image(systemName: "xmark").imageScale(.small)
+            }
+            .buttonStyle(.plain)
+            .brandForeground(.quiet)
+            .help("not the same")
+            .accessibilityLabel("not the same")
+        }
+        .padding(.horizontal, brand.space(.s))
+        .padding(.vertical, brand.space(.xxs))
+    }
+
+    private func row(
+        _ name: String, symbol: String, count: Int, group: StackGroup, intercept: @escaping () -> Bool = { false }
+    ) -> some View {
         Button {
+            guard !intercept() else { return }
             Task { await model.chooseGroup(group) }
         } label: {
             HStack(spacing: brand.space(.s)) {

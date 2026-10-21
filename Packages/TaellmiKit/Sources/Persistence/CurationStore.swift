@@ -13,6 +13,17 @@ public struct CurationStore: Sendable {
 
     static let fileName = "curation.json"
     private let storage: any ArchiveStorage
+    /// One lock for the file: every change reads, changes and writes it whole, and several parts of the app
+    /// change it (folders, summaries, spellings, concepts). Without it two changes at once could lose one.
+    /// Process-wide on purpose: it guards a file, not this value. Recursive, since changes read through the
+    /// same store.
+    private static let fileLock = NSRecursiveLock()
+
+    private func locked<T>(_ change: () throws -> T) rethrows -> T {
+        Self.fileLock.lock()
+        defer { Self.fileLock.unlock() }
+        return try change()
+    }
 
     public init(storage: any ArchiveStorage) {
         self.storage = storage
@@ -26,11 +37,11 @@ public struct CurationStore: Sendable {
     public func addToVocabulary(_ text: String) throws {
         let term = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !term.isEmpty else { throw Error.blankTerm }
-        try setVocabulary(Set(try vocabulary().map(\.text)).union([term]))
+        try locked { try setVocabulary(Set(try vocabulary().map(\.text)).union([term])) }
     }
 
     public func removeFromVocabulary(_ text: String) throws {
-        try setVocabulary(Set(try vocabulary().map(\.text)).subtracting([text]))
+        try locked { try setVocabulary(Set(try vocabulary().map(\.text)).subtracting([text])) }
     }
 
     /// The summary you wrote for a thought, which replaces the generated one for good (ADR 0012).
@@ -40,12 +51,36 @@ public struct CurationStore: Sendable {
 
     /// Saves your summary; `nil` or blank brings back the generated one.
     public func setSummary(_ text: String?, for entryID: String) throws {
+        try locked { try writeSummary(text, for: entryID) }
+    }
+
+    private func writeSummary(_ text: String?, for entryID: String) throws {
         var document = try document()
         var summaries = document["summaries"]?.objectValue ?? [:]
         let trimmed = text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         summaries[entryID] = trimmed.isEmpty ? nil : .string(trimmed)
         document["summaries"] = .object(summaries)
         try write(document)
+    }
+
+    // MARK: Concepts: your renames, merges and kind changes (issue #62).
+
+    public func conceptCuration() throws -> ConceptCuration {
+        ConceptCuration(json: try document()["concepts"])
+    }
+
+    /// Saves your concept list, and a spelling for your Vocabulary with it, in one write.
+    public func setConceptCuration(_ curation: ConceptCuration, addingTerm term: String? = nil) throws {
+        try locked {
+            var document = try document()
+            document["concepts"] = curation.json
+            let trimmed = term?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            if !trimmed.isEmpty {
+                let terms = (document["vocabulary"]?.arrayValue ?? []).compactMap(\.stringValue)
+                document["vocabulary"] = .array(Set(terms + [trimmed]).sorted().map(JSONValue.string))
+            }
+            try write(document)
+        }
     }
 
     // MARK: Folders: `folders` lists them in the order made, `filed` maps a thought to its one folder.
@@ -65,12 +100,20 @@ public struct CurationStore: Sendable {
 
     @discardableResult
     public func createFolder(named name: String) throws -> ThoughtFolder {
+        try locked { try makeFolder(named: name) }
+    }
+
+    private func makeFolder(named name: String) throws -> ThoughtFolder {
         let folder = ThoughtFolder(id: UUID().uuidString.lowercased(), name: try validName(name, except: nil))
         try setFolders(try folders() + [folder], filed: try filed())
         return folder
     }
 
     public func renameFolder(_ id: String, to name: String) throws {
+        try locked { try changeFolderName(id, to: name) }
+    }
+
+    private func changeFolderName(_ id: String, to name: String) throws {
         let name = try validName(name, except: id)
         var folders = try folders()
         guard let index = folders.firstIndex(where: { $0.id == id }) else { throw Error.unknownFolder }
@@ -80,11 +123,17 @@ public struct CurationStore: Sendable {
 
     /// Its thoughts become loose; they are never deleted with it.
     public func deleteFolder(_ id: String) throws {
-        try setFolders(try folders().filter { $0.id != id }, filed: try filed().filter { $0.value != id })
+        try locked {
+            try setFolders(try folders().filter { $0.id != id }, filed: try filed().filter { $0.value != id })
+        }
     }
 
     /// Files a thought in a folder, or makes it loose with `nil`.
     public func file(_ entryID: String, in folderID: String?) throws {
+        try locked { try fileLocked(entryID, in: folderID) }
+    }
+
+    private func fileLocked(_ entryID: String, in folderID: String?) throws {
         var filed = try filed()
         if let folderID {
             guard try folders().contains(where: { $0.id == folderID }) else { throw Error.unknownFolder }

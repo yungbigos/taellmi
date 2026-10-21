@@ -8,11 +8,17 @@ public struct UnderstandingWork: Sendable {
     let store: UnderstandingStore
     let prompts: PromptStore
     let models: any LanguageModelProvider
+    /// Your renames and merges of concepts (curation.json); analysis follows them.
+    let curation: @Sendable () -> ConceptCuration
 
-    public init(store: UnderstandingStore, prompts: PromptStore, models: any LanguageModelProvider) {
+    public init(
+        store: UnderstandingStore, prompts: PromptStore, models: any LanguageModelProvider,
+        curation: @escaping @Sendable () -> ConceptCuration = { ConceptCuration() }
+    ) {
         self.store = store
         self.prompts = prompts
         self.models = models
+        self.curation = curation
     }
 
     /// The prompts and models in use, stored with every result; changing either makes all thoughts stale.
@@ -36,6 +42,7 @@ extension PipelineRunner {
         for entryID in try understanding.store.staleEntryIDs(promptRefs: try understanding.signature(resolver)) {
             try jobs.requeue(entryID: entryID, steps: [MeaningSteps.understand], now: now)
         }
+        try understanding.store.apply(understanding.curation())
         try understanding.store.pruneConcepts()
     }
 
@@ -95,6 +102,7 @@ extension PipelineRunner {
         try understanding.store.replace(
             entryID: entryID, sourceText: text, understanding: Understanding(summary: summary, mentions: mentions),
             provenance: UnderstandingProvenance(modelID: conceptModel.id, promptRefs: signature),
+            curation: understanding.curation(),
             now: now())
     }
 }

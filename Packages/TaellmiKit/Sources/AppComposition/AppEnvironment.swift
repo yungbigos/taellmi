@@ -168,7 +168,11 @@ public final class AppEnvironment {
                 ? nil
                 : UnderstandingWork(
                     store: UnderstandingStore(database: database), prompts: PromptStore(database: database),
-                    models: languageModelProvider))
+                    models: languageModelProvider,
+                    curation: { [storage] in
+                        (try? CurationStore(storage: storage).conceptCuration()) ?? ConceptCuration()
+                    }
+                ))
         let kick = PipelineKick(runner: runner)
         pipelineKick = kick
         journal = LiveJournal(
@@ -205,7 +209,10 @@ public final class AppEnvironment {
             capture: captureModel,
             changeDebounce: .milliseconds(Int((try? settings.number(SettingKeys.exploreChangeDebounceMs)) ?? 300)),
             availableViews: ((try? settings.value(SettingKeys.exploreViews))?.arrayValue ?? [])
-                .compactMap { $0.stringValue.flatMap(ExploreViewKind.init) })
+                .compactMap { $0.stringValue.flatMap(ExploreViewKind.init) },
+            suggestionRule: SuggestionRule(
+                minCodeLength: Int((try? settings.number(SettingKeys.conceptSuggestMinCode)) ?? 3),
+                maxDistance: Int((try? settings.number(SettingKeys.conceptSuggestMaxDistance)) ?? 1)))
         vocabularyModel = VocabularyViewModel(
             settings: LiveVocabularySettings(
                 curation: CurationStore(storage: storage), settings: settings,

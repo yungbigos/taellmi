@@ -26,6 +26,12 @@ def write(name, svg):
 
 # ---------- wordmark (soft eyes, 2b) ----------
 def wordmark(ink, pink, size=200):
+    body, W, H, top = wordmark_shapes(ink, pink, size)
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 {top:.2f} {W:.2f} {H-top:.2f}" role="img" aria-label="tällmi">'
+            f'{body}</svg>\n')
+
+def wordmark_shapes(ink, pink, size):
+    """The wordmark's letters and dots, plus its box: width, height, and the top (negative when the dots stick out)."""
     s = size / UPM; soft = T['wordmark']['soften_stroke'] * size; pad = soft
     base = size * 0.95 + pad
     x = pad; parts = []; a_box = None
@@ -40,8 +46,8 @@ def wordmark(ink, pink, size=200):
     H = base + size*0.06 + pad; top = min(0, cy - r - pad)
     d = ' '.join(parts)
     circles = ''.join(f'<circle cx="{cx+k*gap/2:.2f}" cy="{cy:.2f}" r="{r:.2f}" fill="{pink}"/>' for k in (-1, 1))
-    return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 {top:.2f} {W:.2f} {H-top:.2f}" role="img" aria-label="tällmi">'
-            f'<path d="{d}" fill="{ink}" stroke="{ink}" stroke-width="{soft:.2f}" stroke-linejoin="round"/>{circles}</svg>\n')
+    body = f'<path d="{d}" fill="{ink}" stroke="{ink}" stroke-width="{soft:.2f}" stroke-linejoin="round"/>{circles}'
+    return body, W, H, top
 
 # ---------- tälli / mark: the softened ä ----------
 def talli_group(size, cx_c, cy_c, uid, material=True, ink=None, pink='#FF6A9C', eye=(0, 0)):
@@ -91,6 +97,46 @@ def icon(squircle=True):
            f'{clip_open}{ds}</defs>{g_open}<rect width="{S}" height="{S}" fill="url(#ground)"/><rect width="{S}" height="{S}" fill="url(#sheen)"/>{bd}</g>{edge}</svg>\n')
     write('icon/app-icon.svg' if squircle else 'icon/app-icon-fullbleed.svg', svg)
 
+# ---------- README banner: wordmark and tagline, tälli peeking up from the bottom edge ----------
+f500 = instantiateVariableFont(TTFont(font_path), {"wght": 500}); gs500 = f500.getGlyphSet(); cmap500 = f500.getBestCmap()
+def line(text, x, base, size):
+    """One line of Funnel Display 500, outlined. No kerning, which is fine for a short line."""
+    s = size / f500['head'].unitsPerEm; parts = []
+    for ch in text:
+        g = cmap500[ord(ch)]
+        pen = SVGPathPen(gs500, ntos=lambda v: f"{v:.2f}".rstrip('0').rstrip('.'))
+        gs500[g].draw(TransformPen(pen, (s, 0, 0, -s, x, base))); parts.append(pen.getCommands())
+        x += f500['hmtx'][g][0] * s
+    return ' '.join(p for p in parts if p)
+
+def banner(theme):
+    W, H = 1280, 400; c = C[theme]; ink, pink, quiet = (c[k]['value'] for k in ('ink', 'pink', 'quiet'))
+    if theme == 'dark':  # the app icon's night ground
+        g = T['talli']['ground_night']
+        stops = ''.join(f'<stop offset="{st["at"]}" stop-color="{st["color"]}"/>' for st in g['stops'])
+        ground_def = (f'<radialGradient id="ground" gradientUnits="userSpaceOnUse" cx="{W*.5}" cy="{H*.5}" '
+                      f'fx="{W*g["center"][0]}" fy="{H*g["center"][1]}" r="{W*g["radius"]}">{stops}</radialGradient>')
+        ground = 'url(#ground)'
+    else:
+        ground_def, ground = '', c['mist']['value']
+    # the wordmark with the tagline under it, as one block centred on the left
+    wm_size, tag_size, left = 190, 46, 104
+    wm, wm_w, wm_h, wm_top = wordmark_shapes(ink, pink, wm_size)
+    gap = 0.95 * tag_size
+    block = (wm_h - wm_top) + gap + 0.72 * tag_size
+    wm_y = (H - block) / 2 - wm_top
+    tag_base = wm_y + wm_h + gap
+    tag = line('think out loud.', left, tag_base, tag_size)
+    # tälli on the right, cut off by the bottom edge like the app icon, looking up at the words
+    t_size = 360; a_h = bounds('a')[3] * t_size / UPM
+    ds, bd = talli_group(t_size, W - 240, H - 0.84 * a_h + a_h / 2, theme, True, pink=pink, eye=(-0.8, -0.6))
+    svg = (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" role="img" aria-label="tällmi: think out loud."><defs>'
+           f'{ground_def}<clipPath id="card"><rect width="{W}" height="{H}" rx="28"/></clipPath>{ds}</defs>'
+           f'<g clip-path="url(#card)"><rect width="{W}" height="{H}" fill="{ground}"/>'
+           f'<g transform="translate({left - T["wordmark"]["soften_stroke"] * wm_size:.2f} {wm_y:.2f})">{wm}</g>'
+           f'<path d="{tag}" fill="{quiet}"/>{bd}</g></svg>\n')
+    write(f'banner/banner-{theme}.svg', svg)
+
 lt, dk = C['light'], C['dark']
 write('logo/wordmark-light.svg', wordmark(lt['ink']['value'], lt['pink']['value']))
 write('logo/wordmark-dark.svg',  wordmark(dk['ink']['value'], dk['pink']['value']))
@@ -98,3 +144,4 @@ standalone(False, lt['ink']['value'], lt['pink']['value'], 'logo/mark-light.svg'
 standalone(False, dk['ink']['value'], dk['pink']['value'], 'logo/mark-dark.svg')
 standalone(True, None, dk['pink']['value'], 'logo/talli.svg')
 icon(True); icon(False)
+banner('light'); banner('dark')

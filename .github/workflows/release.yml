@@ -1,0 +1,141 @@
+# Builds tällmi and publishes it as a GitHub release when a version tag is pushed:
+#   git tag v0.1.0 && git push origin v0.1.0
+# A tag with a hyphen (v0.2.0-beta.1) becomes a pre-release. To rebuild an existing tag, run the workflow
+# by hand with that tag; it replaces the release's files.
+# The app is signed ad hoc, not notarized, so macOS asks once before opening it (the release notes say how).
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "existing tag to build, e.g. v0.1.0"
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    # Apple silicon, macOS 26, Xcode 26.6 (the app is Apple silicon only).
+    runs-on: macos-26
+    timeout-minutes: 90
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ env.TAG }}
+          # The build runs third-party package code; it gets no git credentials (gh uses GH_TOKEN).
+          persist-credentials: false
+
+      - name: toolchain
+        run: |
+          [[ "$(uname -m)" == "arm64" ]] || { echo "✘ needs an Apple silicon runner"; exit 1; }
+          sudo xcode-select -s /Applications/Xcode_26.6.app
+          xcodebuild -version
+          # MLX compiles Metal shaders; since Xcode 26 the Metal toolchain is a separate download.
+          xcodebuild -showComponent MetalToolchain | grep -q "Status: installed" || xcodebuild -downloadComponent MetalToolchain
+          brew install xcodegen
+          jq --version
+
+      - name: version from tag
+        run: |
+          VERSION="${TAG#v}"
+          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]] || { echo "✘ tag $TAG is not v<major>.<minor>.<patch>"; exit 1; }
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      # The same gate as every commit: format lint, build, fast tests, app build.
+      - name: check
+        run: scripts/check.sh
+
+      - name: build
+        run: |
+          xcodegen generate --quiet
+          # Apple silicon only, and the app's version is numbers only (v0.2.0-beta.1 → 0.2.0).
+          xcodebuild -project Taellmi.xcodeproj -scheme Taellmi -configuration Release \
+            -derivedDataPath build/release -skipPackagePluginValidation -skipMacroValidation ARCHS=arm64 \
+            MARKETING_VERSION="${VERSION%%-*}" CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
+            build > build/xcodebuild-release.log 2>&1 \
+            || { grep -E "error:" build/xcodebuild-release.log | head -40; exit 1; }
+
+      # Rule 1 of AGENTS.md: no outgoing network. Refuse to ship an app that could open connections.
+      - name: verify
+        run: |
+          APP=build/release/Build/Products/Release/taellmi.app
+          codesign --verify --deep --strict "$APP"
+          [[ "$(lipo -archs "$APP/Contents/MacOS/taellmi")" == "arm64" ]] || { echo "✘ the app is not Apple silicon only"; exit 1; }
+          ENTITLEMENTS=$(codesign -d --entitlements - --xml "$APP" 2>/dev/null)
+          if grep -q "com.apple.security.network.client" <<<"$ENTITLEMENTS"; then
+            echo "✘ the app has the network-client entitlement"; exit 1
+          fi
+          grep -q "com.apple.security.app-sandbox" <<<"$ENTITLEMENTS" || { echo "✘ the app is not sandboxed"; exit 1; }
+          echo "APP=$APP" >> "$GITHUB_ENV"
+
+      # The zip holds a folder: the app, tällmi's licence, and the licences of the code built into it.
+      - name: package
+        run: |
+          DIR="taellmi-$VERSION"; ZIP="$DIR.zip"
+          mkdir "$DIR"
+          ditto "$APP" "$DIR/taellmi.app"
+          cp LICENSE "$DIR/LICENSE.txt"
+          {
+            echo "tällmi includes the following third-party code. Their licences follow."
+            for f in Packages/TaellmiKit/Sources/CSQLiteVec/LICENSE* \
+              build/release/SourcePackages/checkouts/*/{LICENSE,LICENCE,NOTICE,COPYING}*; do
+              [[ -f "$f" ]] || continue
+              name="${f#build/release/SourcePackages/checkouts/}"
+              [[ "$f" == Packages/* ]] && name="sqlite-vec/$(basename "$f")"
+              printf '\n\n==== %s ====\n\n' "$name"
+              cat "$f"
+            done
+            printf '\n\n==== Funnel Display, Funnel Sans (fonts) ====\n\n'
+            cat App/Fonts/OFL.txt
+          } > "$DIR/THIRD_PARTY_NOTICES.txt"
+          grep "^==== " "$DIR/THIRD_PARTY_NOTICES.txt"
+          ditto -c -k --sequesterRsrc --keepParent "$DIR" "$ZIP"
+          shasum -a 256 "$ZIP" > "$ZIP.sha256"
+          cat "$ZIP.sha256"
+          echo "ZIP=$ZIP" >> "$GITHUB_ENV"
+
+      - name: publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cat > notes.md <<EOF
+          tällmi $VERSION, for a mac with apple silicon and macOS 26.
+
+          **install**
+
+          1. download \`$ZIP\` and open it. move \`taellmi.app\` from the folder to your Applications folder.
+          2. this build is not notarized by Apple, so macOS stops it the first time. open it once, then choose **Open Anyway** in System Settings → Privacy & Security.
+
+          **models**
+
+          speech and search by meaning run on models you download once, in a step you start yourself:
+
+          \`\`\`bash
+          brew install jq
+          git clone --depth 1 --branch $TAG https://github.com/$GITHUB_REPOSITORY.git taellmi && cd taellmi
+          scripts/download-model.sh parakeet-tdt-0.6b-v3       # speech
+          scripts/download-model.sh qwen3-embedding-0.6b-8bit  # search by meaning
+          \`\`\`
+
+          each file is checked against a fixed SHA-256. the app itself never goes online.
+          EOF
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$ZIP" "$ZIP.sha256" --clobber
+            # a run that failed mid-upload leaves a draft; publish it now
+            gh release edit "$TAG" --draft=false
+          else
+            PRERELEASE=()
+            [[ "$VERSION" == *-* ]] && PRERELEASE=(--prerelease)
+            gh release create "$TAG" "$ZIP" "$ZIP.sha256" --verify-tag --title "tällmi $VERSION" \
+              --notes-file notes.md --generate-notes ${PRERELEASE[@]+"${PRERELEASE[@]}"}
+          fi

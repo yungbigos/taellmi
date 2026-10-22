@@ -25,6 +25,7 @@ tällmi is a local-only, privacy-first macOS voice journal. You talk into it in 
 5. **Light on resources.** One heavy model is loaded at a time, unloaded after the configured idle time. Background work runs at `.utility` or lower.
 6. **No slop** ([ADR 0006](docs/decisions/0006-no-slop.md)). AI extracts and computes; it never offers insights, interpretations or advice unasked. Generated labels are marked, editable, and linked to their source.
 7. **Dependencies point inward.** `Domain` imports nothing. Only `Engines/*` import ML SDKs. Only `AppComposition` wires engines into protocols.
+8. **The repo is public.** Test data, fixtures and examples in docs are invented. Never commit real thoughts, recordings, contacts, addresses or other personal details, and commit only with the owner's GitHub noreply email.
 
 ## Commands
 
@@ -40,6 +41,7 @@ scripts/download-model.sh <id> # the one user-started network step: fetch a seed
 scripts/download-eval-data.sh  # developer step: the German and English search-evaluation controls (pinned, SHA-256)
 scripts/eval-search.sh         # measure search on eval/ and the controls with the real model (see docs/research)
 npm --prefix website run dev   # the marketing site's design study at http://localhost:4173 (see website/README.md)
+git tag v0.1.0 && git push origin v0.1.0  # release: runs the gate, builds, publishes a GitHub release (.github/workflows/release.yml)
 ```
 
 - Run from a git worktree, `scripts/run-app.sh` launches the worktree's own copy at `build/run/taellmi.app` (`build/demo/run/taellmi-demo.app` with `--demo`) and leaves `~/Applications` alone, so parallel sessions never replace the owner's installed app. All copies share one data folder, so a run stops whichever copy of the same app is running. Tell the owner which copy you launched.
@@ -57,7 +59,7 @@ npm --prefix website run dev   # the marketing site's design study at http://loc
 
 ## Where work is tracked
 
-- **Actionable work** (features, bugs, research, ideas) lives in **GitHub Issues** at `yungbigos/taellmi` (private).
+- **Actionable work** (features, bugs, research, ideas) lives in **GitHub Issues** at `yungbigos/taellmi`.
   - Type labels: `feature`, `bug`, `idea`, `research`.
   - Area labels: `capture`, `explore`, `mcp`, `visuals`, `foundation`.
   - Use `gh issue list -R yungbigos/taellmi`.

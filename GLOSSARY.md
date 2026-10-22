@@ -31,12 +31,12 @@ _In the app_: recording
 _Avoid_: Audio note, voice memo, take
 
 **Source**:
-Where an Entry came from: spoken, typed, or the app it was imported from (e.g. Apple Notes, Obsidian, Bear). An imported Entry keeps the date it was originally created.
+Where an Entry came from: spoken, typed, or the app it was imported from (e.g. Apple Notes, WhatsApp, Obsidian, Bear). An imported Entry keeps the date it was originally created. From WhatsApp, each message is an Entry of its own (ADR 0015).
 _In the app_: spoken, typed, or the app's name
 _Avoid_: Input mode, origin, type
 
 **Import fingerprint**:
-The SHA-256 of the file an imported Entry came from, kept in its `entry.md` (`import_fingerprint`). Importing the same file again finds it and skips it (ADR 0013).
+The SHA-256 of the file an imported Entry came from, kept in its `entry.md` (`import_fingerprint`). Importing the same file again finds it and skips it (ADR 0013). For a WhatsApp message it is the SHA-256 of its time and words, so a later export of the same chat adds only new messages (ADR 0015).
 _In the app_: (not shown; the import report says "already here")
 _Avoid_: Hash, checksum
 

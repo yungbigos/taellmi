@@ -259,7 +259,7 @@ The data layer (entries, chunks, embeddings, entities, links) is designed so any
 
 ## 8. Open questions for you
 
-1. ~~Which notes app holds your existing entries~~ — answered: Apple Notes, imported from its Markdown export (ADR 0013). The export carries no dates, so imported notes are dated by their files.
+1. ~~Which notes app holds your existing entries~~ — answered: Apple Notes, imported from its Markdown export (ADR 0013). The export carries no dates, so imported notes are dated by their files. Also your WhatsApp chat with yourself, one thought per message, dated when sent (ADR 0015).
 2. ~~German/English mixing~~ — answered: mostly German with English words and occasional switches. Parakeet auto-detects; no benchmark for now.
 3. **iPhone capture**: needed soon, or Mac-only for now?
 4. **Typing vs. talking**: should typed entries be first-class, or is this voice-only?

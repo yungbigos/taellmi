@@ -51,19 +51,26 @@ public struct ExploreView: View {
                 // After this view update (the ⌘K sheet may still be closing), so the picker doesn't block it.
                 Task { @MainActor in
                     await Task.yield()
-                    let chosen = NoteFilePicker.choose()
+                    let chosen = ImportFilePicker.choose(explaining: ImportFilePicker.notesExplanation)
                     if !chosen.isEmpty { await model.importNotes(from: chosen) }
                 }
             }
+            .onChange(of: model.chatImportRequest) {
+                Task { @MainActor in
+                    await Task.yield()
+                    let chosen = ImportFilePicker.choose(explaining: ImportFilePicker.chatExplanation)
+                    if !chosen.isEmpty { await model.importChats(from: chosen) }
+                }
+            }
             .overlay(alignment: .top) {
-                if model.isImportingNotes {
-                    Text("importing notes …").brandForeground(.quiet).padding()
+                if let progress = model.importProgress {
+                    Text(progress).brandForeground(.quiet).padding()
                 }
             }
             .alert(
-                model.noteImportMessage ?? "",
+                model.importMessage ?? "",
                 isPresented: Binding(
-                    get: { model.noteImportMessage != nil }, set: { if !$0 { model.noteImportMessage = nil } })
+                    get: { model.importMessage != nil }, set: { if !$0 { model.importMessage = nil } })
             ) {
                 Button("ok") {}
             }

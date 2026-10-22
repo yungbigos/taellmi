@@ -62,6 +62,7 @@
   {"key": "shortcut.view.stack", "type": "string", "value": "command+1", "seed_version": 1},
   {"key": "shortcut.view.time", "type": "string", "value": "command+3", "seed_version": 1},
   {"key": "shortcut.view.space", "type": "string", "value": "command+4", "seed_version": 1},
+  {"key": "shortcut.whatsapp.import", "type": "string", "value": "option+command+i", "seed_version": 1},
   {"key": "transcription.segment_max_pause_s", "type": "number", "value": 1.5, "seed_version": 1},
   {"key": "vocabulary.min_similarity_names", "type": "number", "value": 0.6, "seed_version": 1},
   {"key": "vocabulary.min_similarity_other", "type": "number", "value": 0.8, "seed_version": 1},

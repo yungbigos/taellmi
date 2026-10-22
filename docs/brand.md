@@ -244,7 +244,7 @@ Domain terms stay in code and docs. Users see the UI word. If a term has no UI w
 | Text | (the thought itself) | |
 | Transcript | **transcript** | |
 | Recording | **recording** | |
-| Source | **spoken** · **typed** · **from apple notes** … | shown as a value, not a label |
+| Source | **spoken** · **typed** · **from apple notes** · **from whatsapp** … | shown as a value, not a label |
 | Archive | (not shown) | The window is tällmi. Privacy settings say "where your thoughts are stored". |
 | Retention | `keep recordings for …` | a setting, not a noun |
 | Trash | **trash** | Emptying it moves thoughts on to the macOS Trash. |

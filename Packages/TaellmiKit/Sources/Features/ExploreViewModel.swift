@@ -112,6 +112,8 @@ public protocol ExploreLibrary: Sendable {
     func setDate(id: String, to date: Date) async throws
     /// Turns the chosen note files and folders into thoughts from Apple Notes, skipping notes already here.
     func importNotes(from urls: [URL]) async throws -> NoteImportReport
+    /// Turns the messages of the chosen WhatsApp chats into thoughts, skipping messages already here.
+    func importChats(from urls: [URL]) async throws -> ChatImportReport
 }
 
 /// State and actions of the Explore window.
@@ -173,10 +175,12 @@ public final class ExploreViewModel {
     public private(set) var playbackRequest = 0
     /// Bumped when the window should ask which notes to import.
     public private(set) var noteImportRequest = 0
-    /// What the last import of notes did, until you dismiss it.
-    public var noteImportMessage: String?
-    /// True while chosen notes are being imported.
-    public private(set) var isImportingNotes = false
+    /// Bumped when the window should ask which WhatsApp chats to import.
+    public private(set) var chatImportRequest = 0
+    /// What the last import did, until you dismiss it.
+    public var importMessage: String?
+    /// What is being imported right now, as the window shows it.
+    public private(set) var importProgress: String?
     /// Writing a new thought in the full-window composer.
     public private(set) var isComposing = false
     public var composerText = "" {
@@ -297,6 +301,7 @@ public final class ExploreViewModel {
         case .showTrash: await show(trash: true)
         case .playRecording: playbackRequest += 1
         case .importNotes: noteImportRequest += 1
+        case .importWhatsApp: chatImportRequest += 1
         case .formatBold, .formatItalic, .formatUnderline, .formatStrikethrough, .formatBulletList,
             .formatNumberedList, .indentListItem, .outdentListItem:
             if let action = command.formattingAction { formatting.applyFromPalette(action) }
@@ -305,12 +310,24 @@ public final class ExploreViewModel {
 
     /// Imports the note files and folders you chose and reports what happened.
     public func importNotes(from urls: [URL]) async {
-        isImportingNotes = true
-        defer { isImportingNotes = false }
+        importProgress = "importing notes …"
+        defer { importProgress = nil }
         do {
-            noteImportMessage = NoteImportMessage.text(for: try await library.importNotes(from: urls))
+            importMessage = NoteImportMessage.text(for: try await library.importNotes(from: urls))
         } catch {
-            noteImportMessage = "couldn't import the notes. try again."
+            importMessage = "couldn't import the notes. try again."
+        }
+        await refresh()
+    }
+
+    /// Imports the WhatsApp chats you chose and reports what happened.
+    public func importChats(from urls: [URL]) async {
+        importProgress = "importing the chat …"
+        defer { importProgress = nil }
+        do {
+            importMessage = ChatImportMessage.text(for: try await library.importChats(from: urls))
+        } catch {
+            importMessage = "couldn't import the chat. try again."
         }
         await refresh()
     }

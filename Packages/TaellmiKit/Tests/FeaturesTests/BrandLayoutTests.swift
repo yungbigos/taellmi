@@ -51,6 +51,10 @@ struct BrandLayoutTests {
             createdAt: date, source: .appleNotes, durationSeconds: nil, locale: Locale(identifier: "en_GB"),
             calendar: calendar)
         #expect(imported == "tue, 20 oct 2026 · 15:28 · from apple notes")
+        let message = ThoughtMeta.line(
+            createdAt: date, source: .whatsApp, durationSeconds: nil, locale: Locale(identifier: "en_GB"),
+            calendar: calendar)
+        #expect(message == "tue, 20 oct 2026 · 15:28 · from whatsapp")
     }
 
     @Test("a row in the list ends in a short date: the time today, day and month this year, else the year too")

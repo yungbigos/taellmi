@@ -19,6 +19,10 @@ struct PrivacyViewModelTests {
             importedFrom = urls
             return NoteImportReport(alreadyHere: ["getting active.md"])
         }
+        func importChats(from urls: [URL]) async throws -> ChatImportReport {
+            importedFrom = urls
+            return ChatImportReport(alreadyHere: 4)
+        }
     }
 
     @Test("moving the Archive restarts tällmi afterwards; export reports how many thoughts were written")
@@ -51,5 +55,14 @@ struct PrivacyViewModelTests {
         await model.importNotes(from: [URL(fileURLWithPath: "/tmp/notes")])
         #expect(await privacy.importedFrom.map(\.path) == ["/tmp/notes"])
         #expect(model.message == "imported 0 notes. 1 was already here.")
+    }
+
+    @Test("importing a whatsapp chat from settings tells you what happened")
+    func importChats() async {
+        let privacy = FakePrivacy()
+        let model = PrivacyViewModel(settings: privacy) {}
+        await model.importChats(from: [URL(fileURLWithPath: "/tmp/_chat.txt")])
+        #expect(await privacy.importedFrom.map(\.path) == ["/tmp/_chat.txt"])
+        #expect(model.message == "imported 0 messages. 4 were already here.")
     }
 }

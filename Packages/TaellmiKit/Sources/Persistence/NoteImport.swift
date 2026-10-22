@@ -4,7 +4,8 @@ import Foundation
 
 /// "import from apple notes …": turns note files you chose (Markdown or plain text, or folders of them) into
 /// thoughts. The Text is kept exactly as in the file. A note keeps its date; Notes writes no date into its
-/// exports, so that is the file's date. Files are only read, never moved or changed.
+/// exports, so that is the file's date. A WhatsApp chat among them is imported as a chat, a thought per message
+/// (ADR 0015). Files are only read, never moved or changed.
 public struct NoteImport: Sendable {
     let files: EntryFileStore
     let source: EntrySource
@@ -29,6 +30,7 @@ public struct NoteImport: Sendable {
     public func run(_ chosen: [URL]) throws -> NoteImportReport {
         var report = NoteImportReport()
         var known = try files.importFingerprints()
+        var chats: [URL] = []
         for candidate in chosen.flatMap(noteFiles) {
             guard extensions.contains(candidate.pathExtension.lowercased()) else {
                 report.failed.append(.init(file: candidate.lastPathComponent, problem: .notANote))
@@ -38,6 +40,11 @@ public struct NoteImport: Sendable {
             case .failure(let problem):
                 report.failed.append(.init(file: candidate.lastPathComponent, problem: problem))
             case .success(let note):
+                // Before the duplicate check: a chat once taken as a single note is split now.
+                guard WhatsAppChat(text: note.text, calendar: files.calendar) == nil else {
+                    chats.append(candidate)
+                    continue
+                }
                 guard !known.contains(note.fingerprint) else {
                     report.alreadyHere.append(candidate.lastPathComponent)
                     continue
@@ -52,6 +59,7 @@ public struct NoteImport: Sendable {
                 }
             }
         }
+        if !chats.isEmpty { report.chats = try ChatImport(files: files, calendar: files.calendar).run(chats) }
         return report
     }
 

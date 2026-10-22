@@ -29,10 +29,15 @@ public struct NoteImportReport: Sendable, Equatable {
     /// Names of files whose note is already a thought (also in the Trash).
     public var alreadyHere: [String]
     public var failed: [Failure]
+    /// WhatsApp chats among the chosen files, imported a thought per message rather than as one note.
+    public var chats: ChatImportReport
 
-    public init(imported: [Entry] = [], alreadyHere: [String] = [], failed: [Failure] = []) {
+    public init(
+        imported: [Entry] = [], alreadyHere: [String] = [], failed: [Failure] = [], chats: ChatImportReport = .init()
+    ) {
         self.imported = imported
         self.alreadyHere = alreadyHere
         self.failed = failed
+        self.chats = chats
     }
 }

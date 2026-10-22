@@ -158,6 +158,47 @@ struct LiveExploreLibraryTests {
         #expect(found.map { $0.entry.source } == [.appleNotes])
         #expect(try await library.importNotes(from: [notes]).alreadyHere.count == 2)
     }
+
+    @Test("a whatsapp chat picked as notes is imported as its messages, indexed right away")
+    func importChatAsNotes() async throws {
+        let calls = Mutex(0)
+        var (library, _, _, temp) = try setUp(onChange: { calls.withLock { $0 += 1 } })
+        library.noteExtensions = ["txt"]
+        let chat = temp.url.appendingPathComponent("_chat.txt")
+        try Data(
+            ("[12.09.26, 10:15:00] yannik: Besichtigung in Kreuzberg am Samstag\r\n"
+                + "[12.09.26, 18:40:12] yannik: Zehn Kilometer an der Spree\r\n").utf8
+        ).write(to: chat)
+
+        let report = try await library.importNotes(from: [chat])
+
+        #expect(report.imported.isEmpty)
+        #expect(report.chats.imported.count == 2)
+        #expect(calls.withLock { $0 } == 1)
+        let found = try await library.search(EntryQuery(text: "Kreuzberg"))
+        #expect(found.map { $0.entry.source } == [.whatsApp])
+    }
+
+    @Test("messages from a whatsapp chat are indexed right away, and their passages are refreshed once")
+    func importChats() async throws {
+        let calls = Mutex(0)
+        let (library, _, _, temp) = try setUp(onChange: { calls.withLock { $0 += 1 } })
+        let chat = temp.url.appendingPathComponent("WhatsApp Chat - You/_chat.txt")
+        try FileManager.default.createDirectory(
+            at: chat.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try Data(
+            ("[12.09.26, 10:15:00] yannik: Besichtigung in Kreuzberg am Samstag\r\n"
+                + "[12.09.26, 18:40:12] yannik: Zehn Kilometer an der Spree\r\n").utf8
+        ).write(to: chat)
+
+        let report = try await library.importChats(from: [chat])
+
+        #expect(report.imported.count == 2)
+        #expect(calls.withLock { $0 } == 1)
+        let found = try await library.search(EntryQuery(text: "Kreuzberg"))
+        #expect(found.map { $0.entry.source } == [.whatsApp])
+        #expect(try await library.importChats(from: [chat]).alreadyHere == 2)
+    }
 }
 
 @Suite("A thought's concepts and summary in Explore")

@@ -81,6 +81,7 @@ enum ThoughtMeta {
         switch source {
         case .typed: "keyboard"
         case .voice: "waveform"
+        case .whatsApp: "bubble.left"
         default: "note.text"
         }
     }

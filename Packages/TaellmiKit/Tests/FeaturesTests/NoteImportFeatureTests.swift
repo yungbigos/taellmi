@@ -33,6 +33,14 @@ struct NoteImportFeatureTests {
                     ]),
                 "imported 0 notes. couldn't import 2: a.md (couldn't be read), b.md (not text)."
             ),
+            (
+                NoteImportReport(chats: ChatImportReport(imported: [entry("m"), entry("n")], withoutWords: 3)),
+                "imported 2 messages. left out 3 without words, like photos and voice messages."
+            ),
+            (
+                NoteImportReport(imported: [entry("a")], chats: ChatImportReport(imported: [entry("m")])),
+                "imported 1 note. imported 1 message."
+            ),
             (NoteImportReport(), "found no notes there. choose notes exported from apple notes, or a folder of them."),
         ])
     func message(report: NoteImportReport, expected: String) {
@@ -50,9 +58,9 @@ struct NoteImportFeatureTests {
 
         let chosen = [URL(fileURLWithPath: "/tmp/notes")]
         await model.importNotes(from: chosen)
-        #expect(!model.isImportingNotes)
+        #expect(model.importProgress == nil)
         #expect(await library.importedFrom == chosen)
-        #expect(model.noteImportMessage == "imported 1 note.")
+        #expect(model.importMessage == "imported 1 note.")
         await model.refresh()
         #expect(model.entries.map(\.id) == ["a"])
     }
@@ -63,7 +71,7 @@ struct NoteImportFeatureTests {
         await library.failImports()
         let model = ExploreViewModel(library: library, autosaveDelay: .zero)
         await model.importNotes(from: [URL(fileURLWithPath: "/tmp/notes")])
-        #expect(model.noteImportMessage == "couldn't import the notes. try again.")
+        #expect(model.importMessage == "couldn't import the notes. try again.")
     }
 
     @Test("an imported thought can be given the date you wrote it; spoken and typed thoughts keep theirs")

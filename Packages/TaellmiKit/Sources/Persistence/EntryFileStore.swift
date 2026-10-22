@@ -26,7 +26,7 @@ public struct EntryFileStore: Sendable {
     static let transcriptName = "transcript.json"
 
     public let storage: any ArchiveStorage
-    private let calendar: Calendar
+    let calendar: Calendar
 
     public init(storage: any ArchiveStorage, calendar: Calendar = .current) {
         self.storage = storage

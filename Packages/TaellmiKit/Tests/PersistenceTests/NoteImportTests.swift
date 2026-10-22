@@ -147,6 +147,26 @@ struct NoteImportTests {
         #expect(try setup.importer.run([url]).alreadyHere == ["getting active.md"])
     }
 
+    @Test("a WhatsApp chat picked as notes becomes a thought per message, also one taken as a single note before")
+    func chatsAmongNotes() throws {
+        let setup = try Setup()
+        let chat = try setup.note("WhatsApp Chat - You/_chat.txt", WhatsAppChatTests.selfChat)
+        let note = try setup.note("getting active.md")
+        // How "import from apple notes" took a chat before it knew them: the whole file as one thought.
+        let hash = SHA256.hash(data: Data(WhatsAppChatTests.selfChat.utf8)).map { String(format: "%02x", $0) }.joined()
+        _ = try setup.files.createImportedEntry(
+            text: WhatsAppChatTests.selfChat, createdAt: sampleDate, source: .appleNotes, fingerprint: "sha256:\(hash)")
+
+        let report = try setup.importer.run([chat, note])
+
+        #expect(report.imported.map(\.source) == [.appleNotes], "the note stays a note")
+        #expect(report.alreadyHere.isEmpty)
+        #expect(report.failed.isEmpty)
+        #expect(report.chats.imported.map(\.source) == [.whatsApp, .whatsApp])
+        #expect(report.chats.imported.first?.createdAt == WhatsAppChatTests.date(2026, 9, 2, 12, 34, 31))
+        #expect(report.chats.withoutWords == 2)
+    }
+
     @Test("if tällmi can't tell which notes are already here, it imports nothing")
     func unknownArchiveImportsNothing() throws {
         let setup = try Setup()

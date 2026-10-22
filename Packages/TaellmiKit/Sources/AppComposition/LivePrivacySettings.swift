@@ -30,6 +30,10 @@ nonisolated struct LivePrivacySettings: PrivacySettings {
         try await library.importNotes(from: urls)
     }
 
+    func importChats(from urls: [URL]) async throws -> ChatImportReport {
+        try await library.importChats(from: urls)
+    }
+
     func isWindowLocked() async -> Bool { (try? settings.bool(SettingKeys.lockWindow)) ?? false }
 
     func setWindowLocked(_ on: Bool) async throws {

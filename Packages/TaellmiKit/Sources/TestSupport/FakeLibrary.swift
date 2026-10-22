@@ -21,6 +21,7 @@ public actor FakeLibrary: ExploreLibrary {
     private var held: [CheckedContinuation<Void, Never>] = []
     private var heldWaiters: [CheckedContinuation<Void, Never>] = []
     private var importReport = NoteImportReport()
+    private var chatImportReport = ChatImportReport()
     private var importsFail = false
     public private(set) var importedFrom: [URL]?
 
@@ -283,9 +284,22 @@ public actor FakeLibrary: ExploreLibrary {
     public func importNotes(from urls: [URL]) async throws -> NoteImportReport {
         importedFrom = urls
         if importsFail { throw CocoaError(.fileReadNoPermission) }
-        entries += importReport.imported
+        entries += importReport.imported + importReport.chats.imported
         publish()
         return importReport
+    }
+
+    /// What the next chat import returns; its thoughts join the Archive.
+    public func setChatImportReport(_ report: ChatImportReport) {
+        chatImportReport = report
+    }
+
+    public func importChats(from urls: [URL]) async throws -> ChatImportReport {
+        importedFrom = urls
+        if importsFail { throw CocoaError(.fileReadNoPermission) }
+        entries += chatImportReport.imported
+        publish()
+        return chatImportReport
     }
 
     private func subscribe(_ continuation: AsyncStream<Void>.Continuation) { continuations.append(continuation) }

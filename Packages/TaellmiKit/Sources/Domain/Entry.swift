@@ -11,6 +11,7 @@ public struct EntrySource: RawRepresentable, Sendable, Hashable, Codable {
     public static let voice = EntrySource(rawValue: "voice")
     public static let typed = EntrySource(rawValue: "typed")
     public static let appleNotes = EntrySource(rawValue: "apple_notes")
+    public static let whatsApp = EntrySource(rawValue: "whatsapp")
 
     /// Imported from another app. Its date may be a guess (e.g. when the note was exported), so you can change it.
     public var isImported: Bool { self != .voice && self != .typed }

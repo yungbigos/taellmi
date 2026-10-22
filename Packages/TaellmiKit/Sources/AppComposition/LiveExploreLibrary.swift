@@ -167,6 +167,20 @@ nonisolated struct LiveExploreLibrary: ExploreLibrary {
                 files: library.files, source: .appleNotes, extensions: library.noteExtensions
             ).run(urls)
             // The thoughts are written either way; one that can't be indexed now is indexed on the next start.
+            let imported = report.imported + report.chats.imported
+            for entry in imported { try? library.index.upsert(entry, transcript: nil) }
+            if !imported.isEmpty { library.onChange() }
+            return report
+        }.value
+    }
+
+    func importChats(from urls: [URL]) async throws -> ChatImportReport {
+        let library = self
+        return try await Task.detached(priority: .userInitiated) {
+            let scoped = urls.filter { $0.startAccessingSecurityScopedResource() }
+            defer { for url in scoped { url.stopAccessingSecurityScopedResource() } }
+            // WhatsApp writes the phone's clock time without a zone; this Mac's zone is the best guess.
+            let report = try ChatImport(files: library.files, calendar: .current).run(urls)
             for entry in report.imported { try? library.index.upsert(entry, transcript: nil) }
             if !report.imported.isEmpty { library.onChange() }
             return report

@@ -171,6 +171,12 @@ struct ExploreBarView: View {
                 Task { await model.toggle(source: .appleNotes) }
             }
             BarIconButton(
+                symbol: ThoughtMeta.sourceSymbol(.whatsApp), label: "only from whatsapp",
+                selected: model.onlySource == .whatsApp
+            ) {
+                Task { await model.toggle(source: .whatsApp) }
+            }
+            BarIconButton(
                 symbol: "trash",
                 label: model.trashCount == 0 ? "trash" : "trash, " + ThoughtCount.words(model.trashCount),
                 badge: model.trashCount

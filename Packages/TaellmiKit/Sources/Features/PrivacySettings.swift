@@ -13,6 +13,7 @@ public protocol PrivacySettings: Sendable {
     func setWindowLocked(_ on: Bool) async throws
     func pendingRecoveryKey() async -> String?
     func importNotes(from urls: [URL]) async throws -> NoteImportReport
+    func importChats(from urls: [URL]) async throws -> ChatImportReport
 }
 
 @Observable
@@ -61,6 +62,15 @@ public final class PrivacyViewModel {
             message = NoteImportMessage.text(for: try await settings.importNotes(from: urls))
         } catch {
             message = "couldn't import the notes. try again."
+        }
+    }
+
+    public func importChats(from urls: [URL]) async {
+        message = "importing the chat …"
+        do {
+            message = ChatImportMessage.text(for: try await settings.importChats(from: urls))
+        } catch {
+            message = "couldn't import the chat. try again."
         }
     }
 
@@ -115,11 +125,19 @@ struct PrivacySettingsView: View {
             }
             Section {
                 Button("import from apple notes …") {
-                    let chosen = NoteFilePicker.choose()
+                    let chosen = ImportFilePicker.choose(explaining: ImportFilePicker.notesExplanation)
                     if !chosen.isEmpty { Task { await model.importNotes(from: chosen) } }
                 }
             } footer: {
-                Text(NoteFilePicker.explanation)
+                Text(ImportFilePicker.notesExplanation)
+            }
+            Section {
+                Button("import from whatsapp …") {
+                    let chosen = ImportFilePicker.choose(explaining: ImportFilePicker.chatExplanation)
+                    if !chosen.isEmpty { Task { await model.importChats(from: chosen) } }
+                }
+            } footer: {
+                Text(ImportFilePicker.chatExplanation)
             }
             if let message = model.message { Text(message).brandForeground(.quiet) }
         }

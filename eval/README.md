@@ -7,7 +7,7 @@ Used to measure how well tällmi finds thoughts (`scripts/eval-search.sh`). None
 A year of an invented person's voice journal: about 1,000 thoughts (Nov 2025 – Oct 2026), German with English mixed in, voice-memo style, lengths from "Yeah." to long rambles.
 
 - **`catalogue.json`** is the world the thoughts are written from:
-  - the narrator, Jonas
+  - the narrator, Kai
   - 39 topics: people, places, work, health, home, money, feelings, hobbies, events, dreams
   - a storyline in eight parts
   - topics that must **never** appear

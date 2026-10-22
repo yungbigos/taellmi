@@ -146,15 +146,15 @@ struct LiveExploreLibraryTests {
         library.noteExtensions = ["md"]
         let notes = temp.url.appendingPathComponent("export")
         try FileManager.default.createDirectory(at: notes, withIntermediateDirectories: true)
-        try Data("# Wohnung\nBesichtigung in Kreuzberg am Samstag".utf8).write(
+        try Data("# Markt\nFlohmarkt am Kanal am Samstag".utf8).write(
             to: notes.appendingPathComponent("wohnung.md"))
-        try Data("# Laufen\nZehn Kilometer an der Spree".utf8).write(to: notes.appendingPathComponent("laufen.md"))
+        try Data("# Laufen\nFünf Kilometer im Regen".utf8).write(to: notes.appendingPathComponent("laufen.md"))
 
         let report = try await library.importNotes(from: [notes])
 
         #expect(report.imported.count == 2)
         #expect(calls.withLock { $0 } == 1)
-        let found = try await library.search(EntryQuery(text: "Kreuzberg"))
+        let found = try await library.search(EntryQuery(text: "Flohmarkt"))
         #expect(found.map { $0.entry.source } == [.appleNotes])
         #expect(try await library.importNotes(from: [notes]).alreadyHere.count == 2)
     }
@@ -166,8 +166,8 @@ struct LiveExploreLibraryTests {
         library.noteExtensions = ["txt"]
         let chat = temp.url.appendingPathComponent("_chat.txt")
         try Data(
-            ("[12.09.26, 10:15:00] yannik: Besichtigung in Kreuzberg am Samstag\r\n"
-                + "[12.09.26, 18:40:12] yannik: Zehn Kilometer an der Spree\r\n").utf8
+            ("[14.06.26, 10:15:00] sam: Flohmarkt am Kanal am Samstag\r\n"
+                + "[14.06.26, 18:40:12] sam: Fünf Kilometer im Regen\r\n").utf8
         ).write(to: chat)
 
         let report = try await library.importNotes(from: [chat])
@@ -175,7 +175,7 @@ struct LiveExploreLibraryTests {
         #expect(report.imported.isEmpty)
         #expect(report.chats.imported.count == 2)
         #expect(calls.withLock { $0 } == 1)
-        let found = try await library.search(EntryQuery(text: "Kreuzberg"))
+        let found = try await library.search(EntryQuery(text: "Flohmarkt"))
         #expect(found.map { $0.entry.source } == [.whatsApp])
     }
 
@@ -187,15 +187,15 @@ struct LiveExploreLibraryTests {
         try FileManager.default.createDirectory(
             at: chat.deletingLastPathComponent(), withIntermediateDirectories: true)
         try Data(
-            ("[12.09.26, 10:15:00] yannik: Besichtigung in Kreuzberg am Samstag\r\n"
-                + "[12.09.26, 18:40:12] yannik: Zehn Kilometer an der Spree\r\n").utf8
+            ("[14.06.26, 10:15:00] sam: Flohmarkt am Kanal am Samstag\r\n"
+                + "[14.06.26, 18:40:12] sam: Fünf Kilometer im Regen\r\n").utf8
         ).write(to: chat)
 
         let report = try await library.importChats(from: [chat])
 
         #expect(report.imported.count == 2)
         #expect(calls.withLock { $0 } == 1)
-        let found = try await library.search(EntryQuery(text: "Kreuzberg"))
+        let found = try await library.search(EntryQuery(text: "Flohmarkt"))
         #expect(found.map { $0.entry.source } == [.whatsApp])
         #expect(try await library.importChats(from: [chat]).alreadyHere == 2)
     }

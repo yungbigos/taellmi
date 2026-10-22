@@ -10,10 +10,10 @@ Many people keep a chat with themselves in WhatsApp as a notebook: quick notes, 
 What `_chat.txt` looks like on an iPhone set to German dates:
 
 ```
-‎[14.08.25, 17:39:08] yannik: tickets.pdf • ‎1 page ‎document omitted
-‎[19.08.25, 19:44:41] yannik: ‎audio omitted
-[02.09.26, 12:34:31] yannik: Zählerstand ablesen
-Zähler-ID: 1ABC0000000000
+‎[23.05.25, 18:12:44] sam: fahrplan.pdf • ‎1 page ‎document omitted
+‎[27.05.25, 07:51:09] sam: ‎audio omitted
+[06.06.26, 10:20:05] sam: Pflanzen gießen
+Liste: Mehl, Eier, Hefe
 ```
 
 - A message starts with its time in brackets, written in the phone's regional date format, then the sender's name and `: `. Lines without a time continue the message above. A line that only looks like a start (no sender, or a day that doesn't exist) is part of the message above too. WhatsApp ends lines with LF or CRLF; other breaks, like U+2028, are kept as part of the words.
@@ -26,7 +26,7 @@ Zähler-ID: 1ABC0000000000
 - **"import from apple notes …" knows chats too.** A `.txt` that reads as a WhatsApp chat is imported as one, a thought per message, never as a single note. This is checked before the duplicate check, so a chat imported earlier as one note (before this) is split when you import it again; the old single thought stays until you delete it.
 - **Each message with words becomes one Entry** with Source `whatsapp`, dated by its timestamp to the second, through `createImportedEntry` like a note. It is encrypted, indexed and analysed like a typed thought.
 - **The Text is the message's words** as written, lines and blank lines included, without the time and sender. From the first U+200E on, a line is WhatsApp's and is cut off; the words before it stay, like a caption or an edited message's words. A line whose words end in "•" is a document's name and is left out too. A message with no words left (a photo, voice message, document, deleted message or notice) is not imported; the report counts it. Telling WhatsApp's text apart by U+200E works in every language without a list of phrases.
-- **Dates** are read as the phone wrote them: `14.08.25`, `8/14/25 … PM`, `14/08/2025`, `2025-08-14`, with or without seconds. Dots mean day first. For slashes, the chat decides: a first number over 12 is a day, a second one over 12 a month, and else the number that changes more often is the day. Only a chat too short to tell goes by its clock (12-hour means month first). WhatsApp writes no time zone, so times are read in the Mac's.
+- **Dates** are read as the phone wrote them: `23.05.25`, `5/23/25 … PM`, `23/05/2025`, `2025-05-23`, with or without seconds. Dots mean day first. For slashes, the chat decides: a first number over 12 is a day, a second one over 12 a month, and else the number that changes more often is the day. Only a chat too short to tell goes by its clock (12-hour means month first). WhatsApp writes no time zone, so times are read in the Mac's.
 - **Only a chat with yourself, for now.** If more than one name appears as a sender, the chat is not imported ("a chat with others; only chats with yourself for now"), even if only one of them wrote words or the other only sent photos or the encryption notice. The export doesn't say which name is you, so the words could be the other person's. Other people's words are not your thoughts, and which of them, if any, belong in tällmi is a separate decision.
 - **No duplicates, also across exports:** each message's `import_fingerprint` is `whatsapp:` + SHA-256 of its time on the clock and its words. A later export of the same chat, even with another date format or after you renamed yourself, adds only the new messages. A message in the Trash counts as already here.
 - **The report** says how many messages were imported, were already here and had no words, and which files failed and why.
@@ -40,5 +40,5 @@ Zähler-ID: 1ABC0000000000
 - **Next steps, not built:**
   - voice messages from an export with media (`.opus`; macOS 26 decodes Ogg Opus natively, so no new dependency) as spoken thoughts with their recording;
   - reading the `.zip` directly;
-  - Android exports (`14.08.25, 17:39 - name: text`, no U+200E marks);
+  - Android exports (`23.05.25, 18:12 - name: text`, no U+200E marks);
   - conversations with others.

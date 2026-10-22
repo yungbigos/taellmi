@@ -58,7 +58,7 @@ public struct WhatsAppChat: Sendable, Equatable {
         }
     }
 
-    /// "yannik: Hallo" → ("yannik", "Hallo"); "yannik:" is an empty message. Without a sender, only the first
+    /// "sam: Hallo" → ("sam", "Hallo"); "sam:" is an empty message. Without a sender, only the first
     /// message counts (an old notice); nil otherwise. Direction marks around a name, as WhatsApp writes phone
     /// numbers, are dropped.
     private static func split(_ rest: Substring, first: Bool) -> (sender: String, body: Substring)? {
@@ -90,8 +90,8 @@ public struct WhatsAppChat: Sendable, Equatable {
     }
 }
 
-/// The bracketed time at the start of a message, as written: `[14.08.25, 17:39:08]`, `[8/14/25, 5:39:08 PM]`,
-/// `[14/08/2025, 17:39:08]` or `[2025-08-14, 17:39:08]`.
+/// The bracketed time at the start of a message, as written: `[23.05.25, 18:12:44]`, `[5/23/25, 6:12:44 PM]`,
+/// `[23/05/2025, 18:12:44]` or `[2025-05-23, 18:12:44]`.
 private struct Stamp {
     var numbers: (Int, Int, Int)
     var yearFirst: Bool

@@ -89,15 +89,15 @@ struct UnderstandingStoreTests {
     func overview() throws {
         let h = try Harness()
         try h.add("a", ["Kim in Giesing."])
-        try h.add("b", ["Kim und Jonas."])
+        try h.add("b", ["Kim und Sam."])
         try h.understand(
             "a", summary: nil, [mention("person", "Kim", 0..<3), mention("place", "Giesing", 7..<14)])
-        try h.understand("b", summary: nil, [mention("person", "Kim", 0..<3), mention("person", "Jonas", 8..<13)])
+        try h.understand("b", summary: nil, [mention("person", "Kim", 0..<3), mention("person", "Sam", 8..<11)])
 
         let concepts = try h.store.concepts()
         #expect(concepts.first?.name == "Kim")
         let kim = try #require(concepts.first)
-        #expect(Set(try h.store.appearingWith(kim.id).map(\.name)) == ["Giesing", "Jonas"])
+        #expect(Set(try h.store.appearingWith(kim.id).map(\.name)) == ["Giesing", "Sam"])
     }
 
     @Test("a thought is stale until understood, and again when its text or the prompts change")
@@ -108,7 +108,7 @@ struct UnderstandingStoreTests {
         try h.understand("a", summary: nil, [])
         #expect(try h.store.staleEntryIDs(promptRefs: "p@1").isEmpty)
         #expect(try h.store.staleEntryIDs(promptRefs: "p@2") == ["a"])
-        try h.add("a", ["Mit Kim und Jonas."])
+        try h.add("a", ["Mit Kim und Sam."])
         #expect(try h.store.staleEntryIDs(promptRefs: "p@1") == ["a"])
     }
 
@@ -137,7 +137,7 @@ struct UnderstandingStoreTests {
     func textChangedMeanwhile() throws {
         let h = try Harness()
         try h.add("a", ["Mit Kim."])
-        try h.add("a", ["Mit Jonas und Kim."])
+        try h.add("a", ["Mit Sam und Kim."])
         let stored = try h.store.replace(
             entryID: "a", sourceText: "Mit Kim.",
             understanding: Understanding(summary: nil, mentions: [mention("person", "Kim", 4..<7)]),

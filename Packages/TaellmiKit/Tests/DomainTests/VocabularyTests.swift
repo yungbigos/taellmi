@@ -73,8 +73,8 @@ struct VocabularyCorrectorTests {
         let classifier = FakeClassifier()
         #expect(corrector(["Ben"]).correct("Mein Bein tut weh.", using: classifier).text == "Mein Bein tut weh.")
         #expect(
-            corrector(["Jannik"]).correct("Heute Yannik getroffen.", using: classifier).text
-                == "Heute Jannik getroffen.")
+            corrector(["Sascha"]).correct("Heute Sasha getroffen.", using: classifier).text
+                == "Heute Sascha getroffen.")
     }
 
     @Test("two Vocabulary terms that sound alike make the match ambiguous, so nothing changes")

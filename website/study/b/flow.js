@@ -29,7 +29,7 @@
   // a few weeks of thoughts: what someone keeps talking about (constellations)
   const CLUSTERS = [
     { key: 'moving', name: 'moving', words: ['move', 'Sam', 'landlord', 'boxes', 'the old flat', 'March', 'books last'] },
-    { key: 'work', name: 'the pitch', words: ['Jonas', 'the pitch', 'gut feeling', 'follow up tomorrow', 'deadline', 'not convinced'] },
+    { key: 'work', name: 'the pitch', words: ['Kai', 'the pitch', 'gut feeling', 'follow up tomorrow', 'deadline', 'not convinced'] },
     { key: 'dream', name: 'dreams', words: ['dreamt', 'a lake in the kitchen', 'the sea', 'flying again', 'weird'] },
     { key: 'days', name: 'days', words: ['coffee', 'going for a run', 'grandma', 'call mum', 'Sunday', 'guitar', 'Lisbon'] },
     { key: 'feel', name: 'feelings', words: ['tired', 'excited', 'calm', 'patience', 'too much', 'finally'] },

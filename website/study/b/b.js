@@ -58,13 +58,13 @@
 
     const GROUPS = {
       moving: ['moving', 'move', 'flat', 'apartment', 'home', 'boxes', 'box', 'pack', 'landlord', 'rent', 'sam', 'march', 'books'],
-      work: ['jonas', 'pitch', 'work', 'job', 'deadline', 'meeting', 'client', 'follow'],
+      work: ['kai', 'pitch', 'work', 'job', 'deadline', 'meeting', 'client', 'follow'],
       dream: ['dream', 'sleep', 'night', 'sea', 'lake', 'flying', 'fly'],
       days: ['coffee', 'grandma', 'mum', 'mom', 'sunday', 'weekend', 'guitar', 'lisbon', 'run', 'trip'],
       feel: ['tired', 'excited', 'calm', 'patience', 'feeling', 'mood', 'stress'],
       aeh: ['äh', 'ähm', 'hmm', 'uh', 'um', 'aeh'],
     };
-    const WORDS = { moving: 'move, Sam, landlord, boxes, the old flat, March', work: 'Jonas, the pitch, gut feeling, deadline', dream: 'dreamt, a lake in the kitchen, the sea, flying again',
+    const WORDS = { moving: 'move, Sam, landlord, boxes, the old flat, March', work: 'Kai, the pitch, gut feeling, deadline', dream: 'dreamt, a lake in the kitchen, the sea, flying again',
       days: 'coffee, grandma, call mum, Sunday, Lisbon', feel: 'tired, excited, calm, patience', aeh: 'äh, ähm, hmm: kept, never cleaned up' };
     const groupFor = s => { const v = s.trim().toLowerCase(); if (v.length < 2) return ''; return Object.keys(GROUPS).find(k => GROUPS[k].some(t => t.startsWith(v) || (v.length > 3 && v.startsWith(t)))) || null; };
     function show(g, query) {

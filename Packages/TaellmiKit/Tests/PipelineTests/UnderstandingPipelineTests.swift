@@ -121,16 +121,16 @@ struct UnderstandingPipelineTests {
 
     @Test("editing a thought understands it again")
     func edited() async throws {
-        let model = FakeLanguageModel(concepts: [("Kim", "person", "Kim"), ("Jonas", "person", "Jonas")])
+        let model = FakeLanguageModel(concepts: [("Kim", "person", "Kim"), ("Sam", "person", "Sam")])
         let harness = try Harness(languageModel: model)
         var entry = try addTypedEntry(harness, text: "Kurz mit Kim telefoniert.")
         await harness.runUntilSettled()
 
-        entry.text = "Kurz mit Jonas telefoniert."
+        entry.text = "Kurz mit Sam telefoniert."
         try harness.index.upsert(entry, transcript: nil)
         await harness.runUntilSettled()
 
-        #expect(try harness.understandings.understanding(entryID: entry.id)?.concepts.map(\.name) == ["Jonas"])
+        #expect(try harness.understandings.understanding(entryID: entry.id)?.concepts.map(\.name) == ["Sam"])
     }
 }
 

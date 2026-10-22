@@ -1,6 +1,6 @@
 {
   "about": "A fictional person's voice journal, 2025-11-01 to 2026-10-31. Everything is invented. Used to evaluate search in tällmi; never real data.",
-  "narrator": "Jonas, 34, product designer at a Munich startup called Nordwerk. Thinks out loud, German with English mixed in (work jargon, whole English sentences sometimes). Lives in Munich-Giesing.",
+  "narrator": "Kai, 34, product designer at a Munich startup called Nordwerk. Thinks out loud, German with English mixed in (work jargon, whole English sentences sometimes). Lives in Munich-Giesing.",
   "topics": {
     "person:lea": "Lea, his girlfriend (physiotherapist). Relationship, dates, conflicts, moving in together.",
     "person:anna": "Anna, his older sister in Regensburg. Pregnant from summer, baby (Mila) born in October.",
@@ -39,7 +39,7 @@
     "event:christmas": "Christmas 2025 in Regensburg with Mama, Anna and Oma (in hospital).",
     "event:tobi-birthday": "Tobi's 35th birthday party in August.",
     "event:half-marathon": "The half marathon race day in October.",
-    "event:baby-mila": "Anna's daughter Mila is born in October; Jonas becomes an uncle.",
+    "event:baby-mila": "Anna's daughter Mila is born in October; Kai becomes an uncle.",
     "dream": "He tells a dream he had."
   },
   "never_mention": [
@@ -48,13 +48,13 @@
     "an allotment garden (Schrebergarten)", "learning Japanese", "cats", "Paris", "football (soccer) matches beyond Tobi watching them is allowed; never American football", "a tattoo"
   ],
   "timeline": [
-    {"part": 1, "from": "2025-11-01", "to": "2025-12-15", "beats": "Heating breaks in the Giesing flat, cold, fights with landlord Herr Kraus. Launch prep starts at Nordwerk. Starts running at the Isar. Lea and Jonas happy, a few dates. First bad nights."},
+    {"part": 1, "from": "2025-11-01", "to": "2025-12-15", "beats": "Heating breaks in the Giesing flat, cold, fights with landlord Herr Kraus. Launch prep starts at Nordwerk. Starts running at the Isar. Lea and Kai happy, a few dates. First bad nights."},
     {"part": 2, "from": "2025-12-16", "to": "2026-01-31", "beats": "Oma falls and goes to hospital. Christmas in Regensburg, visiting Oma. Heating finally fixed after New Year. Sleep problems get worse. New year thoughts, a dream or two."},
     {"part": 3, "from": "2026-02-01", "to": "2026-03-15", "beats": "Launch crunch, Sven pushes hard, a tense talk. Knee pain from running, Lea (physio) helps. First sessions with Dr. Weber. Anxiety. Launch day March 10."},
     {"part": 4, "from": "2026-03-16", "to": "2026-04-30", "beats": "After the launch: emptiness, close to burnout, time off. Starts guitar lessons. A fight with Lea about moving in together, then they decide to look for a flat. Oma in rehab."},
     {"part": 5, "from": "2026-05-01", "to": "2026-06-15", "beats": "Tax return (Steuererklärung) with Elster. Flat viewings, they get the Haidhausen flat. Money worries about deposit and move. Running again carefully. Evenings at the Isar. Reading."},
     {"part": 6, "from": "2026-06-16", "to": "2026-07-31", "beats": "Packing and moving (early July). Holiday in Lisbon with Lea. Anna tells she is pregnant. Balcony plants. Gratitude."},
     {"part": 7, "from": "2026-08-01", "to": "2026-09-15", "beats": "Salary negotiation with Sven, goes OK. Tobi's 35th birthday party. Hike in the Alps. Worries about AI and his job. Half marathon training gets serious."},
-    {"part": 8, "from": "2026-09-16", "to": "2026-10-31", "beats": "Half marathon race day (October 11). Anna's baby Mila born (October 20), Jonas visits Regensburg. Reflections on the year, gratitude, some loneliness, a dream."}
+    {"part": 8, "from": "2026-09-16", "to": "2026-10-31", "beats": "Half marathon race day (October 11). Anna's baby Mila born (October 20), Kai visits Regensburg. Reflections on the year, gratitude, some loneliness, a dream."}
   ]
 }

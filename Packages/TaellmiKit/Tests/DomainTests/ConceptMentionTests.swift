@@ -40,11 +40,11 @@ struct ConceptMentionTests {
 
     @Test("matching ignores case but not word boundaries")
     func wordBoundaries() {
-        let text = "Ich bin müde. Jonasson ist nicht Jonas."
+        let text = "Ich bin müde. Am Samstag kommt Sam."
         let mentions = ConceptMentions.locate(
-            in: text, answer: answer([("müde", "emotion", "Müde"), ("Jonas", "person", "Jonas")]), kinds: kinds)
+            in: text, answer: answer([("müde", "emotion", "Müde"), ("Sam", "person", "Sam")]), kinds: kinds)
         #expect(mentions.first { $0.kind == "emotion" }?.utf16Range == 8..<12)
-        #expect(mentions.filter { $0.kind == "person" }.map(\.utf16Range) == [33..<38])
+        #expect(mentions.filter { $0.kind == "person" }.map(\.utf16Range) == [31..<34])
     }
 
     @Test("unknown kinds and empty names are dropped; umlauts and emoji keep positions exact")

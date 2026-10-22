@@ -49,21 +49,21 @@ struct ChatImportTests {
 
         #expect(
             report.imported.map(\.text) == [
-                "Zählerstand ablesen  und notieren\nZähler-ID: 1ABC0000000000\n\nRückruf am Freitag",
-                "Geschenkidee für Kim: Kletterkurs",
+                "Pflanzen gießen  und Post holen\nListe: Mehl, Eier, Hefe\n\nRückruf am Freitag",
+                "Geschenkidee für Kim: Töpferkurs",
             ])
         #expect(report.withoutWords == 2, "the document and the voice message")
         #expect(report.alreadyHere == 0)
         #expect(report.failed.isEmpty)
         let entry = try #require(report.imported.first)
         #expect(entry.source == .whatsApp)
-        #expect(entry.createdAt == WhatsAppChatTests.date(2026, 9, 2, 12, 34, 31))
+        #expect(entry.createdAt == WhatsAppChatTests.date(2026, 6, 6, 10, 20, 5))
         #expect(entry.title == nil)
         #expect(entry.durationSeconds == nil)
 
         #expect(try setup.files.loadEntry(folder: entry.folder).entry == entry)
         let onDisk = try Data(contentsOf: setup.archive.url.appendingPathComponent("\(entry.folder)/entry.md"))
-        #expect(!String(decoding: onDisk, as: UTF8.self).contains("Zählerstand"), "encrypted like every thought")
+        #expect(!String(decoding: onDisk, as: UTF8.self).contains("Pflanzen"), "encrypted like every thought")
         #expect(FileManager.default.fileExists(atPath: url.path), "the export is left where it was")
     }
 
@@ -75,7 +75,7 @@ struct ChatImportTests {
         _ = try setup.files.moveToTrash(try #require(imported.last))
 
         let later = try setup.file(
-            "oktober/_chat.txt", WhatsAppChatTests.selfChat + "[03.09.26, 08:15:02] yannik: Termin beim Zahnarzt\r\n")
+            "oktober/_chat.txt", WhatsAppChatTests.selfChat + "[07.06.26, 08:15:02] sam: Termin beim Zahnarzt\r\n")
         let report = try setup.importer.run([later])
 
         #expect(report.imported.map(\.text) == ["Termin beim Zahnarzt"])
@@ -103,7 +103,7 @@ struct ChatImportTests {
         let note = try setup.file("einkauf.txt", "# Einkaufsliste\n- Milch")
         let withOthers = try setup.file(
             "Kim/_chat.txt",
-            "[01.09.26, 09:00:00] yannik: Kommst du mit zum Klettern?\n[01.09.26, 09:05:00] Kim: Ja, gerne")
+            "[01.09.26, 09:00:00] sam: Kommst du mit ins Kino?\n[01.09.26, 09:05:00] Kim: Ja, gerne")
         let binary = try setup.file("binary.txt", data: Data([0xFF, 0xFE, 0x00, 0xD8]))
         let missing = setup.exports.url.appendingPathComponent("gone/_chat.txt")
 
@@ -124,10 +124,10 @@ struct ChatImportTests {
     @Test(
         "a chat with anyone else isn't imported, even if only one of you wrote words: they may be the other's",
         arguments: [
-            "[01.09.26, 09:00:00] Kim: \u{200E}image omitted\n[01.09.26, 09:05:00] yannik: Schönes Foto vom Gipfel",
-            "[01.09.26, 09:00:00] Kim: Bis morgen am Gipfelkreuz\n[01.09.26, 09:05:00] yannik: \u{200E}image omitted",
+            "[01.09.26, 09:00:00] Kim: \u{200E}image omitted\n[01.09.26, 09:05:00] sam: Schönes Foto vom See",
+            "[01.09.26, 09:00:00] Kim: Bis morgen am Bahnhof\n[01.09.26, 09:05:00] sam: \u{200E}image omitted",
             "[01.09.26, 09:00:00] Kim: \u{200E}Nachrichten und Anrufe sind Ende-zu-Ende-verschlüsselt.\n"
-                + "[01.09.26, 09:05:00] yannik: Kommst du mit?",
+                + "[01.09.26, 09:05:00] sam: Kommst du mit?",
         ])
     func othersWithoutWords(chat: String) throws {
         let setup = try Setup()

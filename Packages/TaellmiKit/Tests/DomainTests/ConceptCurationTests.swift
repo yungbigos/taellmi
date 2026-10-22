@@ -62,7 +62,7 @@ struct ConceptCurationTests {
     func roundTrip() throws {
         var curation = ConceptCuration()
         curation.merge([kym, kimm], into: sam)
-        curation.dismissSuggestion([kym, ConceptName(kind: "person", name: "Martin")])
+        curation.dismissSuggestion([kym, ConceptName(kind: "person", name: "Kimmy")])
         #expect(ConceptCuration(json: curation.json) == curation)
     }
 

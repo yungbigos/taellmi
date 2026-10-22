@@ -17,11 +17,11 @@ struct CurationStoreTests {
         let temp = try TemporaryDirectory()
         let store = CurationStore(storage: PlainFolderStorage(root: temp.url))
         try store.addToVocabulary("Kim")
-        try store.addToVocabulary("  Jannik ")
+        try store.addToVocabulary("  Kai ")
         try store.addToVocabulary("Kim")
 
         let reloaded = CurationStore(storage: PlainFolderStorage(root: temp.url))
-        #expect(try reloaded.vocabulary().map(\.text) == ["Jannik", "Kim"])
+        #expect(try reloaded.vocabulary().map(\.text) == ["Kai", "Kim"])
         #expect(FileManager.default.fileExists(atPath: temp.url.appendingPathComponent("curation.json").path))
     }
 
@@ -35,9 +35,9 @@ struct CurationStoreTests {
     func removeTerm() throws {
         let store = CurationStore(storage: PlainFolderStorage(root: try TemporaryDirectory().url))
         try store.addToVocabulary("Kim")
-        try store.addToVocabulary("Jannik")
+        try store.addToVocabulary("Kai")
         try store.removeFromVocabulary("Kim")
-        #expect(try store.vocabulary().map(\.text) == ["Jannik"])
+        #expect(try store.vocabulary().map(\.text) == ["Kai"])
     }
 
     @Test("other Curation in the file (added by later versions) survives a Vocabulary change")

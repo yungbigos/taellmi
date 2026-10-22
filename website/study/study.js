@@ -222,7 +222,7 @@
     // a small archive to search, dated relative to today
     const day = (n, h, m) => { const d = new Date(); d.setDate(d.getDate() - n); d.setHours(h, m, 0, 0); return d; };
     const thoughts = [
-      { id: 'c', source: 'spoken', at: day(1, 18, 30), text: 'The pitch went well, äh, I think. Jonas nodded a lot but barely said anything. Follow up tomorrow.', concepts: ['Jonas', 'pitch'] },
+      { id: 'c', source: 'spoken', at: day(1, 18, 30), text: 'The pitch went well, äh, I think. Kai nodded a lot but barely said anything. Follow up tomorrow.', concepts: ['Kai', 'pitch'] },
       { id: 'b', source: 'typed', at: day(2, 22, 10), h: 'Boxes', list: ['14 packed, 20 to go', 'books last', 'don’t forget the lamp for Sam'], concepts: ['Sam', 'Boxes'] },
       { id: 'a', source: 'spoken', at: day(3, 7, 48), text: 'Ähm, I dreamt I was back in the old flat. All the rooms were bigger, and somehow there was a lake in the kitchen.', concepts: ['flat'] },
     ];

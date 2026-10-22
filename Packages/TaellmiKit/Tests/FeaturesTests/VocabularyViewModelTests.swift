@@ -37,9 +37,9 @@ struct VocabularyViewModelTests {
         model.newTerm = "  "
         await model.addNewTerm()
         #expect(model.terms == ["Kim"])
-        model.newTerm = "Jannik"
+        model.newTerm = "Kai"
         await model.addNewTerm()
-        #expect(model.terms == ["Jannik", "Kim"])
+        #expect(model.terms == ["Kai", "Kim"])
         #expect(model.newTerm.isEmpty)
     }
 

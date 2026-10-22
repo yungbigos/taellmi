@@ -25,7 +25,7 @@ tällmi is a local-only, privacy-first macOS voice journal. You talk into it in 
 5. **Light on resources.** One heavy model is loaded at a time, unloaded after the configured idle time. Background work runs at `.utility` or lower.
 6. **No slop** ([ADR 0006](docs/decisions/0006-no-slop.md)). AI extracts and computes; it never offers insights, interpretations or advice unasked. Generated labels are marked, editable, and linked to their source.
 7. **Dependencies point inward.** `Domain` imports nothing. Only `Engines/*` import ML SDKs. Only `AppComposition` wires engines into protocols.
-8. **The repo is public.** Test data, fixtures and examples in docs are invented. Never commit real thoughts, recordings, contacts, addresses or other personal details, and commit only with the owner's GitHub noreply email.
+8. **The repo is public.** Test data, fixtures and examples in docs are invented. Never commit real thoughts, recordings, contacts, addresses or other personal details, and commit only with the owner's GitHub noreply email, set in this repo's git config. A push that would show a personal email is blocked by GitHub.
 
 ## Commands
 

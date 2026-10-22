@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # The single quality gate: format lint → build → fast tests.
-# Used by the git pre-commit hook, the Claude Code Stop hook, and by hand.
+# Used by the git pre-commit hook, the Claude Code Stop hook, GitHub Actions (check, release), and by hand.
 #   scripts/check.sh         check only
 #   scripts/check.sh --fix   auto-format first, then check
 set -euo pipefail  # pipefail: a failing build/test fails the script even when piped through tail
@@ -23,7 +23,14 @@ if [[ -f "$PKG/Package.swift" ]]; then
   echo "▸ build"
   swift build --package-path "$PKG" 2>&1 | tail -n 40
   echo "▸ fast tests"
-  swift test --package-path "$PKG" --parallel --skip IntegrationTests 2>&1 | tail -n 60
+  # On failure, show the failing tests wherever they are in the output, not only its last lines.
+  LOG="$(mktemp -t taellmi-tests)"
+  if ! swift test --package-path "$PKG" --parallel --skip IntegrationTests >"$LOG" 2>&1; then
+    grep -E -A4 "✘|error:" "$LOG" | head -n 120 || true
+    echo "✘ fast tests failed (full output: $LOG)"
+    exit 1
+  fi
+  tail -n 60 "$LOG"
 else
   echo "▸ no package yet ($PKG) — lint only"
 fi

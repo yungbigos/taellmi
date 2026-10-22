@@ -1,0 +1,34 @@
+# Runs the gate (scripts/check.sh: format lint, build, fast tests, app build) on every pull request and on main.
+name: check
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    # Apple silicon, macOS 26, Xcode 26.6, like the release.
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: toolchain
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.6.app
+          xcodebuild -showComponent MetalToolchain | grep -q "Status: installed" || xcodebuild -downloadComponent MetalToolchain
+          brew install xcodegen
+
+      - name: check
+        run: scripts/check.sh

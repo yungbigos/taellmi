@@ -50,7 +50,7 @@ struct ChatImportTests {
         #expect(
             report.imported.map(\.text) == [
                 "Zählerstand ablesen  und notieren\nZähler-ID: 1ABC0000000000\n\nRückruf am Freitag",
-                "Geschenkidee für Marleen: Kletterkurs",
+                "Geschenkidee für Kim: Kletterkurs",
             ])
         #expect(report.withoutWords == 2, "the document and the voice message")
         #expect(report.alreadyHere == 0)
@@ -102,8 +102,8 @@ struct ChatImportTests {
         let zipped = try setup.file("WhatsApp Chat - You.zip", data: Data([0x50, 0x4B, 0x03, 0x04]))
         let note = try setup.file("einkauf.txt", "# Einkaufsliste\n- Milch")
         let withOthers = try setup.file(
-            "Marleen/_chat.txt",
-            "[01.09.26, 09:00:00] yannik: Kommst du mit zum Klettern?\n[01.09.26, 09:05:00] Marleen: Ja, gerne")
+            "Kim/_chat.txt",
+            "[01.09.26, 09:00:00] yannik: Kommst du mit zum Klettern?\n[01.09.26, 09:05:00] Kim: Ja, gerne")
         let binary = try setup.file("binary.txt", data: Data([0xFF, 0xFE, 0x00, 0xD8]))
         let missing = setup.exports.url.appendingPathComponent("gone/_chat.txt")
 
@@ -114,7 +114,7 @@ struct ChatImportTests {
             report.failed == [
                 .init(file: "WhatsApp Chat - You.zip", problem: .zipped),
                 .init(file: "einkauf.txt", problem: .notAChat),
-                .init(file: "Marleen/_chat.txt", problem: .withOthers),
+                .init(file: "Kim/_chat.txt", problem: .withOthers),
                 .init(file: "binary.txt", problem: .notText),
                 .init(file: "gone/_chat.txt", problem: .unreadable),
             ])
@@ -124,18 +124,18 @@ struct ChatImportTests {
     @Test(
         "a chat with anyone else isn't imported, even if only one of you wrote words: they may be the other's",
         arguments: [
-            "[01.09.26, 09:00:00] Marleen: \u{200E}image omitted\n[01.09.26, 09:05:00] yannik: Schönes Foto vom Gipfel",
-            "[01.09.26, 09:00:00] Marleen: Bis morgen am Gipfelkreuz\n[01.09.26, 09:05:00] yannik: \u{200E}image omitted",
-            "[01.09.26, 09:00:00] Marleen: \u{200E}Nachrichten und Anrufe sind Ende-zu-Ende-verschlüsselt.\n"
+            "[01.09.26, 09:00:00] Kim: \u{200E}image omitted\n[01.09.26, 09:05:00] yannik: Schönes Foto vom Gipfel",
+            "[01.09.26, 09:00:00] Kim: Bis morgen am Gipfelkreuz\n[01.09.26, 09:05:00] yannik: \u{200E}image omitted",
+            "[01.09.26, 09:00:00] Kim: \u{200E}Nachrichten und Anrufe sind Ende-zu-Ende-verschlüsselt.\n"
                 + "[01.09.26, 09:05:00] yannik: Kommst du mit?",
         ])
     func othersWithoutWords(chat: String) throws {
         let setup = try Setup()
-        let url = try setup.file("WhatsApp Chat - Marleen/_chat.txt", chat)
+        let url = try setup.file("WhatsApp Chat - Kim/_chat.txt", chat)
 
         let report = try setup.importer.run([url])
 
         #expect(report.imported.isEmpty)
-        #expect(report.failed == [.init(file: "WhatsApp Chat - Marleen/_chat.txt", problem: .withOthers)])
+        #expect(report.failed == [.init(file: "WhatsApp Chat - Kim/_chat.txt", problem: .withOthers)])
     }
 }

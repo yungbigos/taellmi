@@ -10,7 +10,7 @@ struct CommandPaletteTests {
         let library = FakeLibrary(entries: [
             Entry(
                 id: "a", createdAt: sampleDate, durationSeconds: nil, source: .voice, folder: "entries/a",
-                text: "Termin mit Marleen verschieben.")
+                text: "Termin mit Kim verschieben.")
         ])
         return (ExploreViewModel(library: library, autosaveDelay: .zero), library)
     }
@@ -31,8 +31,8 @@ struct CommandPaletteTests {
         let palette = CommandPaletteModel(explore: explore)
         await palette.update(query: "trash")
         #expect(palette.results.map(\.title).contains("show trash"))
-        await palette.update(query: "marleen")
-        #expect(palette.results.map(\.title) == ["Termin mit Marleen verschieben."])
+        await palette.update(query: "kim")
+        #expect(palette.results.map(\.title) == ["Termin mit Kim verschieben."])
     }
 
     @Test("choosing a thought opens it; choosing a command runs it")
@@ -42,7 +42,7 @@ struct CommandPaletteTests {
         let palette = CommandPaletteModel(explore: explore)
         palette.isPresented = true
 
-        await palette.update(query: "marleen")
+        await palette.update(query: "kim")
         await palette.choose(try #require(palette.results.first))
         #expect(explore.detail?.entry.id == "a")
         #expect(!palette.isPresented)
@@ -71,12 +71,12 @@ struct CommandPaletteTests {
         let early = Task { await palette.update(query: "x") }
         await library.waitUntilASearchIsHeld()
 
-        await palette.update(query: "marleen")
+        await palette.update(query: "kim")
         await library.releaseHeldSearches()
         await early.value
 
-        #expect(palette.query == "marleen")
-        #expect(palette.results.map(\.title) == ["Termin mit Marleen verschieben."])
+        #expect(palette.query == "kim")
+        #expect(palette.results.map(\.title) == ["Termin mit Kim verschieben."])
     }
 }
 

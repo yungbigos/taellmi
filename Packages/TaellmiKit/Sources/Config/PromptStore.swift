@@ -29,7 +29,7 @@ public enum PromptError: Error, Equatable {
     case missing(role: String)
 }
 
-/// Reads prompts. Editing a prompt means adding a higher version, which makes its outputs stale.
+/// Reads prompts. An edit that can change a prompt's outputs means adding a higher version, which makes them stale.
 public struct PromptStore: Sendable {
     private let database: AppDatabase
 

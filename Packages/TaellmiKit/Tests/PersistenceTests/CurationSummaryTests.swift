@@ -9,12 +9,12 @@ struct CurationSummaryTests {
     func editsSurvive() throws {
         let folder = try TemporaryDirectory()
         let store = CurationStore(storage: PlainFolderStorage(root: folder.url))
-        try store.addToVocabulary("Marleen")
+        try store.addToVocabulary("Kim")
         try store.setSummary("Mein eigener Satz.", for: "e1")
 
         let reopened = CurationStore(storage: PlainFolderStorage(root: folder.url))
         #expect(try reopened.summary(for: "e1") == "Mein eigener Satz.")
-        #expect(try reopened.vocabulary().map(\.text) == ["Marleen"])
+        #expect(try reopened.vocabulary().map(\.text) == ["Kim"])
 
         try reopened.setSummary(nil, for: "e1")
         #expect(try reopened.summary(for: "e1") == nil)

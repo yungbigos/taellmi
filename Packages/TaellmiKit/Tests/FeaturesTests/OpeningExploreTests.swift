@@ -15,7 +15,7 @@ struct OpeningExploreTests {
     private func library() -> FakeLibrary {
         FakeLibrary(entries: [
             entry("a", "Die Heizung gluckert schon wieder.", minutesAgo: 1),
-            entry("b", "Mit Marleen im Englischen Garten.", minutesAgo: 60),
+            entry("b", "Mit Kim im Englischen Garten.", minutesAgo: 60),
         ])
     }
 
@@ -31,10 +31,10 @@ struct OpeningExploreTests {
     @Test("space opens with its concepts loaded")
     func spaceLoadsConcepts() async {
         let library = library()
-        await library.setConcepts([ConceptSummary(id: "c", kind: "person", name: "Marleen", thoughtCount: 1)])
+        await library.setConcepts([ConceptSummary(id: "c", kind: "person", name: "Kim", thoughtCount: 1)])
         let model = ExploreViewModel(library: library, autosaveDelay: .zero, startView: .space)
         await model.open(selecting: nil)
-        #expect(model.concepts.map(\.name) == ["Marleen"])
+        #expect(model.concepts.map(\.name) == ["Kim"])
     }
 
     @Test("a thought chosen in the menu bar opens selected, and flow scrolls to it")

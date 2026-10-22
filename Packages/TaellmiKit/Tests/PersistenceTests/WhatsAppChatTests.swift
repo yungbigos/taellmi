@@ -12,7 +12,7 @@ struct WhatsAppChatTests {
         + "\u{200E}[19.08.25, 19:44:41] yannik: \u{200E}audio omitted\r\n"
         + "[02.09.26, 12:34:31] yannik: Zählerstand ablesen  und notieren\nZähler-ID: 1ABC0000000000\n\n"
         + "Rückruf am Freitag\r\n"
-        + "[02.09.26, 15:53:38] yannik: Geschenkidee für Marleen: Kletterkurs\r\n"
+        + "[02.09.26, 15:53:38] yannik: Geschenkidee für Kim: Kletterkurs\r\n"
 
     static func date(_ year: Int, _ month: Int, _ day: Int, _ hour: Int, _ minute: Int, _ second: Int) -> Date? {
         berlinCalendar.date(
@@ -33,7 +33,7 @@ struct WhatsAppChatTests {
             chat.messages[2].text
                 == "Zählerstand ablesen  und notieren\nZähler-ID: 1ABC0000000000\n\nRückruf am Freitag",
             "lines without a time continue the message above them, blank lines and double spaces included")
-        #expect(chat.messages[3].text == "Geschenkidee für Marleen: Kletterkurs", "a colon in the words stays")
+        #expect(chat.messages[3].text == "Geschenkidee für Kim: Kletterkurs", "a colon in the words stays")
     }
 
     @Test(

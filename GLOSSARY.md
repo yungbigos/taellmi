@@ -102,7 +102,7 @@ _In the app_: summary
 _Avoid_: Insight, takeaway, abstract
 
 **Vocabulary**:
-The words the app should spell exactly your way, mostly names (e.g. "Marleen"). It comes from your own list (part of Curation) and, if you opt in, your contacts. The Text of a new voice Entry is corrected towards it, and each correction is recorded on the Entry.
+The words the app should spell exactly your way, mostly names (e.g. "Kim"). It comes from your own list (part of Curation) and, if you opt in, your contacts. The Text of a new voice Entry is corrected towards it, and each correction is recorded on the Entry.
 _In the app_: spellings
 _Avoid_: Dictionary, custom words, glossary
 

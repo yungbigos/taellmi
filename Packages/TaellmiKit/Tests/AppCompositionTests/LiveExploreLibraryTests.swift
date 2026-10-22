@@ -211,15 +211,15 @@ struct LiveMeaningTests {
         let index = EntryIndex(database: database)
         let fragments = FragmentStore(database: database)
         let store = UnderstandingStore(database: database)
-        var entry = try files.createTypedEntry(text: "Mit Marleen.", createdAt: sampleDate)
+        var entry = try files.createTypedEntry(text: "Mit Kim.", createdAt: sampleDate)
         try index.upsert(entry, transcript: nil)
         try fragments.replace(
-            entryID: entry.id, spans: [TextSpan(text: "Mit Marleen.", utf16Range: 0..<12)], sourceText: entry.text,
+            entryID: entry.id, spans: [TextSpan(text: "Mit Kim.", utf16Range: 0..<8)], sourceText: entry.text,
             method: "test@1")
         try store.replace(
             entryID: entry.id, sourceText: entry.text,
             understanding: Understanding(
-                summary: "Kurz.", mentions: [ConceptMention(kind: "person", name: "Marleen", utf16Range: 4..<11)]),
+                summary: "Kurz.", mentions: [ConceptMention(kind: "person", name: "Kim", utf16Range: 4..<7)]),
             provenance: .init(modelID: "m", promptRefs: "p"))
         let library = LiveExploreLibrary(
             files: files, index: index,
@@ -231,9 +231,9 @@ struct LiveMeaningTests {
                 embedders: FakeEmbedderProvider(), settings: SettingsStore(database: database)),
             understandings: store, curation: CurationStore(storage: PlainFolderStorage(root: temp.url)))
 
-        #expect(try await library.meaning(id: entry.id).concepts.map(\.name) == ["Marleen"])
+        #expect(try await library.meaning(id: entry.id).concepts.map(\.name) == ["Kim"])
 
-        entry.text = "Gestern: mit Marleen."
+        entry.text = "Gestern: mit Kim."
         try index.upsert(entry, transcript: nil)
         let meaning = try await library.meaning(id: entry.id)
         #expect(meaning.concepts.isEmpty)

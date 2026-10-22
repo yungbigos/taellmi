@@ -149,39 +149,39 @@ struct PipelineRunnerTests {
         #expect(try harness.jobs.jobs(entryID: entry.id).map(\.state) == [.done, .done, .done, .done])
     }
 
-    static let marleneResult = RawTranscription(
-        text: "Heute mit Marlene telefoniert.",
+    static let kymResult = RawTranscription(
+        text: "Heute mit Kym telefoniert.",
         tokens: [TimedToken(text: "▁Heute", start: 0, end: 0.4), TimedToken(text: ".", start: 1.9, end: 2)],
         durationSeconds: 2)
 
     @Test("a new Text is corrected towards the Vocabulary, the correction is recorded, the Transcript stays verbatim")
     func correctsTowardsVocabulary() async throws {
         let harness = try Harness(
-            fake: FakeTranscriber(result: Self.marleneResult), vocabulary: [FakeVocabularySource(["Marleen"])],
-            names: ["Marlene"])
+            fake: FakeTranscriber(result: Self.kymResult), vocabulary: [FakeVocabularySource(["Kim"])],
+            names: ["Kym"])
         let entry = try harness.addEntry()
         try await harness.runner.enqueue(entry)
 
         await harness.runner.runPending()
 
         let loaded = try harness.files.loadEntry(folder: entry.folder)
-        #expect(loaded.entry.text == "Heute mit Marleen telefoniert.")
-        #expect(loaded.transcript?.text == "Heute mit Marlene telefoniert.")
-        #expect(loaded.corrections == [VocabularyCorrection(from: "Marlene", to: "Marleen")])
+        #expect(loaded.entry.text == "Heute mit Kim telefoniert.")
+        #expect(loaded.transcript?.text == "Heute mit Kym telefoniert.")
+        #expect(loaded.corrections == [VocabularyCorrection(from: "Kym", to: "Kim")])
     }
 
     @Test("terms from all sources are combined, and a failing source does not block transcription")
     func combinesSourcesAndToleratesFailure() async throws {
         let harness = try Harness(
-            fake: FakeTranscriber(result: Self.marleneResult),
-            vocabulary: [FakeVocabularySource([], fails: true), FakeVocabularySource(["Marleen"])],
-            names: ["Marlene"])
+            fake: FakeTranscriber(result: Self.kymResult),
+            vocabulary: [FakeVocabularySource([], fails: true), FakeVocabularySource(["Kim"])],
+            names: ["Kym"])
         let entry = try harness.addEntry()
         try await harness.runner.enqueue(entry)
 
         await harness.runner.runPending()
 
-        #expect(try harness.files.loadEntry(folder: entry.folder).entry.text == "Heute mit Marleen telefoniert.")
+        #expect(try harness.files.loadEntry(folder: entry.folder).entry.text == "Heute mit Kim telefoniert.")
     }
 
     @Test("a recording in which no words were heard is discarded completely")

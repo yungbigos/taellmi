@@ -16,12 +16,12 @@ struct ConceptMentionTests {
 
     @Test("each concept points to every place its words appear, as UTF-16 positions")
     func locates() {
-        let text = "Mit Marleen in Giesing. Später rief Marleen nochmal an."
+        let text = "Mit Kim in Giesing. Später rief Kim nochmal an."
         let mentions = ConceptMentions.locate(
-            in: text, answer: answer([("Marleen", "person", "Marleen"), ("Giesing", "place", "Giesing")]), kinds: kinds)
-        let marleen = mentions.filter { $0.name == "Marleen" }
-        #expect(marleen.map(\.utf16Range) == [4..<11, 36..<43])
-        #expect(mentions.contains { $0.kind == "place" && $0.utf16Range == 15..<22 })
+            in: text, answer: answer([("Kim", "person", "Kim"), ("Giesing", "place", "Giesing")]), kinds: kinds)
+        let kim = mentions.filter { $0.name == "Kim" }
+        #expect(kim.map(\.utf16Range) == [4..<7, 32..<35])
+        #expect(mentions.contains { $0.kind == "place" && $0.utf16Range == 11..<18 })
     }
 
     @Test("a concept whose words aren't in the thought is dropped, never invented")

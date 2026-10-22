@@ -20,13 +20,13 @@ struct StackGroupsTests {
     private func setUp() async -> (ExploreViewModel, FakeLibrary) {
         let library = FakeLibrary(entries: [
             entry("a", "Der Plan für den Umzug steht.", minutesAgo: 1),
-            entry("b", "Mit Malin über Weihnachten geredet.", minutesAgo: 10),
+            entry("b", "Mit Sam über Weihnachten geredet.", minutesAgo: 10),
             entry("c", "Die Heizung gluckert.", minutesAgo: 20),
         ])
-        let malin = ConceptSummary(id: "concept:person:malin", kind: "person", name: "Malin", thoughtCount: 1)
+        let sam = ConceptSummary(id: "concept:person:sam", kind: "person", name: "Sam", thoughtCount: 1)
         await library.setConcepts(
-            [malin], details: [ConceptDetail(concept: malin, thoughts: [], appearingWith: [])],
-            mentions: ["concept:person:malin": ["b"]])
+            [sam], details: [ConceptDetail(concept: sam, thoughts: [], appearingWith: [])],
+            mentions: ["concept:person:sam": ["b"]])
         let model = ExploreViewModel(library: library, autosaveDelay: .zero, startView: .stack)
         await model.open(selecting: nil)
         return (model, library)
@@ -58,7 +58,7 @@ struct StackGroupsTests {
     @Test("a concept shows the thoughts that mention it, and the first one opens")
     func concept() async {
         let (model, _) = await setUp()
-        await model.chooseGroup(.concept("concept:person:malin"))
+        await model.chooseGroup(.concept("concept:person:sam"))
         #expect(model.entries.map(\.id) == ["b"])
         #expect(model.detail?.entry.id == "b")
     }

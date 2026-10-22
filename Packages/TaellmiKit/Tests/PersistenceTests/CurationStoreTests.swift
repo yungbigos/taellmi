@@ -16,12 +16,12 @@ struct CurationStoreTests {
     func addTerms() throws {
         let temp = try TemporaryDirectory()
         let store = CurationStore(storage: PlainFolderStorage(root: temp.url))
-        try store.addToVocabulary("Marleen")
+        try store.addToVocabulary("Kim")
         try store.addToVocabulary("  Jannik ")
-        try store.addToVocabulary("Marleen")
+        try store.addToVocabulary("Kim")
 
         let reloaded = CurationStore(storage: PlainFolderStorage(root: temp.url))
-        #expect(try reloaded.vocabulary().map(\.text) == ["Jannik", "Marleen"])
+        #expect(try reloaded.vocabulary().map(\.text) == ["Jannik", "Kim"])
         #expect(FileManager.default.fileExists(atPath: temp.url.appendingPathComponent("curation.json").path))
     }
 
@@ -34,9 +34,9 @@ struct CurationStoreTests {
     @Test("removing a term keeps the others")
     func removeTerm() throws {
         let store = CurationStore(storage: PlainFolderStorage(root: try TemporaryDirectory().url))
-        try store.addToVocabulary("Marleen")
+        try store.addToVocabulary("Kim")
         try store.addToVocabulary("Jannik")
-        try store.removeFromVocabulary("Marleen")
+        try store.removeFromVocabulary("Kim")
         #expect(try store.vocabulary().map(\.text) == ["Jannik"])
     }
 
@@ -45,7 +45,7 @@ struct CurationStoreTests {
         let temp = try TemporaryDirectory()
         let storage = PlainFolderStorage(root: temp.url)
         try storage.write(Data(#"{"links": [{"from": "a", "to": "b"}], "vocabulary": []}"#.utf8), to: "curation.json")
-        try CurationStore(storage: storage).addToVocabulary("Marleen")
+        try CurationStore(storage: storage).addToVocabulary("Kim")
         let json = try JSONDecoder().decode([String: JSONValue].self, from: storage.read("curation.json"))
         #expect(json["links"] == .array([.object(["from": .string("a"), "to": .string("b")])]))
     }

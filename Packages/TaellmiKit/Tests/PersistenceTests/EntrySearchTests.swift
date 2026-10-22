@@ -22,7 +22,7 @@ struct EntrySearchTests {
 
     private let samples: [(id: String, text: String, daysAgo: Double, source: EntrySource)] = [
         ("a", "Meine Zukunftsangst wegen dem Job ist heute kleiner.", 0, .voice),
-        ("b", "Im Büro mit Marleen über das Projekt gesprochen. Honestly, gut gelaufen.", 3, .typed),
+        ("b", "Im Büro mit Kim über das Projekt gesprochen. Honestly, gut gelaufen.", 3, .typed),
         ("c", "Straße nass, Spaziergang trotzdem schön.", 40, .voice),
     ]
 
@@ -38,7 +38,7 @@ struct EntrySearchTests {
     func allWords() throws {
         let index = try indexed(samples)
         #expect(
-            try index.search(EntryQuery(text: "büro marleen"), now: sampleDate, calendar: berlinCalendar).map(\.id) == [
+            try index.search(EntryQuery(text: "büro kim"), now: sampleDate, calendar: berlinCalendar).map(\.id) == [
                 "b"
             ])
         #expect(try index.search(EntryQuery(text: "büro straße"), now: sampleDate, calendar: berlinCalendar).isEmpty)

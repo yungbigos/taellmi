@@ -5,7 +5,7 @@ import Foundation
 /// Returns the problems found; empty means the engine keeps the contract.
 public enum EmbedderContract {
     public static let germanTexts = [
-        "Ich habe Angst vor der Zukunft.", "Fahrrad repariert, Kette geölt.", "Marleen kommt am Wochenende.",
+        "Ich habe Angst vor der Zukunft.", "Fahrrad repariert, Kette geölt.", "Kim kommt am Wochenende.",
     ]
 
     public static func problems(of embedder: any Embedder, dimensions: Int) async throws -> [String] {

@@ -4,7 +4,7 @@ import Testing
 @Suite("Editing the Vocabulary in Settings")
 struct VocabularyViewModelTests {
     actor FakeSettings: VocabularySettings {
-        var words: [String] = ["Marleen"]
+        var words: [String] = ["Kim"]
         var contacts = false
         var contactsAccessGranted: Bool
 
@@ -26,7 +26,7 @@ struct VocabularyViewModelTests {
     func loads() async {
         let model = VocabularyViewModel(settings: FakeSettings())
         await model.load()
-        #expect(model.terms == ["Marleen"])
+        #expect(model.terms == ["Kim"])
         #expect(model.usesContacts == false)
     }
 
@@ -36,10 +36,10 @@ struct VocabularyViewModelTests {
         await model.load()
         model.newTerm = "  "
         await model.addNewTerm()
-        #expect(model.terms == ["Marleen"])
+        #expect(model.terms == ["Kim"])
         model.newTerm = "Jannik"
         await model.addNewTerm()
-        #expect(model.terms == ["Jannik", "Marleen"])
+        #expect(model.terms == ["Jannik", "Kim"])
         #expect(model.newTerm.isEmpty)
     }
 
@@ -47,7 +47,7 @@ struct VocabularyViewModelTests {
     func removes() async {
         let model = VocabularyViewModel(settings: FakeSettings())
         await model.load()
-        await model.remove("Marleen")
+        await model.remove("Kim")
         #expect(model.terms.isEmpty)
     }
 

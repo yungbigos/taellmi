@@ -497,7 +497,7 @@ mark::after { content: attr(data-k); font: 600 9.5px/1 var(--text); letter-spaci
       <ul style="margin:0;padding-left:18px;display:grid;gap:6px">
         <li><b>Check the kind</b> against the kinds enabled in config. Unknown kinds are skipped.</li>
         <li><b>Find the mention</b> in your text: every whole-word match, ignoring case. If the words aren't there, the concept is dropped. Nothing is shown that doesn't point back to what you said.</li>
-        <li><b>Merge by name</b>: the concept's id is kind + lowercased name, e.g. <code>concept:person:marleen</code>. The same name in another thought is the same concept. Nothing smarter yet: "Marleen" and "Leni" stay two people.</li>
+        <li><b>Merge by name</b>: the concept's id is kind + lowercased name, e.g. <code>concept:person:kim</code>. The same name in another thought is the same concept. Nothing smarter yet: "Kim" and "Kimmy" stay two people.</li>
         <li><b>Link to the passage</b> holding the words, with exact character positions. That is what badges and highlights use.</li>
         <li><b>Record provenance</b>: model id and <code>concepts@1+summary@1</code>. A new prompt version makes every thought stale, and the sweep runs them again.</li>
         <li>Concepts no passage mentions any more are deleted.</li>
@@ -506,16 +506,16 @@ mark::after { content: attr(data-k); font: 600 9.5px/1 var(--text); letter-spaci
   </div>
 
   <h3 style="margin-top:8px">a real run</h3>
-  <p class="quiet">Run today on this Mac with the exact prompts and schema from config, Apple's model, temperature 0.2, three times. This is a sample thought, not one of yours.</p>
+  <p class="quiet">Run today on this Mac with the exact prompts and schema from config, Apple's model, temperature 0.2, three times. This is a sample thought, not one of yours. Its person's name was later replaced with the invented "Kim", positions recomputed.</p>
   <div class="run">
     <div class="run-in">
       <div class="k">INPUT · 64 WORDS, ONE PASSAGE</div>
-      <p class="thought">Heute Morgen wieder kaum geschlafen, weil die <mark data-k="topic">Heizung</mark> in der Wohnung die ganze Nacht geklackert hat. Ich habe dann mit <mark data-k="person">Marleen</mark> telefoniert, sie ist gerade in <mark data-k="place">Lissabon</mark> für die Konferenz. Sie meinte, ich soll endlich den <mark data-k="topic">Vermieter</mark> anrufen. Eigentlich bin ich eher <mark data-k="feeling">müde</mark> als genervt. Im Büro hat mein Chef nach dem Release gefragt, und ich hatte keine Antwort, weil das Deployment noch hängt.</p>
+      <p class="thought">Heute Morgen wieder kaum geschlafen, weil die <mark data-k="topic">Heizung</mark> in der Wohnung die ganze Nacht geklackert hat. Ich habe dann mit <mark data-k="person">Kim</mark> telefoniert, sie ist gerade in <mark data-k="place">Lissabon</mark> für die Konferenz. Sie meinte, ich soll endlich den <mark data-k="topic">Vermieter</mark> anrufen. Eigentlich bin ich eher <mark data-k="feeling">müde</mark> als genervt. Im Büro hat mein Chef nach dem Release gefragt, und ich hatte keine Antwort, weil das Deployment noch hängt.</p>
     </div>
     <div class="run-out">
       <div class="k">MODEL OUTPUT · RUN 1</div>
       <pre class="code">{"concepts": [
- {"name":"Marleen",  "kind":"person", "mention":"Marleen"},
+ {"name":"Kim",  "kind":"person", "mention":"Kim"},
  {"name":"Lissabon", "kind":"place",  "mention":"Lissabon"},
  {"name":"Heizung",  "kind":"topic",  "mention":"Heizung"},
  {"name":"Vermieter","kind":"topic",  "mention":"Vermieter"},
@@ -533,11 +533,11 @@ mark::after { content: attr(data-k); font: 600 9.5px/1 var(--text); letter-spaci
     <table>
       <thead><tr><th>table</th><th>id</th><th>contents</th></tr></thead>
       <tbody>
-        <tr><td class="mono">node</td><td class="mono">concept:person:marleen</td><td>label "Marleen", kind person, method <span class="mono">same_name@1</span></td></tr>
+        <tr><td class="mono">node</td><td class="mono">concept:person:kim</td><td>label "Kim", kind person, method <span class="mono">same_name@1</span></td></tr>
         <tr><td class="mono">node</td><td class="mono">concept:place:lissabon</td><td>label "Lissabon", kind place</td></tr>
         <tr><td class="mono">node</td><td class="mono">concept:topic:heizung · …:vermieter</td><td>two topic nodes</td></tr>
         <tr><td class="mono">node</td><td class="mono">concept:emotion:müde</td><td>shown as a feeling</td></tr>
-        <tr><td class="mono">edge</td><td class="mono">mentions</td><td>passage <span class="mono">fragment-…</span> → <span class="mono">concept:person:marleen</span>, evidence <span class="mono">{"ranges":[[119,126]]}</span>, one edge per concept</td></tr>
+        <tr><td class="mono">edge</td><td class="mono">mentions</td><td>passage <span class="mono">fragment-…</span> → <span class="mono">concept:person:kim</span>, evidence <span class="mono">{"ranges":[[119,122]]}</span>, one edge per concept</td></tr>
         <tr><td class="mono">node</td><td class="mono">summary:&lt;thought id&gt;</td><td>the sentence, plus the source text, model <span class="mono">apple-foundation-system</span>, prompts <span class="mono">concepts@1+summary@1</span></td></tr>
       </tbody>
     </table>
@@ -546,7 +546,7 @@ mark::after { content: attr(data-k); font: 600 9.5px/1 var(--text); letter-spaci
   <div class="rule" style="background:var(--panel);border:1px solid var(--line)">
     <h3>what the three runs show</h3>
     <ul>
-      <li><b>Names and places are reliable.</b> Marleen, Lissabon and Heizung came back every time.</li>
+      <li><b>Names and places are reliable.</b> Kim, Lissabon and Heizung came back every time.</li>
       <li><b>Roles are missed or put under the wrong kind.</b> "Vermieter" came back as a topic every time, though the prompt says roles are people. "mein Chef" was never found. Büro and Wohnung were never found as places.</li>
       <li><b>The word check works.</b> Run 2 returned the topic "Job", which isn't in the text. tällmi found no such word and dropped it.</li>
       <li><b>Feelings vary.</b> "müde" came back in runs 1 and 3, not in run 2.</li>

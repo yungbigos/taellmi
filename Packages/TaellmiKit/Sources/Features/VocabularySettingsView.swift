@@ -12,7 +12,7 @@ public struct VocabularySettingsView: View {
         Form {
             Section {
                 HStack {
-                    TextField("add a name, e.g. Marleen", text: $model.newTerm)
+                    TextField("add a name, e.g. Kim", text: $model.newTerm)
                         .onSubmit { Task { await model.addNewTerm() } }
                     Button("add") { Task { await model.addNewTerm() } }
                         .disabled(model.newTerm.trimmingCharacters(in: .whitespaces).isEmpty)

@@ -26,7 +26,7 @@ struct MLXEmbedderOptionsTests {
     @Test("without a query template, the query is embedded as it is")
     func noTemplate() throws {
         let options = try MLXEmbedderOptions(params: ["dimensions": .number(256), "pooling": .string("mean")])
-        #expect(options.text("Marleen", for: .query) == "Marleen")
+        #expect(options.text("Kim", for: .query) == "Kim")
     }
 
     @Test(

@@ -133,7 +133,7 @@ struct ArchiveMigrationTests {
         try PlainFolderStorage(root: archive.url).move(old.folder, to: "entries/2026/10/20261019-203412-a1b2")
         let movedOld = try plainFiles.loadEntry(folder: "entries/2026/10/20261019-203412-a1b2").entry
         _ = try plainFiles.saveTranscript(germanTranscript, for: movedOld)
-        try CurationStore(storage: PlainFolderStorage(root: archive.url)).addToVocabulary("Marleen")
+        try CurationStore(storage: PlainFolderStorage(root: archive.url)).addToVocabulary("Kim")
 
         let key = SymmetricKey(size: .bits256)
         let encrypted = EncryptedStorage(root: archive.url, key: key, decryptedCache: scratch.url)
@@ -148,7 +148,7 @@ struct ArchiveMigrationTests {
         #expect(loaded.entry.text == germanTranscript.text)
         #expect(loaded.entry.createdAt == movedOld.createdAt)
         #expect(loaded.transcript == germanTranscript)
-        #expect(try CurationStore(storage: encrypted).vocabulary().map(\.text) == ["Marleen"])
+        #expect(try CurationStore(storage: encrypted).vocabulary().map(\.text) == ["Kim"])
         #expect(!FileManager.default.fileExists(atPath: archive.url.appendingPathComponent("entries/2026").path))
         #expect(try ArchiveMigration.encryptPlainEntries(root: archive.url, into: encrypted, key: key).migrated == 0)
     }

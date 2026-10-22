@@ -13,10 +13,10 @@ struct SettingGatedSourceTests {
         _ = try Seeder(database: database).apply(SeedBundle.bundled())
         let source = SettingGatedSource(
             settings: SettingsStore(database: database), key: SettingKeys.vocabularyUseContacts,
-            source: FakeVocabularySource(["Marleen"]))
+            source: FakeVocabularySource(["Kim"]))
 
         #expect(try await source.terms().isEmpty)
         try ConfigEditor(database: database).setSetting(SettingKeys.vocabularyUseContacts, to: .bool(true))
-        #expect(try await source.terms().map(\.text) == ["Marleen"])
+        #expect(try await source.terms().map(\.text) == ["Kim"])
     }
 }

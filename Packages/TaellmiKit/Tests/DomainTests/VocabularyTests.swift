@@ -8,8 +8,8 @@ struct KoelnerPhonetikTests {
         arguments: [
             ("Wikipedia", "3412"),
             ("Müller-Lüdenscheidt", "65752682"),
-            ("Marlene", "6756"),
-            ("Marleen", "6756"),
+            ("Kym", "46"),
+            ("Kim", "46"),
             ("Christoph", "47823"),
             ("Bein", "16"),
             ("Ben", "16"),
@@ -55,10 +55,10 @@ struct VocabularyCorrectorTests {
 
     @Test("a recognised name that sounds like a Vocabulary term takes its spelling")
     func correctsName() {
-        let result = corrector(["Marleen"]).correct(
-            "Ich habe heute mit Marlene telefoniert.", using: FakeClassifier(names: ["Marlene"]))
-        #expect(result.text == "Ich habe heute mit Marleen telefoniert.")
-        #expect(result.corrections == [VocabularyCorrection(from: "Marlene", to: "Marleen")])
+        let result = corrector(["Kim"]).correct(
+            "Ich habe heute mit Kym telefoniert.", using: FakeClassifier(names: ["Kym"]))
+        #expect(result.text == "Ich habe heute mit Kim telefoniert.")
+        #expect(result.corrections == [VocabularyCorrection(from: "Kym", to: "Kim")])
     }
 
     @Test("function words are never touched, even when they sound the same")
@@ -79,29 +79,29 @@ struct VocabularyCorrectorTests {
 
     @Test("two Vocabulary terms that sound alike make the match ambiguous, so nothing changes")
     func ambiguousTerms() {
-        let result = corrector(["Marleen", "Marlehn"]).correct(
-            "Mit Marlene gesprochen.", using: FakeClassifier(names: ["Marlene"]))
-        #expect(result.text == "Mit Marlene gesprochen.")
+        let result = corrector(["Kim", "Kymm"]).correct(
+            "Mit Kym gesprochen.", using: FakeClassifier(names: ["Kym"]))
+        #expect(result.text == "Mit Kym gesprochen.")
     }
 
     @Test("an exact match and lower-case words are left alone")
     func exactAndLowercase() {
-        let classifier = FakeClassifier(names: ["Marleen"])
-        #expect(corrector(["Marleen"]).correct("Mit Marleen.", using: classifier).corrections.isEmpty)
-        #expect(corrector(["Marleen"]).correct("die marlene", using: classifier).corrections.isEmpty)
+        let classifier = FakeClassifier(names: ["Kim", "kym"])
+        #expect(corrector(["Kim"]).correct("Mit Kim.", using: classifier).corrections.isEmpty)
+        #expect(corrector(["Kim"]).correct("die kym", using: classifier).corrections.isEmpty)
     }
 
     @Test("every occurrence is corrected and recorded, punctuation and English around it survive")
     func multipleOccurrences() {
-        let result = corrector(["Marleen"]).correct(
-            "Marlene, honestly. Dann Marlene!", using: FakeClassifier(names: ["Marlene"]))
-        #expect(result.text == "Marleen, honestly. Dann Marleen!")
+        let result = corrector(["Kim"]).correct(
+            "Kym, honestly. Dann Kym!", using: FakeClassifier(names: ["Kym"]))
+        #expect(result.text == "Kim, honestly. Dann Kim!")
         #expect(result.corrections.count == 2)
     }
 
     @Test("an empty Vocabulary changes nothing")
     func emptyVocabulary() {
-        let text = "Ich habe heute mit Marlene telefoniert."
-        #expect(corrector([]).correct(text, using: FakeClassifier(names: ["Marlene"])).text == text)
+        let text = "Ich habe heute mit Kym telefoniert."
+        #expect(corrector([]).correct(text, using: FakeClassifier(names: ["Kym"])).text == text)
     }
 }

@@ -24,11 +24,9 @@ jobs:
         with:
           persist-credentials: false
 
+      # Xcode 26.6, the Metal toolchain, xcodegen and the German language data the tests need.
       - name: toolchain
-        run: |
-          sudo xcode-select -s /Applications/Xcode_26.6.app
-          xcodebuild -showComponent MetalToolchain | grep -q "Status: installed" || xcodebuild -downloadComponent MetalToolchain
-          brew install xcodegen
+        run: scripts/ci-setup.sh
 
       - name: check
         run: scripts/check.sh

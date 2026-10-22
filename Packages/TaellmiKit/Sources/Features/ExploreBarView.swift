@@ -1,7 +1,7 @@
 import Domain
 import SwiftUI
 
-/// The floating bar at the bottom of the window, as three glass islands that follow the view (issue #54):
+/// The floating bar at the bottom of the window, as three glass islands that follow the view (issue #45):
 /// what to look at, (in space) finding concepts, and spoken / typed with trash. Trash has a bar of its own.
 struct ExploreBarView: View {
     @Bindable var model: ExploreViewModel

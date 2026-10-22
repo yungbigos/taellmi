@@ -1,7 +1,7 @@
 import Domain
 import SwiftUI
 
-/// The month rail at the side of flow and time (issue #53): every month, newest at the top, with a dot per
+/// The month rail at the side of flow and time (issue #44): every month, newest at the top, with a dot per
 /// thought. In flow a month scrolls to it; in time it shows that month.
 struct MonthRailView: View {
     @Bindable var model: ExploreViewModel

@@ -1,7 +1,7 @@
 # 0014 — Formatting is Markdown in the Text, styled where it stands; speech adds only paragraphs and numbered lists
 
 - **Status:** accepted (2026-10-20). Builds on ADR 0004 (entries as files), ADR 0006 (no slop), ADR 0011 (passages) and ADR 0013 (importing notes).
-- **Issues:** #55 (formatting, also from speech). Shortcuts follow #24 (keyboard-first).
+- **Issues:** #46 (formatting, also from speech). Shortcuts follow #24 (keyboard-first).
 
 ## Context
 

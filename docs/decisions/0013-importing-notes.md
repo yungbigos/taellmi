@@ -1,7 +1,7 @@
 # 0013 — Importing notes from Apple Notes as files you choose
 
 - **Status:** accepted (2026-10-20). Builds on ADR 0004 (entries as files) and ADR 0010 (encryption).
-- **Issues:** #18 (each note → Entry with Source `apple_notes` and its original date). Formatting is #55.
+- **Issues:** #18 (each note → Entry with Source `apple_notes` and its original date). Formatting is #46.
 
 ## Context
 

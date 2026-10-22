@@ -1,7 +1,7 @@
 # 0015 — Importing WhatsApp chats, one thought per message
 
 - **Status:** accepted (2026-10-22). Builds on ADR 0013 (importing notes) and ADR 0004 (entries as files).
-- **Issues:** #63.
+- **Issues:** #48.
 
 ## Context
 

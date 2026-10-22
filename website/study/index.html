@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tällmi website study</title>
+<link rel="preload" href="../fonts/FunnelDisplay-Variable.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="preload" href="../fonts/FunnelSans-Variable.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="stylesheet" href="study.css">
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <a class="brand" href="#" aria-label="tällmi"><span class="wm-slot"></span></a>
+  <button class="pill" id="theme" type="button">dark</button>
+</header>
+
+<section class="intro">
+  <p class="label">website · design study · 22 oct 2026</p>
+  <div>
+    <h1>how should the site feel?</h1>
+    <p>a marketing site, not the app. its job is to get people to try tällmi or help build it; a few small, smart demo pieces can help, but they serve the call. the brand book settles the parts. this study is about how they come together: the story, the words, how it looks and moves, and how the call works. none of this is the website yet, and nothing is decided.</p>
+    <p class="quiet">pick one option in each block. your picks collect at the bottom, ready to paste back into the chat. the copy inside the three directions follows your message picks.</p>
+    <ul class="fixed" aria-label="already fixed by the brand book">
+      <li>G1 colours</li><li>Funnel Display + Funnel Sans</li><li>lowercase, calm voice</li><li>pink only for the dots</li><li>tälli's look and motion</li><li>think out loud. · äh included.</li>
+    </ul>
+    <div class="decided">
+      <p class="label">picked on 22 oct</p>
+      <ul>
+        <li><b>B night</b>, with C's spoken thought flowing into a structure of words later on the page.</li>
+        <li><b>the äh beat:</b> “äh is the sound of thinking.*” with option 2's words underneath, and “*in german.”</li>
+        <li><b>the call:</b> one door. <b>pieces:</b> tälli watches the pointer, poke tälli, the ä grows as you scroll, one search in your language, the live privacy counter, tälli peeks in the footer, the 3d word field.</li>
+        <li>everything else stays on the suggested option for now.</li>
+      </ul>
+      <a class="btn" href="b/">see direction B as a whole page</a>
+    </div>
+  </div>
+</section>
+
+<!-- 1 · story -->
+<section class="block" id="story">
+  <div class="rail">
+    <p class="label">1</p>
+    <h2>the story</h2>
+    <p>six beats, short, top to bottom. two pillars carry it: the äh (say it the way it comes, write when you want to craft it) and privacy (your thoughts are yours). every beat ends one scroll away from the call.</p>
+  </div>
+  <div class="body">
+    <ol class="spine">
+      <li><b>think out loud.</b><span>the tagline, tälli alive beside it, and the call right there: try it · contribute.</span></li>
+      <li><b>the äh</b><span>thoughts don't arrive finished. no need for the right words first.</span></li>
+      <li><b>speak or write</b><span>talk to get it out. write when a thought wants care. one small demo piece shows it.</span></li>
+      <li><b>your thoughts are yours</b><span>on your mac only, no account, sealed, plain files. proven on the page itself.</span></li>
+      <li><b>try it · help build it</b><span>the call, in full: what you need to run it, and the ways to contribute.</span></li>
+      <li><b>close</b><span>think out loud, once more. tälli peeks.</span></li>
+    </ol>
+    <div class="group" data-group="order" data-name="privacy placement">
+      <h3>where privacy sits <small>one pick</small></h3>
+      <div class="opts two">
+        <button class="opt" type="button" data-v="late" data-sug><span class="sug">suggested</span><span class="n">late</span><span class="sm">feel it first, then the promise: hero → äh → speak or write → privacy → the call.</span><span class="why">the idea earns attention before the claim, and privacy lands right before the call, as the reason to say yes.</span></button>
+        <button class="opt" type="button" data-v="early"><span class="n">early</span><span class="sm">promise first: hero → privacy → äh → speak or write → the call.</span><span class="why">right if most people come because they don't want their journal in someone's cloud.</span></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2 · messaging -->
+<section class="block" id="messaging">
+  <div class="rail">
+    <p class="label">2</p>
+    <h2>the words</h2>
+    <p>three options for each line that carries a pillar. all follow the voice rules: lowercase, calm, no "!", and no "just", so "just speak" becomes "say it the way it comes".</p>
+  </div>
+  <div class="body">
+    <div class="group" data-group="sub" data-name="hero subline">
+      <h3>under the tagline <small>think out loud. stays fixed</small></h3>
+      <div class="opts">
+        <button class="opt" type="button" data-v="1" data-sug><span class="sug">suggested</span><span class="n">1</span><span class="sm" data-text>say it the way it comes: unfinished, hesitant, in your language. tällmi keeps every word and finds it again later.</span><span class="why">describes what happens, and says it works in your language.</span></button>
+        <button class="opt" type="button" data-v="2"><span class="n">2</span><span class="sm" data-text>a journal you talk to. no need for the right words first: say it, äh and all, and tällmi keeps it.</span><span class="why">shortest. says "journal" up front for people who don't know what this is.</span></button>
+        <button class="opt" type="button" data-v="3"><span class="n">3</span><span class="sm" data-text>thoughts don't arrive finished, so don't wait for the right words. talk, and tällmi keeps it, word for word.</span><span class="why">leads with the insight, but repeats the äh beat below.</span></button>
+      </div>
+    </div>
+
+    <div class="group" data-group="idea" data-name="the äh beat">
+      <h3>the äh beat</h3>
+      <div class="opts">
+        <button class="opt" type="button" data-v="1" data-sug><span class="sug">suggested</span><span class="n">1</span><span class="big" data-text>äh is the sound of thinking.</span><span class="sm">most journals want the right words before you start. thoughts don't arrive like that: they come with pauses, restarts and an äh in between. tällmi takes them as they come.</span><span class="why">teaches the name and the idea in one go.</span></button>
+        <button class="opt" type="button" data-v="2"><span class="n">2</span><span class="big" data-text>no need for the right words.</span><span class="sm">talk the way you think, with pauses and restarts, in your language. the äh stays in. messy is good, and it works.</span><span class="why">the plain benefit. the äh becomes a detail, not the hook.</span></button>
+        <button class="opt" type="button" data-v="3"><span class="n">3</span><span class="big" data-text>start before you know what to say.</span><span class="sm">the right words come later, or never. tällmi keeps what you said either way, and finds it again when you need it.</span><span class="why">the most emotional. needs the demo to make it concrete.</span></button>
+      </div>
+    </div>
+
+    <div class="group" data-group="ways" data-name="speak or write">
+      <h3>speak or write</h3>
+      <div class="opts">
+        <button class="opt" type="button" data-v="1" data-sug><span class="sug">suggested</span><span class="n">1</span><span class="big" data-text>speak to get it out. write to get it right.</span><span class="why">two verbs, one rhythm. "right" here means crafted, not correct.</span></button>
+        <button class="opt" type="button" data-v="2"><span class="n">2</span><span class="big" data-text>talk while you think. write when you craft.</span><span class="why">plainer, less quotable.</span></button>
+        <button class="opt" type="button" data-v="3"><span class="n">3</span><span class="big" data-text>say it rough. write it carefully. both stay yours.</span><span class="why">bridges into privacy.</span></button>
+      </div>
+    </div>
+
+    <div class="group" data-group="priv" data-name="privacy line">
+      <h3>the privacy line</h3>
+      <div class="opts">
+        <button class="opt" type="button" data-v="1" data-sug><span class="sug">suggested</span><span class="n">1</span><span class="big" data-text>your thoughts are yours.</span><span class="sm" data-sub>not big tech's. not an ad network's. not ours either.</span><span class="why">"not ours either" says we can't read them, which is true.</span></button>
+        <button class="opt" type="button" data-v="2"><span class="n">2</span><span class="big" data-text>it stays on your mac.</span><span class="sm" data-sub>no cloud, no account, no server. there is no tällmi server.</span><span class="why">concrete and checkable, less warm.</span></button>
+        <button class="opt" type="button" data-v="3"><span class="n">3</span><span class="big" data-text>nobody listens but tälli.</span><span class="sm" data-sub>and tälli lives on your mac.</span><span class="why">playful, uses the character. may undersell encryption and plain files.</span></button>
+      </div>
+    </div>
+
+    <div class="group" data-group="try" data-name="try button">
+      <h3>the try button <small>the main call</small></h3>
+      <div class="opts">
+        <button class="opt" type="button" data-v="1" data-sug><span class="sug">suggested</span><span class="n">1</span><span class="big" data-text>try tällmi</span><span class="why">says what happens, works for a beta and a release.</span></button>
+        <button class="opt" type="button" data-v="2"><span class="n">2</span><span class="big" data-text>download for mac</span><span class="why">the most concrete. only fits once there's a file to download.</span></button>
+        <button class="opt" type="button" data-v="3"><span class="n">3</span><span class="big" data-text>get the early version</span><span class="why">sets expectations: it's early, and that's fine.</span></button>
+      </div>
+    </div>
+
+    <div class="group" data-group="contrib" data-name="contribute button">
+      <h3>the contribute button <small>what "contribute" means is still open</small></h3>
+      <div class="opts">
+        <button class="opt" type="button" data-v="1" data-sug><span class="sug">suggested</span><span class="n">1</span><span class="big" data-text>help build it</span><span class="why">covers code, testing and feedback, whatever it turns out to be.</span></button>
+        <button class="opt" type="button" data-v="2"><span class="n">2</span><span class="big" data-text>contribute on GitHub</span><span class="why">clear for developers. only fits if the code goes public.</span></button>
+        <button class="opt" type="button" data-v="3"><span class="n">3</span><span class="big" data-text>test it with us</span><span class="why">for a beta group: people who think out loud, in any language.</span></button>
+      </div>
+    </div>
+
+    <div class="group" data-group="close" data-name="call headline">
+      <h3>the headline over the call</h3>
+      <div class="opts">
+        <button class="opt" type="button" data-v="1" data-sug><span class="sug">suggested</span><span class="n">1</span><span class="big" data-text>try it. shape it.</span><span class="sm" data-sub>tällmi is early. use it, tell us what's missing, or help build it.</span><span class="why">short, two doors, honest about the stage.</span></button>
+        <button class="opt" type="button" data-v="2"><span class="n">2</span><span class="big" data-text>say something to it.</span><span class="sm" data-sub>the first thought takes ten seconds. the rest is up to you.</span><span class="why">brings it back to the act of talking; contribute becomes the quieter second door.</span></button>
+        <button class="opt" type="button" data-v="3"><span class="n">3</span><span class="big" data-text>a journal built in the open.</span><span class="sm" data-sub>local, private, and made with the people who use it.</span><span class="why">leads with contributing. only true if the code and the roadmap are public.</span></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 3 · look and feel -->
+<section class="block" id="look">
+  <div class="rail">
+    <p class="label">3</p>
+    <h2>look and feel</h2>
+    <p>three directions, each as a live first screen plus two later beats. move your pointer, poke tälli, scroll inside the boxes. "full screen" shows a frame at real size.</p>
+    <p>a mix works too: say which parts of which.</p>
+  </div>
+  <div class="body">
+
+    <!-- A · paper -->
+    <article class="dir" id="dirA">
+      <div class="dir-head">
+        <div><h3><b>A</b>paper</h3><p>editorial and calm, like the brand book itself: white space, big type, asymmetry. tälli is the one thing that moves, and that's where the life is.</p></div>
+        <div class="dir-acts"><button class="pick" type="button" data-dir="A" aria-pressed="false">pick A</button></div>
+      </div>
+      <div class="frame">
+        <div class="f fa">
+          <div class="f-nav"><span class="wm-slot"></span><nav aria-hidden="true"><span>the idea</span><span>demo</span><span>privacy</span></nav></div>
+          <div class="hero">
+            <div>
+              <p class="f-label">a voice journal for the mac</p>
+              <p class="f-moment">think<br>out loud.</p>
+              <p class="f-lede" data-copy="sub"></p>
+              <div class="f-cta"><span class="f-btn" data-copy="try"></span><span class="f-link" data-copy="contrib"></span></div>
+              <p class="f-wink">äh included.<i>(äh: german for “uh”, the sound of thinking.)</i></p>
+            </div>
+            <div class="talli-box"><canvas id="aHero" role="img" aria-label="tälli, rolling in, then watching your pointer"></canvas><p class="whisper">this is tälli. poke it.</p></div>
+          </div>
+        </div>
+        <button class="fs" type="button">full screen</button>
+      </div>
+      <div class="tiles">
+        <figure>
+          <div class="tile">
+            <div class="t-scroll" id="aScroll" tabindex="0" aria-label="scrollable sample of the äh beat">
+              <div class="runway">
+                <div class="t-sticky">
+                  <canvas id="aAeh" role="img" aria-label="tälli thinking, the ä grows letters"></canvas>
+                  <div>
+                    <p class="t-title" data-copy="idea"></p>
+                    <ol class="t-lines" id="aLines">
+                      <li>most journals want the right words before you start.</li>
+                      <li>but thoughts don't arrive finished.</li>
+                      <li>they come with pauses, restarts and an äh in between.</li>
+                      <li>tällmi takes them as they come.</li>
+                      <li>messy is good. messy works.</li>
+                    </ol>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <p class="t-hint whisper" id="aHint">scroll inside this box</p>
+          </div>
+          <figcaption class="tile-cap">the äh beat: as you scroll, the ä grows its letters (äh, ähh, ähm, ähmmm) and the lines light up.</figcaption>
+        </figure>
+        <figure>
+          <div class="tile">
+            <div class="t-center">
+              <p class="label">privacy</p>
+              <p class="t-big" data-copy="priv"></p>
+              <p class="quiet" data-copy="privSub"></p>
+              <div class="counts"><div><b data-count="cookies">0</b><span>cookies on this page</span></div><div><b data-count="req">0</b><span>requests to other servers</span></div><div><b data-count="store">0</b><span>things stored in your browser</span></div></div>
+            </div>
+          </div>
+          <figcaption class="tile-cap">the privacy beat: the page proves it on itself. the numbers are counted live by your browser, for this study page.</figcaption>
+        </figure>
+      </div>
+      <dl class="notes">
+        <div><dt>feel</dt><dd>calm, editorial, Apple Notes-clean.</dd></div>
+        <div><dt>people remember</dt><dd>tälli watching them, and the big lowercase type.</dd></div>
+        <div><dt>tech</dt><dd>HTML, CSS and one small canvas engine. no WebGL.</dd></div>
+        <div><dt>weight · risk</dt><dd>about 30 KB of script plus fonts. can feel too quiet if the words are weak.</dd></div>
+      </dl>
+    </article>
+
+    <!-- B · night -->
+    <article class="dir" id="dirB">
+      <div class="dir-head">
+        <div><h3><b>B</b>night</h3><p>the app icon, come alive. night blue, the type in light ink, and tälli peeking up from the bottom edge, watching you. intimate, like journaling late at night.</p></div>
+        <div class="dir-acts"><button class="pick" type="button" data-dir="B" aria-pressed="false">pick B</button></div>
+      </div>
+      <div class="frame" id="bFrame">
+        <div class="f fb">
+          <div class="f-nav"><span class="wm-slot"></span><nav aria-hidden="true"><span>the idea</span><span>demo</span><span>privacy</span></nav></div>
+          <div class="hero">
+            <p class="f-label">a voice journal for the mac</p>
+            <p class="f-moment">think out loud.</p>
+            <p class="f-lede" data-copy="sub"></p>
+            <div class="f-cta"><span class="f-btn" data-copy="try"></span><span class="f-link" data-copy="contrib"></span></div>
+            <p class="f-wink">äh included.<i>(äh: german for “uh”, the sound of thinking.)</i></p>
+          </div>
+          <canvas class="peek" id="bHero" role="img" aria-label="tälli peeking up from the bottom edge. click it."></canvas>
+          <div class="bubble-b" id="bBubble">anything you want to keep?</div>
+        </div>
+        <button class="fs" type="button">full screen</button>
+      </div>
+      <div class="tiles">
+        <figure>
+          <div class="tile night">
+            <canvas class="full" id="bListen" role="img" aria-label="tälli listening, its dots pulse with the voice"></canvas>
+            <p class="transcript" id="bTranscript" aria-live="off"></p>
+          </div>
+          <figcaption class="tile-cap">the äh beat: tälli listens, and the äh stays in the text (in quiet ink, still your words).</figcaption>
+        </figure>
+        <figure>
+          <div class="tile night">
+            <canvas class="full" id="bSleep" role="img" aria-label="tälli dozing"></canvas>
+            <div class="over"><p class="label">privacy</p><p class="t-big" data-copy="priv"></p><p class="quiet" data-copy="privSub"></p></div>
+          </div>
+          <figcaption class="tile-cap">the privacy beat: calm instead of proof. tälli dozes, nothing is going anywhere.</figcaption>
+        </figure>
+      </div>
+      <dl class="notes">
+        <div><dt>feel</dt><dd>intimate, late at night, the icon come alive.</dd></div>
+        <div><dt>people remember</dt><dd>two pink eyes peeking up from the bottom of the screen.</dd></div>
+        <div><dt>tech</dt><dd>same as A, with a full-bleed canvas. no WebGL.</dd></div>
+        <div><dt>weight · risk</dt><dd>about 30 KB plus fonts. dark first, where the brand book says paper first (for the app). may read as a sleep app.</dd></div>
+      </dl>
+    </article>
+
+    <!-- C · space -->
+    <article class="dir" id="dirC">
+      <div class="dir-head">
+        <div><h3><b>C</b>space</h3><p>your words in depth, like the space view: thoughts drift past as flat type, sharp up close, blurring far away. search pulls the right ones forward, by meaning.</p></div>
+        <div class="dir-acts"><button class="pick" type="button" data-dir="C" aria-pressed="false">pick C</button></div>
+      </div>
+      <div class="frame">
+        <div class="f fc">
+          <canvas class="field" id="cHero" aria-hidden="true"></canvas>
+          <div class="f-nav"><span class="wm-slot"></span><nav aria-hidden="true"><span>the idea</span><span>demo</span><span>privacy</span></nav></div>
+          <div class="hero">
+            <p class="f-moment">think out loud.</p>
+            <p class="f-lede" data-copy="sub"></p>
+            <div class="f-cta"><span class="f-btn" data-copy="try"></span><span class="f-link" data-copy="contrib"></span></div>
+            <div class="chips" id="cChips"><span class="k">find</span><button type="button" data-g="moving">moving</button><button type="button" data-g="jonas">jonas</button><button type="button" data-g="dream">dream</button><button type="button" data-g="aeh">äh</button></div>
+          </div>
+        </div>
+        <button class="fs" type="button">full screen</button>
+      </div>
+      <div class="tiles">
+        <figure>
+          <div class="tile space">
+            <div class="t-scroll" id="cScroll" tabindex="0" aria-label="scrollable sample: fly through the words">
+              <div class="runway"><div class="t-sticky" style="grid-template-columns:minmax(0,1fr);padding:0"><canvas id="cFly" aria-hidden="true"></canvas></div></div>
+            </div>
+            <div class="over fly-end" id="cEnd"><p class="t-big" data-copy="priv"></p><p class="quiet">all of this stays on your mac.</p></div>
+            <p class="t-hint whisper" id="cHint">scroll inside this box</p>
+          </div>
+          <figcaption class="tile-cap">a scroll flies you through a year of thoughts and lands on privacy.</figcaption>
+        </figure>
+        <figure>
+          <div class="tile space">
+            <canvas class="full" id="cLand" aria-hidden="true"></canvas>
+          </div>
+          <figcaption class="tile-cap">a new thought joins the map, word by word, äh and all.</figcaption>
+        </figure>
+      </div>
+      <dl class="notes">
+        <div><dt>feel</dt><dd>spatial and product-forward. shows the space view and search by meaning.</dd></div>
+        <div><dt>people remember</dt><dd>words floating past, and search pulling the right ones forward.</dd></div>
+        <div><dt>tech</dt><dd>a real build needs three.js (WebGL) with crisp text. this study fakes it in 2d canvas.</dd></div>
+        <div><dt>weight · risk</dt><dd>three.js adds roughly 150 KB, loaded after first paint. can look like generic "ai particles", and must stay readable and easy on the battery.</dd></div>
+      </dl>
+    </article>
+  </div>
+</section>
+
+<!-- 4 · the call -->
+<section class="block" id="call">
+  <div class="rail">
+    <p class="label">4</p>
+    <h2>the call</h2>
+    <p>the part that matters most. two doors: try it, or help build it. the question is how much room each door gets.</p>
+  </div>
+  <div class="body">
+    <div class="group" data-group="call" data-name="call layout">
+      <h3>how the call looks <small>one pick</small></h3>
+      <div class="opts">
+        <button class="opt" type="button" data-v="two doors" data-sug>
+          <span class="sug">suggested</span><span class="n">1 · two doors</span>
+          <span class="cm">
+            <span class="cm-h" data-copy="close"></span><span class="cm-s" data-copy="closeSub"></span>
+            <span class="cm-cards">
+              <span class="cm-card"><span class="cm-btn" data-copy="try"></span><span class="cm-t">an early version for macs with apple silicon and macOS 26.</span></span>
+              <span class="cm-card"><span class="cm-btn ghost" data-copy="contrib"></span><span class="cm-t">test it in your language, and tell us what breaks.</span></span>
+            </span>
+          </span>
+          <span class="why">equal weight. right if contributors matter as much as users at this stage.</span>
+        </button>
+        <button class="opt" type="button" data-v="one door">
+          <span class="n">2 · one door</span>
+          <span class="cm">
+            <span class="cm-h" data-copy="close"></span><span class="cm-s" data-copy="closeSub"></span>
+            <span class="cm-btn big" data-copy="try"></span>
+            <span class="cm-link">or <span data-copy="contrib"></span></span>
+          </span>
+          <span class="why">one clear next step. contributing is there for whoever looks for it.</span>
+        </button>
+        <button class="opt" type="button" data-v="always there">
+          <span class="n">3 · always there</span>
+          <span class="cm cm-bar">
+            <span class="cm-page"><span class="cm-line big"></span><span class="cm-line w80"></span><span class="cm-line w60"></span><span class="cm-line w70"></span></span>
+            <span class="cm-glass"><span class="cm-dots"><i></i><i></i></span><span class="cm-btn sm" data-copy="try"></span><span class="cm-link sm" data-copy="contrib"></span></span>
+          </span>
+          <span class="why">a small glass bar stays at the bottom from the second beat on. always one click away, at the cost of a little chrome.</span>
+        </button>
+      </div>
+    </div>
+    <p class="whisper" style="margin:0">whichever layout, the first screen carries the call too (see the three directions). and "contribute" needs a decision: code on GitHub, testing, translations, or all of them.</p>
+  </div>
+</section>
+
+<!-- 5 · demo pieces -->
+<section class="block" id="pieces">
+  <div class="rail">
+    <p class="label">5</p>
+    <h2>demo pieces</h2>
+    <p>small and smart, or not at all: each piece has to make someone more likely to try it. two are here to try in full; tick what the site should have.</p>
+  </div>
+  <div class="body">
+    <div class="group">
+      <h3>the full demo <small>the biggest piece: maybe too much for a marketing page</small></h3>
+      <p class="quiet" style="margin:0">click anywhere on the desk, or press <kbd>⌃</kbd><kbd>⌥</kbd><kbd>T</kbd>. tälli listens to a short scripted thought; click again or wait to keep it, <kbd>esc</kbd> discards. or click the bubble and type your own. then search the window by meaning.</p>
+      <div class="desk" id="desk">
+        <div class="menubar" aria-hidden="true"><span class="mb-dots"><i></i><i></i></span><span id="clock"></span></div>
+        <div class="desk-free" id="free">
+          <canvas id="deskTalli" aria-hidden="true"></canvas>
+          <p class="desk-hint" id="deskHint">click anywhere here to call tälli</p>
+          <div class="bubble" id="bubble" hidden>
+            <textarea id="live" rows="1" placeholder="or type …" aria-label="your thought"></textarea>
+            <p class="bubble-note" id="bubbleNote"></p>
+          </div>
+        </div>
+        <div class="window" id="win">
+          <div class="win-bar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span><span class="win-title">flow</span></div>
+          <div class="win-search"><input id="q" type="search" placeholder="search …" aria-label="search your thoughts" autocomplete="off" spellcheck="false"></div>
+          <p class="win-chips" id="chips">try <button type="button">moving</button><button type="button">sleep</button><button type="button">jonas</button><button type="button">boxes</button></p>
+          <ol class="stream" id="stream" aria-live="polite"></ol>
+        </div>
+      </div>
+      <p class="whisper" style="margin:0">in the app, transcription and search by meaning run on models on your mac. here a short script stands in, and your microphone stays off.</p>
+    </div>
+
+    <div class="group">
+      <h3>tälli up close</h3>
+      <div class="piece">
+        <div class="tile night"><canvas class="full" id="playTalli" role="img" aria-label="tälli on a night-blue ground"></canvas><div class="say" id="playSay">saved.</div></div>
+        <div class="piece-ctl">
+          <div class="seg" id="states" role="group" aria-label="what tälli is doing">
+            <button type="button" data-s="idle" aria-pressed="true">idle</button><button type="button" data-s="listening" aria-pressed="false">listening</button><button type="button" data-s="thinking" aria-pressed="false">thinking</button><button type="button" data-s="saving" aria-pressed="false">saving</button>
+          </div>
+          <div class="row"><button class="btn ghost" id="mic" type="button">let tälli hear you</button></div>
+          <label class="row">time of day <input id="tod" type="range" min="0" max="24" step="0.25"> <output id="todV">now</output></label>
+          <p class="whisper" id="micNote" style="margin:0">the microphone is used for loudness only. nothing is recorded, and nothing leaves this tab.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="group" data-multi="pieces" data-name="pieces">
+      <h3>what the site should have <small>tick any</small></h3>
+      <div class="checks">
+        <button class="check" type="button" data-v="tälli watches the pointer" data-sug><span><b>tälli watches the pointer</b><span>in the first screen, eyes follow, it perks up as you come close.</span><em>shared engine, no extra weight</em></span></button>
+        <button class="check" type="button" data-v="poke tälli" data-sug><span><b>poke tälli</b><span>it squishes; three quick pokes and it squeezes its eyes shut.</span><em>no extra weight</em></span></button>
+        <button class="check" type="button" data-v="the ä grows as you scroll" data-sug><span><b>the ä grows as you scroll</b><span>äh, ähh, ähm, ähmmm, tied to the äh beat.</span><em>a few lines</em></span></button>
+        <button class="check" type="button" data-v="one search, your language" data-sug><span><b>one search, your language</b><span>the search half of the demo on its own: type "moving", find "boxes" and "landlord". the smartest small piece.</span><em>a few KB</em></span></button>
+        <button class="check" type="button" data-v="the full demo"><span><b>the full demo</b><span>scripted capture with tälli, keep, then search. shows everything, asks for a minute.</span><em>about 8 KB</em></span></button>
+        <button class="check" type="button" data-v="let tälli hear you"><span><b>let tälli hear you</b><span>real microphone loudness makes tälli swell. local only, but it asks for the mic.</span><em>a few lines, plus a permission prompt</em></span></button>
+        <button class="check" type="button" data-v="live privacy counter" data-sug><span><b>live privacy counter</b><span>cookies, outside requests and storage, counted on the page.</span><em>a few lines</em></span></button>
+        <button class="check" type="button" data-v="tälli peeks in the footer" data-sug><span><b>tälli peeks in the footer</b><span>the icon's pose, eyes up at you, at the end of the page.</span><em>no extra weight</em></span></button>
+        <button class="check" type="button" data-v="3d word field"><span><b>3d word field</b><span>direction C's field, as the hero or only in one beat.</span><em>three.js, about 150 KB</em></span></button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5 · picks -->
+<section class="block" id="picks">
+  <div class="rail">
+    <p class="label">6</p>
+    <h2>your picks</h2>
+    <p>copy this and paste it into the chat. nothing is saved; reloading the page starts over.</p>
+  </div>
+  <div class="body">
+    <div class="summary"><pre id="summary"></pre><button class="btn" id="copy" type="button">copy picks</button></div>
+    <div class="group">
+      <h3>after the study</h3>
+      <ul class="next">
+        <li>with a direction picked, the build: a static site with script only where something moves. likely Astro (pages ship as plain html, interactive parts load as islands) or Vite with plain modules.</li>
+        <li>three.js only if the word field stays, loaded after the first paint so it never slows the page down.</li>
+        <li>speed budget: the first screen paints without waiting for any script, under 100 KB before anything moves, fonts as woff2 subsets (the ttf files here are 160 KB together).</li>
+        <li>still open: what "contribute" means (code, testing, translations), where "try" leads (a download, a beta sign-up), a german version, and the domain.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+</div>
+<script src="../wordmark.js"></script>
+<script src="../talli.js"></script>
+<script src="space.js"></script>
+<script src="study.js"></script>
+</body>
+</html>

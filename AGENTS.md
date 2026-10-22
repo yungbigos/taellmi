@@ -39,6 +39,7 @@ scripts/make-demo-archive.sh <dir> <thoughts.jsonl>...  # encrypted demo Archive
 scripts/download-model.sh <id> # the one user-started network step: fetch a seed model, verify SHA-256
 scripts/download-eval-data.sh  # developer step: the German and English search-evaluation controls (pinned, SHA-256)
 scripts/eval-search.sh         # measure search on eval/ and the controls with the real model (see docs/research)
+npm --prefix website run dev   # the marketing site's design study at http://localhost:4173 (see website/README.md)
 ```
 
 - Run from a git worktree, `scripts/run-app.sh` launches the worktree's own copy at `build/run/taellmi.app` (`build/demo/run/taellmi-demo.app` with `--demo`) and leaves `~/Applications` alone, so parallel sessions never replace the owner's installed app. All copies share one data folder, so a run stops whichever copy of the same app is running. Tell the owner which copy you launched.

@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tällmi · think out loud.</title>
+<meta name="description" content="a voice journal for the mac. say it the way it comes, äh included. everything stays on your mac.">
+<link rel="preload" href="../../fonts/FunnelDisplay-Variable.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="preload" href="../../fonts/FunnelSans-Variable.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="stylesheet" href="b.css">
+</head>
+<body>
+
+<p class="draft">design draft · direction B with the spoken thought flowing into space · copy you left open uses the suggested option · <a href="../">back to the study</a></p>
+
+<header class="nav">
+  <a class="brand" href="#top" aria-label="tällmi"><span class="wm-slot"></span></a>
+  <nav aria-label="sections">
+    <a href="#idea">the idea</a>
+    <a href="#privacy">privacy</a>
+    <a class="btn sm" href="#try">try tällmi</a>
+  </nav>
+</header>
+
+<main>
+
+<!-- 1 · think out loud -->
+<section class="hero" id="top">
+  <canvas id="peek" role="img" aria-label="tälli, a blue letter ä with two pink dot eyes, peeking up from the bottom edge. click it."></canvas>
+  <div class="hero-copy">
+    <p class="label">a voice journal for the mac</p>
+    <h1 class="moment">think out loud.</h1>
+    <p class="lede">say it the way it comes: unfinished, hesitant, in your language. tällmi keeps every word and finds it again later.</p>
+    <div class="cta"><a class="btn" href="#try">try tällmi</a><a class="link" href="#try">or help build it</a></div>
+    <p class="wink">äh included.<span class="whisper">(äh: german for “uh”, the sound of thinking.)</span></p>
+  </div>
+  <div class="invite" id="invite">anything you want to keep?</div>
+</section>
+
+<!-- 2 · think → speak → keep → connect → find, as one scroll -->
+<section class="flow" id="idea" aria-label="how a thought becomes part of tällmi">
+  <div class="flow-stage">
+    <canvas id="flow" aria-hidden="true"></canvas>
+    <canvas id="flowTalli" aria-hidden="true"></canvas>
+    <div class="steps">
+      <div class="step" data-from="0" data-to=".27">
+        <p class="label">the idea</p>
+        <h2 class="title">äh is the sound of thinking.<sup>*</sup></h2>
+        <p>talk the way you think, with pauses and restarts, in your language. the äh stays in. messy is good, and it works.</p>
+        <p class="whisper">*in german.</p>
+      </div>
+      <div class="step" data-from=".27" data-to=".52">
+        <p class="label">kept</p>
+        <h2 class="title">every word stays.</h2>
+        <p>your thought stays exactly as you said it, äh included, next to everything you've said before.</p>
+      </div>
+      <div class="step" data-from=".52" data-to=".8">
+        <p class="label">connected</p>
+        <h2 class="title">and finds what belongs together.</h2>
+        <p>people, places, topics and feelings link up across your thoughts, in your language. worked out on your mac, never sent anywhere.</p>
+      </div>
+      <div class="step" data-from=".8" data-to="1.01">
+        <p class="label">found</p>
+        <h2 class="title">search by meaning.</h2>
+        <p>type “moving”, find “boxes” and “landlord”. it finds what you meant, not only the words you used.</p>
+        <div class="find">
+          <input id="q" type="search" placeholder="search …" aria-label="search the sample thoughts" autocomplete="off" spellcheck="false">
+          <div class="chips" id="chips">try <button type="button" data-g="moving">moving</button><button type="button" data-g="work">jonas</button><button type="button" data-g="dream">sleep</button><button type="button" data-g="aeh">äh</button></div>
+          <p class="found" id="found" aria-live="polite"></p>
+        </div>
+      </div>
+    </div>
+    <p class="scrollcue whisper" id="cue">scroll</p>
+  </div>
+</section>
+
+<!-- 3 · speak or write -->
+<section class="ways" aria-labelledby="ways-title">
+  <header>
+    <p class="label">two ways in</p>
+    <h2 class="title" id="ways-title">speak to get it out.<br>write to get it right.</h2>
+  </header>
+  <div class="ways-grid">
+    <article class="way">
+      <h3>speak.</h3>
+      <p>press <kbd>⌃</kbd><kbd>⌥</kbd><kbd>T</kbd> anywhere on your mac. tälli appears next to your cursor and listens. say what's on your mind, press again, and it's kept.</p>
+      <p class="quiet">transcribed on your mac, in your language.</p>
+      <figure class="card"><figcaption class="meta">spoken · wed · 18:30</figcaption><p>Okay, <span class="aeh">äh</span>, quick one: the pitch went fine, I think. But Jonas wasn't really convinced, was he?</p></figure>
+    </article>
+    <article class="way">
+      <h3>write.</h3>
+      <p>some thoughts want more care. write those instead, in the same place, with headings and lists when you want them.</p>
+      <p class="quiet">spoken and typed thoughts sit side by side, and you search them together.</p>
+      <figure class="card"><figcaption class="meta">typed · wed · 22:40</figcaption><p class="h">What I'll tell Jonas tomorrow</p><ol><li>numbers first, then the story</li><li>ask what the gut says</li><li>don't explain <b>too much</b></li></ol></figure>
+    </article>
+  </div>
+  <p class="whisper">your words stay exactly as you said or typed them. tällmi never rewrites them.</p>
+</section>
+
+<!-- 4 · privacy -->
+<section class="privacy" id="privacy" aria-labelledby="privacy-title">
+  <div class="privacy-in">
+    <div class="privacy-head">
+    <p class="label">privacy</p>
+    <h2 class="moment" id="privacy-title">your thoughts<br>are yours.</h2>
+    <p class="lede">not big tech's. not an ad network's. not ours either. a journal only works if you can say anything in it, so tällmi keeps everything on your mac, and has no way to send it anywhere.</p>
+    </div>
+    <figure class="cage" id="cage" role="img" aria-label="tälli inside a locked cage, with your thoughts floating around it. nothing gets out.">
+      <svg class="bars back" id="cageBack" viewBox="0 0 400 520" aria-hidden="true"></svg>
+      <canvas id="cageWords" aria-hidden="true"></canvas>
+      <canvas id="cageTalli" aria-hidden="true"></canvas>
+      <svg class="bars front" id="cageFront" viewBox="0 0 400 520" aria-hidden="true"></svg>
+      <figcaption class="whisper" id="cageNote">everything stays inside. only you have the key.</figcaption>
+    </figure>
+    <div class="facts">
+      <article class="fact"><h3>no internet, by design.</h3><p>the app is built without network access. transcription, search and answers run on your mac's own chip, in flight mode too.</p></article>
+      <article class="fact"><h3>no account. no cloud.</h3><p>nothing to sign up for, and no server that holds your thoughts. there is no tällmi server.</p></article>
+      <article class="fact"><h3>sealed, even when synced.</h3><p>every thought is encrypted with a key in your mac's keychain. sync through any folder you like: what lands there is unreadable. your recovery key is the only spare.</p></article>
+      <article class="fact"><h3>plain files, yours to take.</h3><p>export everything as markdown and audio whenever you want, readable in any text editor, with or without tällmi.</p></article>
+    </div>
+    <div class="proof">
+      <div><b data-count="cookies">0</b><span>cookies on this page</span></div>
+      <div><b data-count="req">0</b><span>requests to other servers</span></div>
+      <div><b data-count="store">0</b><span>things stored in your browser</span></div>
+      <p class="whisper">counted live by your browser, right now.</p>
+    </div>
+    <ul class="fine whisper">
+      <li>the one download is the speech and language models, once, when you start it. each file is checked against a fixed fingerprint.</li>
+      <li>if you want, ai apps on this mac can read your thoughts through a local connection. it's off until you switch it on.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 5 · the call: one door -->
+<section class="call" id="try" aria-labelledby="call-title">
+  <p class="label">try it</p>
+  <h2 class="moment" id="call-title">try it. shape it.</h2>
+  <p class="lede">tällmi is early. use it, tell us what's missing, or help build it.</p>
+  <a class="btn big" href="#try">try tällmi</a>
+  <p class="or">or <a class="link" href="#try">help build it</a></p>
+  <p class="req whisper">an early version, for macs with apple silicon and macOS 26.</p>
+</section>
+
+</main>
+
+<footer class="foot">
+  <canvas id="footPeek" aria-hidden="true"></canvas>
+  <div class="foot-in">
+    <p class="foot-line">think out loud.</p>
+    <p class="whisper">this site sets no cookies and loads nothing from anyone else.</p>
+  </div>
+</footer>
+
+<script src="../../wordmark.js"></script>
+<script src="../../talli.js"></script>
+<script src="flow.js"></script>
+<script src="b.js"></script>
+</body>
+</html>

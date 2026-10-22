@@ -56,6 +56,7 @@ git tag v0.1.0 && git push origin v0.1.0  # release: runs the gate, builds, publ
 - Formatter: `swift format`, configured in `.swift-format`.
 - Tests: Swift Testing (`@Test`, `#expect`, `#require`, parameterized `arguments:`). Use XCTest only for UI tests.
 - Slow tests live in `*IntegrationTests` targets, which the fast gate skips.
+- The fast tests use Apple's German NaturalLanguage data (names, word classes). A Mac has it once German is one of its languages; CI fetches it in `scripts/ci-setup.sh`, which prepares the runner for both workflows.
 
 ## Where work is tracked
 

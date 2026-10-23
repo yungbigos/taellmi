@@ -3,7 +3,7 @@ import Domain
 import SwiftUI
 
 /// The Explore window: the view you chose, with a floating bar at the bottom that holds that view's filters
-/// (issue #54). There is no sidebar.
+/// (issue #45). There is no sidebar.
 public struct ExploreView: View {
     @Bindable var model: ExploreViewModel
     /// The pointer in this window, for the tälli in the title to watch.

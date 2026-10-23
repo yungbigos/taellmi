@@ -17,7 +17,7 @@ public struct ConceptName: Sendable, Hashable, Codable {
     public func hash(into hasher: inout Hasher) { hasher.combine(key) }
 }
 
-/// Your renames, merges and kind changes of Concepts (Curation, issue #62): every name the model may use is
+/// Your renames, merges and kind changes of Concepts (Curation, issue #47): every name the model may use is
 /// sent to the Concept you chose. It is never recomputed; analysis follows it.
 public struct ConceptCuration: Sendable, Equatable {
     /// Where each name goes, by its key, with the name as it was written (for splitting off again).

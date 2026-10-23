@@ -174,7 +174,7 @@ Decisions are locked (see section 3); we fix model choices later if real use sho
 - **From imports:** headings, checklists, quotes and links show as such.
 - **From speech, only when a spoken thought is first written:** paragraphs from long pauses, and numbered lists when you count out loud ("erstens … zweitens …"). Both are recorded on the Entry, and no word changes.
 - **Search and meaning read only the words.** Each list item is its own passage.
-- **Build order:** editor and words-only view (built) → paragraphs from pauses → German test clips through Parakeet → spoken lists (#55).
+- **Build order:** editor and words-only view (built) → paragraphs from pauses → German test clips through Parakeet → spoken lists (#46).
 
 ### Phase 1 — Capture and archive (MVP you can use daily)
 - Menu-bar app with a global hotkey: press → record → press again → done. Optional push-to-talk.

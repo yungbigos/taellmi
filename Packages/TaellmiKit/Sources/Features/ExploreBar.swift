@@ -2,7 +2,7 @@ import Domain
 import Foundation
 
 /// What the floating bar at the bottom of the window holds. There is no sidebar: the bar follows the view
-/// (issue #54).
+/// (issue #45).
 nonisolated public enum ExploreBar: Sendable, Equatable {
     /// stack and flow: periods, search, spoken / typed and trash.
     case thoughts

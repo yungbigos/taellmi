@@ -16,7 +16,7 @@ nonisolated public struct FlowSection: Sendable, Equatable, Identifiable {
 }
 
 nonisolated public enum FlowSections {
-    /// Newest day first; within a day, newest thought first (issue #53).
+    /// Newest day first; within a day, newest thought first (issue #44).
     public static func group(_ entries: [Entry], calendar: Calendar) -> [FlowSection] {
         let sorted = entries.sorted { $0.createdAt > $1.createdAt }
         var sections: [FlowSection] = []

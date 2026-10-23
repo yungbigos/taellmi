@@ -63,7 +63,7 @@ public struct CurationStore: Sendable {
         try write(document)
     }
 
-    // MARK: Concepts: your renames, merges and kind changes (issue #62).
+    // MARK: Concepts: your renames, merges and kind changes (issue #47).
 
     public func conceptCuration() throws -> ConceptCuration {
         ConceptCuration(json: try document()["concepts"])

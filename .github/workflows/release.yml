@@ -90,12 +90,14 @@ jobs:
           grep -q "com.apple.security.app-sandbox" <<<"$ENTITLEMENTS" || { echo "✘ the app is not sandboxed"; exit 1; }
           echo "APP=$APP" >> "$GITHUB_ENV"
 
-      # The zip holds a folder: the app, tällmi's licence, and the licences of the code built into it.
+      # The disk image opens on the app beside a link to Applications to drag it onto, with tällmi's licence and
+      # the licences of the code built into it. A disk image needs no Apple account; only notarization would.
       - name: package
         run: |
-          DIR="taellmi-$VERSION"; ZIP="$DIR.zip"
+          DIR="taellmi-$VERSION"; DMG="$DIR.dmg"
           mkdir "$DIR"
           ditto "$APP" "$DIR/taellmi.app"
+          ln -s /Applications "$DIR/Applications"
           cp LICENSE "$DIR/LICENSE.txt"
           {
             echo "tällmi includes the following third-party code. Their licences follow."
@@ -111,10 +113,16 @@ jobs:
             cat App/Fonts/OFL.txt
           } > "$DIR/THIRD_PARTY_NOTICES.txt"
           grep "^==== " "$DIR/THIRD_PARTY_NOTICES.txt"
-          ditto -c -k --sequesterRsrc --keepParent "$DIR" "$ZIP"
-          shasum -a 256 "$ZIP" > "$ZIP.sha256"
-          cat "$ZIP.sha256"
-          echo "ZIP=$ZIP" >> "$GITHUB_ENV"
+          # hdiutil on a fresh runner sometimes fails with "Resource busy"; a retry gets past it.
+          for attempt in 1 2 3; do
+            hdiutil create -volname "tällmi $VERSION" -srcfolder "$DIR" -fs APFS -format UDZO -ov "$DMG" && break
+            [[ $attempt == 3 ]] && exit 1
+            sleep 10
+          done
+          hdiutil verify "$DMG"
+          shasum -a 256 "$DMG" > "$DMG.sha256"
+          cat "$DMG.sha256"
+          echo "DMG=$DMG" >> "$GITHUB_ENV"
 
       - name: publish
         env:
@@ -125,7 +133,7 @@ jobs:
 
           **install**
 
-          1. download \`$ZIP\` and open it. move \`taellmi.app\` from the folder to your Applications folder.
+          1. download \`$DMG\` and open it. drag \`taellmi.app\` onto the Applications folder beside it.
           2. this build is not notarized by Apple, so macOS stops it the first time. open it once, then choose **Open Anyway** in System Settings → Privacy & Security.
 
           **models**
@@ -142,12 +150,12 @@ jobs:
           each file is checked against a fixed SHA-256. the app itself never goes online.
           EOF
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" "$ZIP" "$ZIP.sha256" --clobber
+            gh release upload "$TAG" "$DMG" "$DMG.sha256" --clobber
             # a run that failed mid-upload leaves a draft; publish it now
             gh release edit "$TAG" --draft=false
           else
             PRERELEASE=()
             [[ "$VERSION" == *-* ]] && PRERELEASE=(--prerelease)
-            gh release create "$TAG" "$ZIP" "$ZIP.sha256" --verify-tag --title "tällmi $VERSION" \
+            gh release create "$TAG" "$DMG" "$DMG.sha256" --verify-tag --title "tällmi $VERSION" \
               --notes-file notes.md --generate-notes ${PRERELEASE[@]+"${PRERELEASE[@]}"}
           fi

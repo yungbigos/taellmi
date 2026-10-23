@@ -90,11 +90,11 @@ struct CaptureViewModelTests {
         let (model, recorder, journal, temp) = try makeModel()
         defer { withExtendedLifetime(temp) {} }
         await model.toggle()
-        model.typedText = "  Marleen anrufen.  "
+        model.typedText = "  Kim anrufen.  "
         await model.submitTyped()
         #expect(!model.isRecording)
         #expect(await recorder.cancelled == 1)
-        #expect(await journal.typed == ["Marleen anrufen."])
+        #expect(await journal.typed == ["Kim anrufen."])
         #expect(await journal.added.isEmpty)
         #expect(model.typedText.isEmpty)
         #expect(model.lastSavedAt != nil)

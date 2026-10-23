@@ -52,12 +52,12 @@ struct FlowTests {
     @Test("with a search, matches are listed in reading order and next/previous jump between them, wrapping")
     func matches() async {
         let library = FakeLibrary(entries: [
-            thought("a", "Marleen angerufen.", daysAgo: 3), thought("b", "Kaffee.", daysAgo: 2),
-            thought("c", "Mit Marleen gelaufen.", daysAgo: 1),
+            thought("a", "Kim angerufen.", daysAgo: 3), thought("b", "Kaffee.", daysAgo: 2),
+            thought("c", "Mit Kim gelaufen.", daysAgo: 1),
         ])
         let model = ExploreViewModel(library: library, autosaveDelay: .zero)
         model.view = .flow
-        model.query.text = "marleen"
+        model.query.text = "kim"
         await model.refresh()
         #expect(model.flowMatches == ["c", "a"])
         #expect(model.currentMatch == "c")

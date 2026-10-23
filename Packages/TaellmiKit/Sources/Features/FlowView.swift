@@ -1,7 +1,7 @@
 import Domain
 import SwiftUI
 
-/// flow: every thought as one long note. Newest at the top, where it opens (issue #53); the month rail at the side
+/// flow: every thought as one long note. Newest at the top, where it opens (issue #44); the month rail at the side
 /// jumps back in time. Day dividers, each thought editable in place. A search highlights matches; ⌘G jumps
 /// between them.
 struct FlowView: View {

@@ -129,7 +129,7 @@ Rules:
 
 ## 7. Style
 
-- **The frame is native macOS 26:** Liquid Glass toolbar and a floating glass bar at the bottom, system controls, generous space, few lines, no custom chrome. There is no sidebar: the bar holds the filters of the view you are in, in glass islands (what to look at · in space, finding concepts · spoken / typed and trash). Search and new thought sit at the top right; search opens ⌘K, and flow and time have a month rail at the side (issues #53, #54).
+- **The frame is native macOS 26:** Liquid Glass toolbar and a floating glass bar at the bottom, system controls, generous space, few lines, no custom chrome. There is no sidebar: the bar holds the filters of the view you are in, in glass islands (what to look at · in space, finding concepts · spoken / typed and trash). Search and new thought sit at the top right; search opens ⌘K, and flow and time have a month rail at the side (issues #44, #45).
 - **What makes it unusual lives inside the views** (flow, time, space), never in the frame. The look is editorial: big display type, a lot of white space, asymmetry. It grows from calm to wild across the views:
   - **stack**: Apple Notes-clean.
   - **flow**: magazine spreads, asymmetric, a big date or topic.

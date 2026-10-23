@@ -46,7 +46,7 @@ struct ReadingTextTests {
 
     @Test("plain text stays exactly as it is")
     func plain() throws {
-        #expect(try read("Mit Malin an der Isar.").string == "Mit Malin an der Isar.")
+        #expect(try read("Mit Sam an der Isar.").string == "Mit Sam an der Isar.")
     }
 }
 

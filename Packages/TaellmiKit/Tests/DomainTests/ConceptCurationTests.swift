@@ -3,30 +3,30 @@ import Testing
 
 @Suite("Renaming, merging and re-kinding concepts by hand")
 struct ConceptCurationTests {
-    private let marlen = ConceptName(kind: "person", name: "Marlen")
-    private let marlin = ConceptName(kind: "person", name: "Marlin")
-    private let malin = ConceptName(kind: "person", name: "Malin")
+    private let kym = ConceptName(kind: "person", name: "Kym")
+    private let kimm = ConceptName(kind: "person", name: "Kimm")
+    private let sam = ConceptName(kind: "person", name: "Sam")
 
     @Test("a renamed concept's name always lands on the new one, whatever case the model uses")
     func rename() {
         var curation = ConceptCuration()
-        curation.rename(marlen, to: "Malin")
-        #expect(curation.resolve(ConceptName(kind: "person", name: "marlen")) == malin)
-        #expect(curation.resolve(marlin) == marlin)
+        curation.rename(kym, to: "Sam")
+        #expect(curation.resolve(ConceptName(kind: "person", name: "kym")) == sam)
+        #expect(curation.resolve(kimm) == kimm)
     }
 
     @Test("merging several keeps one; a later rename of the target carries the merged names along")
     func mergeThenRename() {
         var curation = ConceptCuration()
-        curation.merge([marlen, marlin], into: malin)
-        #expect(curation.resolve(marlen) == malin)
-        #expect(curation.resolve(marlin) == malin)
-        curation.rename(malin, to: "Malin K.")
-        #expect(curation.resolve(marlen).name == "Malin K.")
-        // Malin itself was renamed, not merged: only the merged names can be split off.
+        curation.merge([kym, kimm], into: sam)
+        #expect(curation.resolve(kym) == sam)
+        #expect(curation.resolve(kimm) == sam)
+        curation.rename(sam, to: "Sam K.")
+        #expect(curation.resolve(kym).name == "Sam K.")
+        // Sam itself was renamed, not merged: only the merged names can be split off.
         #expect(
-            curation.mergedNames(into: ConceptName(kind: "person", name: "Malin K.")).map(\.name).sorted() == [
-                "Marlen", "Marlin",
+            curation.mergedNames(into: ConceptName(kind: "person", name: "Sam K.")).map(\.name).sorted() == [
+                "Kimm", "Kym",
             ])
     }
 
@@ -41,52 +41,52 @@ struct ConceptCurationTests {
     @Test("splitting a merged name off makes it its own concept again")
     func split() {
         var curation = ConceptCuration()
-        curation.merge([marlen, marlin], into: malin)
-        curation.split(marlin)
-        #expect(curation.resolve(marlin) == marlin)
-        #expect(curation.resolve(marlen) == malin)
+        curation.merge([kym, kimm], into: sam)
+        curation.split(kimm)
+        #expect(curation.resolve(kimm) == kimm)
+        #expect(curation.resolve(kym) == sam)
     }
 
     @Test("merging a concept into itself, or in a circle, never loops")
     func noLoops() {
         var curation = ConceptCuration()
-        curation.merge([marlen], into: marlin)
-        curation.merge([marlin], into: marlen)
-        #expect(curation.resolve(marlen) == marlen)
-        #expect(curation.resolve(marlin) == marlen)
-        curation.merge([malin], into: malin)
-        #expect(curation.resolve(malin) == malin)
+        curation.merge([kym], into: kimm)
+        curation.merge([kimm], into: kym)
+        #expect(curation.resolve(kym) == kym)
+        #expect(curation.resolve(kimm) == kym)
+        curation.merge([sam], into: sam)
+        #expect(curation.resolve(sam) == sam)
     }
 
     @Test("it round-trips through JSON, as stored in curation.json")
     func roundTrip() throws {
         var curation = ConceptCuration()
-        curation.merge([marlen, marlin], into: malin)
-        curation.dismissSuggestion([marlen, ConceptName(kind: "person", name: "Martin")])
+        curation.merge([kym, kimm], into: sam)
+        curation.dismissSuggestion([kym, ConceptName(kind: "person", name: "Kimmy")])
         #expect(ConceptCuration(json: curation.json) == curation)
     }
 
     @Test("a rename that only changes the capitals shows the new spelling")
     func spellingOnly() {
         var curation = ConceptCuration()
-        curation.rename(malin, to: "malin")
-        #expect(curation.resolve(malin).name == "malin")
+        curation.rename(sam, to: "sam")
+        #expect(curation.resolve(sam).name == "sam")
     }
 
     @Test("a plain rename is not offered to split off; merged names are")
     func renameIsNotAMerge() {
         var curation = ConceptCuration()
-        curation.rename(marlen, to: "Malin")
-        #expect(curation.mergedNames(into: malin).isEmpty)
-        curation.merge([marlin], into: malin)
-        #expect(curation.mergedNames(into: malin).map(\.name) == ["Marlin"])
+        curation.rename(kym, to: "Sam")
+        #expect(curation.mergedNames(into: sam).isEmpty)
+        curation.merge([kimm], into: sam)
+        #expect(curation.mergedNames(into: sam).map(\.name) == ["Kimm"])
     }
 
     @Test("merging into a concept keeps that concept's own spelling")
     func mergeKeepsTargetSpelling() {
         var curation = ConceptCuration()
-        curation.rename(malin, to: "MALIN")
-        curation.merge([marlen], into: malin)
-        #expect(curation.resolve(marlen).name == "MALIN")
+        curation.rename(sam, to: "SAM")
+        curation.merge([kym], into: sam)
+        #expect(curation.resolve(kym).name == "SAM")
     }
 }

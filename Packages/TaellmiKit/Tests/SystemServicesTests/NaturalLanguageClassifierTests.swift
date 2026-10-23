@@ -11,8 +11,8 @@ struct NaturalLanguageClassifierTests {
 
     @Test("recognises a German first name in context as a personal name")
     func personalName() throws {
-        let words = classify("Ich habe heute mit Marlene telefoniert, und mein Bein tut weh.")
-        #expect(try #require(words["Marlene"]).isPersonalName)
+        let words = classify("Ich habe heute mit Kim telefoniert, und mein Bein tut weh.")
+        #expect(try #require(words["Kim"]).isPersonalName)
         #expect(try #require(words["Bein"]).isContentWord)
         #expect(try #require(words["Bein"]).isPersonalName == false)
     }

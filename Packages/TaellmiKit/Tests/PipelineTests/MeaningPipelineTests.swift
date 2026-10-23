@@ -20,12 +20,12 @@ struct MeaningPipelineTests {
     @Test("a typed thought is split into passages and every passage is embedded as a document")
     func typedEntry() async throws {
         let harness = try Harness()
-        let entry = try addTypedEntry(harness, text: "Heute war ich an der Isar.\n\nMorgen treffe ich Marleen.")
+        let entry = try addTypedEntry(harness, text: "Heute war ich an der Isar.\n\nMorgen treffe ich Kim.")
 
         await harness.runUntilSettled()
 
         let fragments = try harness.fragments.fragments(entryID: entry.id)
-        #expect(fragments.map(\.text) == ["Heute war ich an der Isar.", "Morgen treffe ich Marleen."])
+        #expect(fragments.map(\.text) == ["Heute war ich an der Isar.", "Morgen treffe ich Kim."])
         #expect(await harness.embedder.embeddedTexts == fragments.map(\.text))
         #expect(try harness.vectors.nodeIDs(space: fakeEmbeddingModel.vectorSpace) == Set(fragments.map(\.id)))
     }

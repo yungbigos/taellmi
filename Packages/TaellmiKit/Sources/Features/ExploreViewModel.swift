@@ -532,7 +532,7 @@ public final class ExploreViewModel {
         }
     }
 
-    /// The flow's thoughts, newest first (issue #53).
+    /// The flow's thoughts, newest first (issue #44).
     public var flowEntries: [Entry] { entries }
 
     // MARK: The bar at the bottom and the month rail

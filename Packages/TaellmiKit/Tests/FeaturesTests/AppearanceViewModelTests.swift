@@ -33,6 +33,6 @@ struct AppearanceViewModelTests {
     func display() async {
         let model = AppearanceViewModel(store: FakeStore("lowercase"))
         await model.load()
-        #expect(model.display("Heute mit Marleen telefoniert.") == "heute mit marleen telefoniert.")
+        #expect(model.display("Heute mit Kim telefoniert.") == "heute mit kim telefoniert.")
     }
 }

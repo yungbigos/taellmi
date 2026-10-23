@@ -15,7 +15,7 @@ struct ExploreViewModelTests {
     private func makeModel() -> (ExploreViewModel, FakeLibrary) {
         let library = FakeLibrary(entries: [
             entry("a", "Zukunftsangst wegen dem Job.", minutesAgo: 1),
-            entry("b", "Im Büro mit Marleen.", minutesAgo: 60, source: .typed),
+            entry("b", "Im Büro mit Kim.", minutesAgo: 60, source: .typed),
         ])
         return (ExploreViewModel(library: library, autosaveDelay: .zero), library)
     }
@@ -42,7 +42,7 @@ struct ExploreViewModelTests {
         await model.refresh()
         await model.select("b")
         #expect(model.detail?.entry.id == "b")
-        #expect(model.editorText == "Im Büro mit Marleen.")
+        #expect(model.editorText == "Im Büro mit Kim.")
     }
 
     @Test("edits are saved automatically")
@@ -63,7 +63,7 @@ struct ExploreViewModelTests {
         model.editorText = "Geändert."
         await model.select("b")
         #expect(await library.savedTexts["a"] == "Geändert.")
-        #expect(model.editorText == "Im Büro mit Marleen.")
+        #expect(model.editorText == "Im Büro mit Kim.")
     }
 
     @Test("an unchanged Text is not written again")

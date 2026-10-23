@@ -1,7 +1,7 @@
 # 0012 — Concepts and summaries from Apple's on-device model
 
 - **Status:** accepted (2026-10-20). Builds on ADR 0005 (typed graph), ADR 0006 (no slop), ADR 0011 (meaning index).
-- **Issues:** #49 (concepts, related thoughts and summary per thought), #50 (highlighting in flow), #52 (concepts overview).
+- **Issues:** #41 (concepts, related thoughts and summary per thought), #42 (highlighting in flow), #43 (concepts overview).
 
 ## Decision
 
@@ -17,7 +17,7 @@
   - The model returns, for each one, the exact words it found (`mention`). A concept whose words aren't in the thought is dropped. Everything shown points back to your words.
   - Feelings only when you named them. The prompt forbids guessing from tone (ADR 0006: no mood diagnosis).
   - The same name (ignoring case) and kind is the same Concept across all thoughts.
-  - **You can rename, merge, re-kind and split concepts by hand (#62).** It is Curation: a list in `curation.json` of "this name → that concept". It is applied to the graph at once, and every analysis sends the model's names through it, so a merge is never undone by itself. Your Text is never changed; renaming or merging a person can add the name to your spellings, for new recordings. tällmi suggests names of the same kind that sound alike (Kölner Phonetik); nothing happens unless you merge, and a dismissed suggestion stays dismissed.
+  - **You can rename, merge, re-kind and split concepts by hand (#47).** It is Curation: a list in `curation.json` of "this name → that concept". It is applied to the graph at once, and every analysis sends the model's names through it, so a merge is never undone by itself. Your Text is never changed; renaming or merging a person can add the name to your spellings, for new recordings. tällmi suggests names of the same kind that sound alike (Kölner Phonetik); nothing happens unless you merge, and a dismissed suggestion stays dismissed.
 - **Summary:** one sentence, only for thoughts of at least `summary.min_words` words.
   - **It is only shown if every meaningful word in it (noun, name, verb, adjective, adverb) appears in the thought,** in some form (`summary.stem_length` leading letters). This drops summaries that add a reason or a feeling (found in a real run: "weil ich den Vermieter nicht anrufe" for a thought that gave no reason). It can't catch a shifted nuance made of the thought's own words ("eher müde als genervt" → "müde und genervt"); the owner accepted that limit. Joined-up separable verbs ("anrufen" for "rufe … an") make a summary fail the check, which is the cautious side.
   - It is marked as generated wherever it shows.

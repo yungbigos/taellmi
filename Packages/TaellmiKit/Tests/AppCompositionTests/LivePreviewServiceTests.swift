@@ -26,14 +26,14 @@ struct LivePreviewServiceTests {
                     return FakeLivePreview()
                 }
             ],
-            vocabulary: [FakeVocabularySource(["Marleen"])])
+            vocabulary: [FakeVocabularySource(["Kim"])])
 
         let (audio, feed) = AsyncStream.makeStream(of: AudioSamples.self)
         feed.finish()
         _ = try await service.preview(audio)
 
         #expect(seen.value?.model == "apple-speech-de")
-        #expect(seen.value?.vocabulary == ["Marleen"])
+        #expect(seen.value?.vocabulary == ["Kim"])
     }
 
     @Test("without a usable model the preview reports why, so capture can carry on without it")

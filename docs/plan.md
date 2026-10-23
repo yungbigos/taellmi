@@ -100,7 +100,7 @@ Decisions are locked (see section 3); we fix model choices later if real use sho
   - typed Entries in the UI
 
 ### Vocabulary (built 2026-10-19)
-- **Your own spelling for names in new voice Entries** (Marlene → Marleen).
+- **Your own spelling for names in new voice Entries** (Kym → Kim).
   - Matching uses the Kölner Phonetik sound code.
   - Guards stop false corrections: Apple's NaturalLanguage tags names and word classes, so verbs and function words are never touched, and ordinary nouns need high spelling similarity. If two Vocabulary terms sound alike, nothing is replaced.
   - Corrections are recorded in `entry.md` (`vocabulary_corrections`). The Transcript stays verbatim.
@@ -174,7 +174,7 @@ Decisions are locked (see section 3); we fix model choices later if real use sho
 - **From imports:** headings, checklists, quotes and links show as such.
 - **From speech, only when a spoken thought is first written:** paragraphs from long pauses, and numbered lists when you count out loud ("erstens … zweitens …"). Both are recorded on the Entry, and no word changes.
 - **Search and meaning read only the words.** Each list item is its own passage.
-- **Build order:** editor and words-only view (built) → paragraphs from pauses → German test clips through Parakeet → spoken lists (#55).
+- **Build order:** editor and words-only view (built) → paragraphs from pauses → German test clips through Parakeet → spoken lists (#46).
 
 ### First launch (requested 2026-10-22, built 2026-10-23, #52)
 - **A fresh tällmi walks you in** instead of starting silently in the menu bar:

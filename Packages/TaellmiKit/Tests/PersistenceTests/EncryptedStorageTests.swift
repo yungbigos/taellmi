@@ -19,12 +19,12 @@ struct EncryptedStorageTests {
     @Test("what is written reads back the same, but the file on disk is sealed")
     func writeRead() throws {
         let (storage, archive, scratch) = try makeStorage()
-        let text = Data("Mein geheimer Gedanke über Marleen.".utf8)
+        let text = Data("Mein geheimer Gedanke über Kim.".utf8)
         try storage.write(text, to: "entries/x/entry.md")
         #expect(try storage.read("entries/x/entry.md") == text)
         let raw = try Data(contentsOf: archive.url.appendingPathComponent("entries/x/entry.md"))
         #expect(ArchiveCrypto.isSealed(raw))
-        #expect(raw.range(of: Data("Marleen".utf8)) == nil)
+        #expect(raw.range(of: Data("Gedanke über Kim".utf8)) == nil)
         withExtendedLifetime(scratch) {}
     }
 

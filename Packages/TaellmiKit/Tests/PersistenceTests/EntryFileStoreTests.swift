@@ -177,11 +177,11 @@ struct EntryFileStoreTests {
         let temp = try TemporaryDirectory()
         let store = makeStore(temp)
         let entry = try store.createTypedEntry(
-            text: "Kurz notiert: Marleen anrufen.", createdAt: sampleDate, id: "t1p3")
+            text: "Kurz notiert: Kim anrufen.", createdAt: sampleDate, id: "t1p3")
         #expect(entry.source == .typed)
         #expect(entry.folder == "entries/t1p3")
         let loaded = try store.loadEntry(folder: entry.folder)
-        #expect(loaded.entry.text == "Kurz notiert: Marleen anrufen.")
+        #expect(loaded.entry.text == "Kurz notiert: Kim anrufen.")
         #expect(!store.hasRecording(entry))
     }
 }

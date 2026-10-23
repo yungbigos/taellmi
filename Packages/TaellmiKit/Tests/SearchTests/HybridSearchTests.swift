@@ -82,9 +82,9 @@ struct HybridSearchTests {
     @Test("the best match comes first, whatever its date")
     func bestMatchFirst() async throws {
         let harness = try Harness()
-        try harness.add("strong", "Marleen hat angerufen. Marleen kommt am Wochenende.", daysAgo: 30)
-        try harness.add("weak", "Viele Termine diese Woche, auch einer mit Marleen und dem ganzen Team im Büro.")
-        #expect(try await harness.ids("Marleen") == ["strong", "weak"])
+        try harness.add("strong", "Kim hat angerufen. Kim kommt am Wochenende.", daysAgo: 30)
+        try harness.add("weak", "Viele Termine diese Woche, auch einer mit Kim und dem ganzen Team im Büro.")
+        #expect(try await harness.ids("Kim") == ["strong", "weak"])
     }
 
     @Test("time and source filters apply to meaning matches too")

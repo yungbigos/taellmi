@@ -12,25 +12,25 @@ struct ThoughtMeaningTests {
             folder: "entries/\(id)", text: text)
     }
 
-    private let marleen = ThoughtConcept(
-        id: "concept:person:marleen", kind: "person", name: "Marleen", utf16Ranges: [4..<11])
+    private let kim = ThoughtConcept(
+        id: "concept:person:kim", kind: "person", name: "Kim", utf16Ranges: [4..<7])
     private let heizung = ThoughtConcept(
-        id: "concept:topic:heizung", kind: "topic", name: "Heizung", utf16Ranges: [21..<28])
+        id: "concept:topic:heizung", kind: "topic", name: "Heizung", utf16Ranges: [17..<24])
 
     private func setUp() async -> (ExploreViewModel, FakeLibrary) {
-        let a = entry("a", "Mit Marleen über die Heizung geredet.")
+        let a = entry("a", "Mit Kim über die Heizung geredet.")
         let b = entry("b", "Die Heizung gluckert.", minutesAgo: 60)
         let library = FakeLibrary(entries: [a, b])
         await library.setMeaning(
             ThoughtMeaning(
-                summary: "Gespräch über die Heizung.", summaryIsEdited: false, concepts: [marleen, heizung],
+                summary: "Gespräch über die Heizung.", summaryIsEdited: false, concepts: [kim, heizung],
                 related: [b]),
             for: "a")
-        let marleenSummary = ConceptSummary(id: marleen.id, kind: "person", name: "Marleen", thoughtCount: 1)
+        let kimSummary = ConceptSummary(id: kim.id, kind: "person", name: "Kim", thoughtCount: 1)
         let heizungSummary = ConceptSummary(id: heizung.id, kind: "topic", name: "Heizung", thoughtCount: 2)
         await library.setConcepts(
-            [heizungSummary, marleenSummary],
-            details: [ConceptDetail(concept: heizungSummary, thoughts: [a, b], appearingWith: [marleenSummary])])
+            [heizungSummary, kimSummary],
+            details: [ConceptDetail(concept: heizungSummary, thoughts: [a, b], appearingWith: [kimSummary])])
         let model = ExploreViewModel(library: library, autosaveDelay: .zero, startView: .flow)
         await model.open(selecting: nil)
         return (model, library)
@@ -41,7 +41,7 @@ struct ThoughtMeaningTests {
         let (model, _) = await setUp()
         await model.loadMeaning(for: "a")
         #expect(model.meanings["a"]?.summary == "Gespräch über die Heizung.")
-        #expect(model.meanings["a"]?.concepts.map(\.name) == ["Marleen", "Heizung"])
+        #expect(model.meanings["a"]?.concepts.map(\.name) == ["Kim", "Heizung"])
         #expect(model.meanings["a"]?.related.map(\.id) == ["b"])
     }
 
@@ -49,15 +49,15 @@ struct ThoughtMeaningTests {
     func highlights() async {
         let (model, _) = await setUp()
         await model.loadMeaning(for: "a")
-        let text = "Mit Marleen über die Heizung geredet."
+        let text = "Mit Kim über die Heizung geredet."
         #expect(
             model.highlights(in: text, entryID: "a") == [
-                TextHighlight(range: 4..<11, kind: .concept("person")),
-                TextHighlight(range: 21..<28, kind: .concept("topic")),
+                TextHighlight(range: 4..<7, kind: .concept("person")),
+                TextHighlight(range: 17..<24, kind: .concept("topic")),
             ])
         model.query.text = "geredet"
         await model.refresh()
-        #expect(model.highlights(in: text, entryID: "a").contains(TextHighlight(range: 29..<36, kind: .word)))
+        #expect(model.highlights(in: text, entryID: "a").contains(TextHighlight(range: 25..<32, kind: .word)))
     }
 
     @Test("concept highlights are dropped once the text was edited away from what was analysed")
@@ -72,11 +72,11 @@ struct ThoughtMeaningTests {
         let (model, _) = await setUp()
         await model.perform(.showSpace)
         #expect(model.view == .space)
-        #expect(model.concepts.map(\.name) == ["Heizung", "Marleen"])
+        #expect(model.concepts.map(\.name) == ["Heizung", "Kim"])
 
         await model.openConcept("concept:topic:heizung")
         #expect(model.conceptDetail?.thoughts.map(\.id) == ["a", "b"])
-        #expect(model.conceptDetail?.appearingWith.map(\.name) == ["Marleen"])
+        #expect(model.conceptDetail?.appearingWith.map(\.name) == ["Kim"])
     }
 
     @Test("clicking a badge in flow opens that concept in space")

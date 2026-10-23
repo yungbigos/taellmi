@@ -16,12 +16,12 @@ struct ConceptMentionTests {
 
     @Test("each concept points to every place its words appear, as UTF-16 positions")
     func locates() {
-        let text = "Mit Marleen in Giesing. Später rief Marleen nochmal an."
+        let text = "Mit Kim in Giesing. Später rief Kim nochmal an."
         let mentions = ConceptMentions.locate(
-            in: text, answer: answer([("Marleen", "person", "Marleen"), ("Giesing", "place", "Giesing")]), kinds: kinds)
-        let marleen = mentions.filter { $0.name == "Marleen" }
-        #expect(marleen.map(\.utf16Range) == [4..<11, 36..<43])
-        #expect(mentions.contains { $0.kind == "place" && $0.utf16Range == 15..<22 })
+            in: text, answer: answer([("Kim", "person", "Kim"), ("Giesing", "place", "Giesing")]), kinds: kinds)
+        let kim = mentions.filter { $0.name == "Kim" }
+        #expect(kim.map(\.utf16Range) == [4..<7, 32..<35])
+        #expect(mentions.contains { $0.kind == "place" && $0.utf16Range == 11..<18 })
     }
 
     @Test("a concept whose words aren't in the thought is dropped, never invented")
@@ -40,11 +40,11 @@ struct ConceptMentionTests {
 
     @Test("matching ignores case but not word boundaries")
     func wordBoundaries() {
-        let text = "Ich bin müde. Jonasson ist nicht Jonas."
+        let text = "Ich bin müde. Am Samstag kommt Sam."
         let mentions = ConceptMentions.locate(
-            in: text, answer: answer([("müde", "emotion", "Müde"), ("Jonas", "person", "Jonas")]), kinds: kinds)
+            in: text, answer: answer([("müde", "emotion", "Müde"), ("Sam", "person", "Sam")]), kinds: kinds)
         #expect(mentions.first { $0.kind == "emotion" }?.utf16Range == 8..<12)
-        #expect(mentions.filter { $0.kind == "person" }.map(\.utf16Range) == [33..<38])
+        #expect(mentions.filter { $0.kind == "person" }.map(\.utf16Range) == [31..<34])
     }
 
     @Test("unknown kinds and empty names are dropped; umlauts and emoji keep positions exact")

@@ -12,12 +12,12 @@ struct CurationFolderTests {
     @Test("a folder is created, kept in curation.json next to the rest, and comes back after reopening")
     func createAndReopen() throws {
         let dir = try TemporaryDirectory()
-        try store(dir).addToVocabulary("Malin")
+        try store(dir).addToVocabulary("Sam")
         let umzug = try store(dir).createFolder(named: "Umzug")
         _ = try store(dir).createFolder(named: "Wohnung")
         #expect(try store(dir).folders().map(\.name) == ["Umzug", "Wohnung"])
         #expect(try store(dir).folders().first?.id == umzug.id)
-        #expect(try store(dir).vocabulary().map(\.text) == ["Malin"])
+        #expect(try store(dir).vocabulary().map(\.text) == ["Sam"])
     }
 
     @Test("a blank or duplicate name is refused")
@@ -61,13 +61,13 @@ struct CurationConceptTests {
     func saved() throws {
         let dir = try TemporaryDirectory()
         let store = CurationStore(storage: PlainFolderStorage(root: dir.url))
-        try store.addToVocabulary("Malin")
+        try store.addToVocabulary("Sam")
         var curation = ConceptCuration()
-        curation.rename(ConceptName(kind: "person", name: "Marlen"), to: "Malin")
+        curation.rename(ConceptName(kind: "person", name: "Kym"), to: "Sam")
         try store.setConceptCuration(curation)
         let reopened = CurationStore(storage: PlainFolderStorage(root: dir.url))
         #expect(try reopened.conceptCuration() == curation)
-        #expect(try reopened.vocabulary().map(\.text) == ["Malin"])
+        #expect(try reopened.vocabulary().map(\.text) == ["Sam"])
     }
 }
 
@@ -98,9 +98,9 @@ struct CurationConcurrencyTests {
         let dir = try TemporaryDirectory()
         let store = CurationStore(storage: PlainFolderStorage(root: dir.url))
         var curation = ConceptCuration()
-        curation.rename(ConceptName(kind: "person", name: "Marlen"), to: "Malin")
-        try store.setConceptCuration(curation, addingTerm: "Malin")
+        curation.rename(ConceptName(kind: "person", name: "Kym"), to: "Sam")
+        try store.setConceptCuration(curation, addingTerm: "Sam")
         #expect(try store.conceptCuration() == curation)
-        #expect(try store.vocabulary().map(\.text) == ["Malin"])
+        #expect(try store.vocabulary().map(\.text) == ["Sam"])
     }
 }

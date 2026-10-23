@@ -23,7 +23,7 @@
     "version": 1,
     "role": "entities",
     "language": "de",
-    "template": "Du liest einen Gedanken aus einem privaten Tagebuch (Deutsch, manchmal mit Englisch gemischt). Finde, was darin vorkommt:\n- person: Menschen, mit Namen oder als Rolle (z. B. \"Marleen\", \"meine Mutter\", \"mein Chef\")\n- place: Orte (Städte, Viertel, Gebäude, Länder)\n- topic: worum es geht, höchstens 5, jeweils ein kurzes Hauptwort (z. B. \"Heizung\", \"Job\", \"Schlaf\")\n- emotion: Gefühle, aber nur wenn sie im Text ausdrücklich genannt werden (z. B. \"müde\", \"traurig\", \"einsam\"). Errate nie Gefühle aus dem Ton.\n\nRegeln:\n- \"mention\" sind die genauen Wörter, wie sie im Text stehen.\n- \"name\" ist dieselbe Sache in Grundform, in der Sprache des Textes.\n- Nichts hinzufügen, was nicht im Text steht. Keine Deutung.\n\nText:\n{{text}}",
+    "template": "Du liest einen Gedanken aus einem privaten Tagebuch (Deutsch, manchmal mit Englisch gemischt). Finde, was darin vorkommt:\n- person: Menschen, mit Namen oder als Rolle (z. B. \"Kim\", \"meine Mutter\", \"mein Chef\")\n- place: Orte (Städte, Viertel, Gebäude, Länder)\n- topic: worum es geht, höchstens 5, jeweils ein kurzes Hauptwort (z. B. \"Heizung\", \"Job\", \"Schlaf\")\n- emotion: Gefühle, aber nur wenn sie im Text ausdrücklich genannt werden (z. B. \"müde\", \"traurig\", \"einsam\"). Errate nie Gefühle aus dem Ton.\n\nRegeln:\n- \"mention\" sind die genauen Wörter, wie sie im Text stehen.\n- \"name\" ist dieselbe Sache in Grundform, in der Sprache des Textes.\n- Nichts hinzufügen, was nicht im Text steht. Keine Deutung.\n\nText:\n{{text}}",
     "output_schema": {
       "type": "object",
       "properties": {
@@ -35,7 +35,7 @@
             "properties": {
               "name": {
                 "type": "string",
-                "description": "Grundform, z. B. Marleen, Heizung, müde"
+                "description": "Grundform, z. B. Kim, Heizung, müde"
               },
               "kind": {
                 "type": "string",
@@ -63,7 +63,7 @@
         "concepts"
       ]
     },
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "id": "summary",
@@ -90,7 +90,7 @@
     "version": 2,
     "role": "entities",
     "language": "de",
-    "template": "Du liest einen Gedanken aus einem privaten Tagebuch (Deutsch, manchmal mit Englisch gemischt). Finde, was darin vorkommt:\n- person: jeder Mensch, mit Namen oder als Rolle. Rollen sind immer person, nie topic (z. B. \"Marleen\", \"meine Mutter\", \"mein Chef\", \"der Vermieter\", \"die Ärztin\")\n- place: Orte, auch alltägliche (z. B. \"München\", \"Giesing\", \"Büro\", \"Wohnung\", \"Küche\", \"Isar\")\n- topic: worum es geht, höchstens 5, jeweils ein kurzes Hauptwort aus dem Text (z. B. \"Heizung\", \"Schlaf\", \"Umzug\")\n- emotion: Gefühle, aber nur wenn sie im Text ausdrücklich genannt werden (z. B. \"müde\", \"traurig\", \"einsam\"). Errate nie Gefühle aus dem Ton.\n\nRegeln:\n- \"mention\" sind die genauen Wörter, wie sie im Text stehen.\n- \"name\" ist dasselbe Wort in Grundform, wie es im Text vorkommt (z. B. \"Vermieter\" für \"dem Vermieter\").\n- Nur Wörter aus dem Text. Nichts hinzufügen, keine Deutung.\n\nText:\n{{text}}",
+    "template": "Du liest einen Gedanken aus einem privaten Tagebuch (Deutsch, manchmal mit Englisch gemischt). Finde, was darin vorkommt:\n- person: jeder Mensch, mit Namen oder als Rolle. Rollen sind immer person, nie topic (z. B. \"Kim\", \"meine Mutter\", \"mein Chef\", \"der Vermieter\", \"die Ärztin\")\n- place: Orte, auch alltägliche (z. B. \"München\", \"Giesing\", \"Büro\", \"Wohnung\", \"Küche\", \"Isar\")\n- topic: worum es geht, höchstens 5, jeweils ein kurzes Hauptwort aus dem Text (z. B. \"Heizung\", \"Schlaf\", \"Umzug\")\n- emotion: Gefühle, aber nur wenn sie im Text ausdrücklich genannt werden (z. B. \"müde\", \"traurig\", \"einsam\"). Errate nie Gefühle aus dem Ton.\n\nRegeln:\n- \"mention\" sind die genauen Wörter, wie sie im Text stehen.\n- \"name\" ist dasselbe Wort in Grundform, wie es im Text vorkommt (z. B. \"Vermieter\" für \"dem Vermieter\").\n- Nur Wörter aus dem Text. Nichts hinzufügen, keine Deutung.\n\nText:\n{{text}}",
     "output_schema": {
       "type": "object",
       "properties": {
@@ -102,7 +102,7 @@
             "properties": {
               "name": {
                 "type": "string",
-                "description": "Grundform, z. B. Marleen, Heizung, müde"
+                "description": "Grundform, z. B. Kim, Heizung, müde"
               },
               "kind": {
                 "type": "string",
@@ -130,7 +130,7 @@
         "concepts"
       ]
     },
-    "seed_version": 1
+    "seed_version": 2
   },
   {
     "id": "summary",

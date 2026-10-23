@@ -12,7 +12,7 @@ struct AppleSpeechLivePreviewIntegrationTests {
     @Test("hears German speech fed in live chunks")
     func previewsGerman() async throws {
         let preview = AppleSpeechLivePreview(
-            options: try AppleSpeechOptions(params: ["locale": .string("de-DE")]), vocabulary: ["Marleen"])
+            options: try AppleSpeechOptions(params: ["locale": .string("de-DE")]), vocabulary: ["Kim"])
         let (audio, feed) = AsyncStream.makeStream(of: AudioSamples.self)
         let updates = try await preview.preview(audio)
         for chunk in try AppleSpeechFixture.chunks() { feed.yield(chunk) }

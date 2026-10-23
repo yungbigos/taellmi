@@ -27,7 +27,7 @@ struct RelatedThoughtsTests {
         try harness.add("heizung", "Die Heizung in der Wohnung gluckert und wird nicht warm.")
         try harness.add("heizung2", "Heizung gluckert wieder, Wohnung bleibt kalt.")
         try harness.add("wohnung", "Die Wohnung ist kalt.")
-        try harness.add("isar", "Mit Marleen an der Isar spazieren.")
+        try harness.add("isar", "Mit Kim an der Isar spazieren.")
         try ConfigEditor(database: harness.database).setSetting(SettingKeys.relatedThoughtsCount, to: .number(2))
 
         let found = try related(harness).related(to: "heizung").map(\.id)
@@ -38,7 +38,7 @@ struct RelatedThoughtsTests {
     func threshold() throws {
         let harness = try Harness()
         try harness.add("heizung", "Die Heizung gluckert.")
-        try harness.add("isar", "Mit Marleen an der Isar spazieren.")
+        try harness.add("isar", "Mit Kim an der Isar spazieren.")
         #expect(try related(harness).related(to: "heizung").isEmpty)
     }
 

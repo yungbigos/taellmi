@@ -8,11 +8,11 @@ struct WhatsAppChatTests {
     /// Shaped exactly like a `_chat.txt` from WhatsApp on an iPhone set to German dates: U+200E before
     /// everything WhatsApp writes itself, CRLF after a message, LF between the lines of one message.
     static let selfChat =
-        "\u{200E}[14.08.25, 17:39:08] yannik: tickets.pdf • \u{200E}1 page \u{200E}document omitted\r\n"
-        + "\u{200E}[19.08.25, 19:44:41] yannik: \u{200E}audio omitted\r\n"
-        + "[02.09.26, 12:34:31] yannik: Zählerstand ablesen  und notieren\nZähler-ID: 1ABC0000000000\n\n"
+        "\u{200E}[23.05.25, 18:12:44] sam: fahrplan.pdf • \u{200E}1 page \u{200E}document omitted\r\n"
+        + "\u{200E}[27.05.25, 07:51:09] sam: \u{200E}audio omitted\r\n"
+        + "[06.06.26, 10:20:05] sam: Pflanzen gießen  und Post holen\nListe: Mehl, Eier, Hefe\n\n"
         + "Rückruf am Freitag\r\n"
-        + "[02.09.26, 15:53:38] yannik: Geschenkidee für Marleen: Kletterkurs\r\n"
+        + "[06.06.26, 16:45:30] sam: Geschenkidee für Kim: Töpferkurs\r\n"
 
     static func date(_ year: Int, _ month: Int, _ day: Int, _ hour: Int, _ minute: Int, _ second: Int) -> Date? {
         berlinCalendar.date(
@@ -23,23 +23,23 @@ struct WhatsAppChatTests {
     func readsMessages() throws {
         let chat = try #require(WhatsAppChat(text: Self.selfChat, calendar: berlinCalendar))
 
-        #expect(chat.messages.map(\.sender) == ["yannik", "yannik", "yannik", "yannik"])
+        #expect(chat.messages.map(\.sender) == ["sam", "sam", "sam", "sam"])
         #expect(
             chat.messages.map(\.sentAt) == [
-                Self.date(2025, 8, 14, 17, 39, 8), Self.date(2025, 8, 19, 19, 44, 41),
-                Self.date(2026, 9, 2, 12, 34, 31), Self.date(2026, 9, 2, 15, 53, 38),
+                Self.date(2025, 5, 23, 18, 12, 44), Self.date(2025, 5, 27, 7, 51, 9),
+                Self.date(2026, 6, 6, 10, 20, 5), Self.date(2026, 6, 6, 16, 45, 30),
             ])
         #expect(
             chat.messages[2].text
-                == "Zählerstand ablesen  und notieren\nZähler-ID: 1ABC0000000000\n\nRückruf am Freitag",
+                == "Pflanzen gießen  und Post holen\nListe: Mehl, Eier, Hefe\n\nRückruf am Freitag",
             "lines without a time continue the message above them, blank lines and double spaces included")
-        #expect(chat.messages[3].text == "Geschenkidee für Marleen: Kletterkurs", "a colon in the words stays")
+        #expect(chat.messages[3].text == "Geschenkidee für Kim: Töpferkurs", "a colon in the words stays")
     }
 
     @Test(
         "what WhatsApp writes itself is left out, in any language; a caption or an edited message keeps its words",
         arguments: [
-            ("tickets.pdf • \u{200E}1 page \u{200E}document omitted", ""),
+            ("fahrplan.pdf • \u{200E}1 page \u{200E}document omitted", ""),
             ("\u{200E}audio omitted", ""),
             ("\u{200E}Bild weggelassen", ""),
             ("\u{200E}<attached: 00000012-PHOTO-2026-09-01-09-01-00.jpg>", ""),
@@ -53,34 +53,34 @@ struct WhatsAppChatTests {
         ])
     func leavesOutWhatWhatsAppWrote(body: String, words: String) throws {
         let chat = try #require(
-            WhatsAppChat(text: "[01.09.26, 09:00:00] yannik: \(body)\r\n", calendar: berlinCalendar))
+            WhatsAppChat(text: "[01.09.26, 09:00:00] sam: \(body)\r\n", calendar: berlinCalendar))
         #expect(chat.messages.map(\.text) == [words])
     }
 
     @Test(
         "dates and times are read the way the phone wrote them",
         arguments: [
-            "[14.08.25, 17:39:08] a: x",
-            "\u{200E}[8/14/25, 5:39:08\u{202F}PM] a: x",
-            "[8/14/25, 5:39:08 PM] a: x",
-            "[14/08/2025, 17:39:08] a: x",
-            "[2025-08-14, 17:39:08] a: x",
-            "[14/8/25, 5:39:08 p.\u{00A0}m.] a: x",
+            "[23.05.25, 18:12:44] a: x",
+            "\u{200E}[5/23/25, 6:12:44\u{202F}PM] a: x",
+            "[5/23/25, 6:12:44 PM] a: x",
+            "[23/05/2025, 18:12:44] a: x",
+            "[2025-05-23, 18:12:44] a: x",
+            "[23/5/25, 6:12:44 p.\u{00A0}m.] a: x",
         ])
     func readsDateFormats(line: String) throws {
         let chat = try #require(WhatsAppChat(text: line, calendar: berlinCalendar))
-        #expect(chat.messages.map(\.sentAt) == [Self.date(2025, 8, 14, 17, 39, 8)])
+        #expect(chat.messages.map(\.sentAt) == [Self.date(2025, 5, 23, 18, 12, 44)])
     }
 
     @Test("midnight and noon in 12-hour times, and times without seconds")
     func readsTimes() throws {
         let chat = try #require(
             WhatsAppChat(
-                text: "[8/14/25, 12:05:00 AM] a: x\n[8/14/25, 12:05:00 PM] a: y\n[14.08.25, 17:39] a: z",
+                text: "[5/23/25, 12:05:00 AM] a: x\n[5/23/25, 12:05:00 PM] a: y\n[23.05.25, 18:12] a: z",
                 calendar: berlinCalendar))
         #expect(
             chat.messages.map(\.sentAt) == [
-                Self.date(2025, 8, 14, 0, 5, 0), Self.date(2025, 8, 14, 12, 5, 0), Self.date(2025, 8, 14, 17, 39, 0),
+                Self.date(2025, 5, 23, 0, 5, 0), Self.date(2025, 5, 23, 12, 5, 0), Self.date(2025, 5, 23, 18, 12, 0),
             ])
     }
 
@@ -117,8 +117,8 @@ struct WhatsAppChatTests {
     func emptyMessage() throws {
         let chat = try #require(
             WhatsAppChat(
-                text: "[01.09.26, 09:00:00] yannik:\n[01.09.26, 09:01:00] yannik: Hallo", calendar: berlinCalendar))
-        #expect(chat.messages.map(\.sender) == ["yannik", "yannik"])
+                text: "[01.09.26, 09:00:00] sam:\n[01.09.26, 09:01:00] sam: Hallo", calendar: berlinCalendar))
+        #expect(chat.messages.map(\.sender) == ["sam", "sam"])
         #expect(chat.messages.map(\.text) == ["", "Hallo"])
     }
 
@@ -141,14 +141,14 @@ struct WhatsAppChatTests {
     )
     func fingerprints() throws {
         let german = try #require(
-            WhatsAppChat(text: "[02.09.26, 15:53:38] yannik: Kletterkurs", calendar: berlinCalendar))
+            WhatsAppChat(text: "[06.06.26, 16:45:30] sam: Töpferkurs", calendar: berlinCalendar))
         let british = try #require(
-            WhatsAppChat(text: "[02/09/2026, 15:53:38] yannik: Kletterkurs", calendar: berlinCalendar))
+            WhatsAppChat(text: "[06/06/2026, 16:45:30] sam: Töpferkurs", calendar: berlinCalendar))
         let renamed = try #require(
-            WhatsAppChat(text: "[02.09.26, 15:53:38] Yannik B.: Kletterkurs", calendar: berlinCalendar))
+            WhatsAppChat(text: "[06.06.26, 16:45:30] Sam B.: Töpferkurs", calendar: berlinCalendar))
         let others = try #require(
             WhatsAppChat(
-                text: "[02.09.26, 15:53:38] yannik: Boulderkurs\n[02.09.26, 15:53:39] yannik: Kletterkurs",
+                text: "[06.06.26, 16:45:30] sam: Malkurs\n[06.06.26, 16:45:31] sam: Töpferkurs",
                 calendar: berlinCalendar))
 
         let fingerprint = try #require(german.messages.first?.fingerprint)
@@ -163,19 +163,19 @@ struct WhatsAppChatTests {
     func lookalikeLines() throws {
         let noSender = try #require(
             WhatsAppChat(
-                text: "[01.09.26, 09:00:00] yannik: Termine\n[01.09.26, 10:00] Arzt anrufen", calendar: berlinCalendar))
+                text: "[01.09.26, 09:00:00] sam: Termine\n[01.09.26, 10:00] Arzt anrufen", calendar: berlinCalendar))
         #expect(noSender.messages.map(\.text) == ["Termine\n[01.09.26, 10:00] Arzt anrufen"])
 
         let noSuchDay = try #require(
             WhatsAppChat(
-                text: "[01.09.26, 09:00:00] yannik: eins\n[31.02.26, 09:00:00] yannik: zwei", calendar: berlinCalendar))
-        #expect(noSuchDay.messages.map(\.text) == ["eins\n[31.02.26, 09:00:00] yannik: zwei"])
+                text: "[01.09.26, 09:00:00] sam: eins\n[31.02.26, 09:00:00] sam: zwei", calendar: berlinCalendar))
+        #expect(noSuchDay.messages.map(\.text) == ["eins\n[31.02.26, 09:00:00] sam: zwei"])
     }
 
     @Test("only line feeds and carriage returns end a line; other breaks in your words stay as they are")
     func keepsOtherBreaks() throws {
         let chat = try #require(
-            WhatsAppChat(text: "[01.09.26, 09:00:00] yannik: eins\u{2028}zwei\u{0C}drei\r\n", calendar: berlinCalendar))
+            WhatsAppChat(text: "[01.09.26, 09:00:00] sam: eins\u{2028}zwei\u{0C}drei\r\n", calendar: berlinCalendar))
         #expect(chat.messages.map(\.text) == ["eins\u{2028}zwei\u{0C}drei"])
     }
 }

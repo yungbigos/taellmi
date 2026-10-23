@@ -27,7 +27,7 @@ struct PassageSplitterTests {
     @Test("a long monologue is split at sentence ends into passages no longer than the maximum")
     func longMonologue() {
         let sentences = [
-            "Ich war heute früh im Büro und das Meeting mit Marleen hat ewig gedauert.",
+            "Ich war heute früh im Büro und das Meeting mit Kim hat ewig gedauert.",
             "Honestly, ich weiß nicht, ob das Projekt so noch Sinn ergibt.",
             "Danach bin ich an der Isar spazieren gegangen, das hat gutgetan.",
             "Morgen muss ich unbedingt die Steuererklärung fertig machen!",

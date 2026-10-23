@@ -1,6 +1,6 @@
 # The understand step on a sample thought (2026-10-20)
 
-A first look at what Apple's on-device model returns for the `concepts@1` and `summary@1` prompts ([ADR 0012](../decisions/0012-concepts-and-summaries.md)). Three runs on one made-up thought. This is a spot check, not an evaluation.
+A first look at what Apple's on-device model returns for the `concepts@1` and `summary@1` prompts ([ADR 0012](../decisions/0012-concepts-and-summaries.md)). Three runs on one made-up thought. This is a spot check, not an evaluation. The person's name in the thought and the prompt was later replaced with the invented "Kim"; the outputs and positions below are shown with it, positions recomputed.
 
 ## Setup
 
@@ -11,9 +11,9 @@ A first look at what Apple's on-device model returns for the `concepts@1` and `s
 
 ## Input
 
-64 words, so the summary runs too (`summary.min_words` is 40). The text is one paragraph of 388 characters, so it becomes one passage.
+64 words, so the summary runs too (`summary.min_words` is 40). The text is one paragraph of 384 characters, so it becomes one passage.
 
-> Heute Morgen wieder kaum geschlafen, weil die Heizung in der Wohnung die ganze Nacht geklackert hat. Ich habe dann mit Marleen telefoniert, sie ist gerade in Lissabon für die Konferenz. Sie meinte, ich soll endlich den Vermieter anrufen. Eigentlich bin ich eher müde als genervt. Im Büro hat mein Chef nach dem Release gefragt, und ich hatte keine Antwort, weil das Deployment noch hängt.
+> Heute Morgen wieder kaum geschlafen, weil die Heizung in der Wohnung die ganze Nacht geklackert hat. Ich habe dann mit Kim telefoniert, sie ist gerade in Lissabon für die Konferenz. Sie meinte, ich soll endlich den Vermieter anrufen. Eigentlich bin ich eher müde als genervt. Im Büro hat mein Chef nach dem Release gefragt, und ich hatte keine Antwort, weil das Deployment noch hängt.
 
 ## Output
 
@@ -21,15 +21,15 @@ Concepts (field order varies between runs and is shown normalised):
 
 | run | person | place | topic | emotion |
 |---|---|---|---|---|
-| 1 | Marleen | Lissabon | Heizung, Vermieter | müde |
-| 2 | Marleen | Lissabon | Heizung, Vermieter, **Job** | none |
-| 3 | Marleen | Lissabon | Heizung, Vermieter | müde |
+| 1 | Kim | Lissabon | Heizung, Vermieter | müde |
+| 2 | Kim | Lissabon | Heizung, Vermieter, **Job** | none |
+| 3 | Kim | Lissabon | Heizung, Vermieter | müde |
 
 Run 1 raw:
 
 ```json
 {"concepts": [
-  {"name": "Marleen",   "kind": "person",  "mention": "Marleen"},
+  {"name": "Kim",   "kind": "person",  "mention": "Kim"},
   {"name": "Lissabon",  "kind": "place",   "mention": "Lissabon"},
   {"name": "Heizung",   "kind": "topic",   "mention": "Heizung"},
   {"name": "Vermieter", "kind": "topic",   "mention": "Vermieter"},
@@ -37,7 +37,7 @@ Run 1 raw:
 ]}
 ```
 
-Where tällmi finds the words (UTF-16 ranges, stored as `mentions` edge evidence): Heizung 46..<53, Marleen 119..<126, Lissabon 158..<166, Vermieter 219..<228, müde 262..<266. "Job" is not in the text, so `locate` drops it.
+Where tällmi finds the words (UTF-16 ranges, stored as `mentions` edge evidence): Heizung 46..<53, Kim 119..<122, Lissabon 154..<162, Vermieter 215..<224, müde 258..<262. "Job" is not in the text, so `locate` drops it.
 
 Summaries:
 
@@ -47,7 +47,7 @@ Summaries:
 
 ## Findings
 
-- **Names and places are stable.** Marleen, Lissabon and Heizung came back every time.
+- **Names and places are stable.** Kim, Lissabon and Heizung came back every time.
 - **Roles are missed or put under the wrong kind.** "Vermieter" was always a topic, though the prompt lists roles ("meine Mutter", "mein Chef") as people. "mein Chef" was never found. Büro and Wohnung were never found as places.
 - **The word check does its job.** Run 2's invented "Job" never reaches the graph.
 - **Feelings vary.** "müde" appeared in 2 of 3 runs.
@@ -73,7 +73,7 @@ import FoundationModels
     let item = DynamicGenerationSchema(name: "Answer_concepts_item", properties: [
       .init(name: "kind", schema: DynamicGenerationSchema(name: "Answer_concepts_item_kind", anyOf: ["person","place","topic","emotion"])),
       .init(name: "mention", description: "die genauen Wörter aus dem Text", schema: DynamicGenerationSchema(type: String.self)),
-      .init(name: "name", description: "Grundform, z. B. Marleen, Heizung, müde", schema: DynamicGenerationSchema(type: String.self)),
+      .init(name: "name", description: "Grundform, z. B. Kim, Heizung, müde", schema: DynamicGenerationSchema(type: String.self)),
     ])
     let conceptsRoot = DynamicGenerationSchema(name: "Answer", properties: [
       .init(name: "concepts", schema: DynamicGenerationSchema(arrayOf: item, maximumElements: 20))])

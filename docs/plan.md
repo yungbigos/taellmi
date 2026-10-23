@@ -100,7 +100,7 @@ Decisions are locked (see section 3); we fix model choices later if real use sho
   - typed Entries in the UI
 
 ### Vocabulary (built 2026-10-19)
-- **Your own spelling for names in new voice Entries** (Marlene → Marleen).
+- **Your own spelling for names in new voice Entries** (Kym → Kim).
   - Matching uses the Kölner Phonetik sound code.
   - Guards stop false corrections: Apple's NaturalLanguage tags names and word classes, so verbs and function words are never touched, and ordinary nouns need high spelling similarity. If two Vocabulary terms sound alike, nothing is replaced.
   - Corrections are recorded in `entry.md` (`vocabulary_corrections`). The Transcript stays verbatim.

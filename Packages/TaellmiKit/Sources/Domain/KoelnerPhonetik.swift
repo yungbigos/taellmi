@@ -1,7 +1,7 @@
 import Foundation
 
 /// The Kölner Phonetik: a sound code for German words. Words that sound alike get the same code
-/// ("Marlene" and "Marleen" → "6756").
+/// ("Kym" and "Kim" → "46").
 public enum KoelnerPhonetik {
     public static func code(_ word: String) -> String {
         let letters = Array(

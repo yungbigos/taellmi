@@ -16,7 +16,7 @@
   const WORDS = [
     ['äh', 'aeh', 'aeh'], ['ähm', 'aeh', 'aeh'], ['äh', 'aeh', 'aeh'], ['hmm', 'aeh', 'aeh'], ['ähm', 'aeh', 'aeh'], ['äh', 'aeh', 'aeh'],
     ['the move', 'w', 'moving'], ['boxes', 'w', 'moving'], ['the old flat', 'w', 'moving'], ['landlord', 'w', 'moving'], ['March', 'w', 'moving'], ['Sam', 'w', 'moving'],
-    ['Jonas', 'w', 'jonas'], ['the pitch', 'w', 'jonas'], ['gut feeling', 'w', 'jonas'], ['follow up tomorrow', 'w', 'jonas'], ['deadline', 'w', 'jonas'], ['not convinced', 'w', 'jonas'],
+    ['Kai', 'w', 'kai'], ['the pitch', 'w', 'kai'], ['gut feeling', 'w', 'kai'], ['follow up tomorrow', 'w', 'kai'], ['deadline', 'w', 'kai'], ['not convinced', 'w', 'kai'],
     ['dreamt', 'w', 'dream'], ['a lake in the kitchen', 'w', 'dream'], ['the sea', 'w', 'dream'], ['weird', 'w', 'dream'], ['flying again', 'w', 'dream'],
     ['I think', 'w', ''], ['somehow', 'w', ''], ['maybe', 'w', ''], ['grandma', 'w', ''], ['going for a run', 'w', ''], ['tired', 'w', ''], ['finally', 'w', ''],
     ['dentist', 'w', ''], ['call mum', 'w', ''], ['Sunday', 'w', ''], ['coffee', 'w', ''], ['Lisbon', 'w', ''], ['patience', 'w', ''], ['too much', 'w', ''],

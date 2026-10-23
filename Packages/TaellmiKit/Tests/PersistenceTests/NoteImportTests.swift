@@ -163,7 +163,7 @@ struct NoteImportTests {
         #expect(report.alreadyHere.isEmpty)
         #expect(report.failed.isEmpty)
         #expect(report.chats.imported.map(\.source) == [.whatsApp, .whatsApp])
-        #expect(report.chats.imported.first?.createdAt == WhatsAppChatTests.date(2026, 9, 2, 12, 34, 31))
+        #expect(report.chats.imported.first?.createdAt == WhatsAppChatTests.date(2026, 6, 6, 10, 20, 5))
         #expect(report.chats.withoutWords == 2)
     }
 

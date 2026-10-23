@@ -60,6 +60,7 @@ Derived data stores the model that produced it. A title, a summary or a cleaned 
 - The repo holds `Resources/Seeds/*.json` (providers, models, assignments, prompts, settings), reviewed like code.
 - On launch, a migrator compares each row's `seed_version` and only **adds or updates rows with `origin = seed`**. Rows you edited become `origin = user` and are never overwritten.
 - A "reset to default" action per row or table.
+- A prompt keeps its `version` only when its wording changes without changing what it asks, such as swapping an invented example name: then only `seed_version` goes up, and outputs made with it stay valid. Anything that can change the outputs is a new `version`.
 - **Your changes (`origin = user`) are also written to `config.json` in the Archive** ([ADR 0004](../decisions/0004-entries-as-files.md)). On a fresh database the effective config is the Seeds plus `config.json`, so a new Mac plus your Archive gives you back exactly your setup.
 - This also covers settings that steer recomputation, such as focus weights. Weights on specific Concepts or Atoms are Curation and live in `curation.json`.
 

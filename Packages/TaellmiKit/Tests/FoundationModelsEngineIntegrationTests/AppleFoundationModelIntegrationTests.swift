@@ -20,9 +20,9 @@ struct AppleFoundationModelIntegrationTests {
             "required": .array([.string("people")]),
         ])
         let answer = try await model.generate(
-            prompt: "Welche Personen werden genannt? Text: Heute mit Marleen und Jonas im Englischen Garten.",
+            prompt: "Welche Personen werden genannt? Text: Heute mit Kim und Sam im Englischen Garten.",
             schema: schema)
         let people = answer.objectValue?["people"]?.arrayValue?.compactMap(\.stringValue) ?? []
-        #expect(people.contains { $0.contains("Marleen") })
+        #expect(people.contains { $0.contains("Kim") })
     }
 }

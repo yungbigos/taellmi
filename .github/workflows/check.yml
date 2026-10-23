@@ -19,6 +19,13 @@ jobs:
     # Apple silicon, macOS 26, Xcode 26.6, like the release.
     runs-on: macos-26
     timeout-minutes: 60
+    env:
+      # swift build's folder, and the app build's packages, products and module cache (not its index)
+      BUILD_CACHE: |
+        Packages/TaellmiKit/.build
+        build/SourcePackages
+        build/Build
+        build/ModuleCache.noindex
     steps:
       - uses: actions/checkout@v5
         with:
@@ -28,5 +35,23 @@ jobs:
       - name: toolchain
         run: scripts/ci-setup.sh
 
+      # Both builds compile every dependency (MLX and friends take most of the time) from scratch on a fresh runner.
+      # Reuse them: only main saves (about 6 GB of a 10 GB repo quota), every run restores, and a pull request reads
+      # main's. The key changes with the dependencies, so the cache is saved again only then.
+      - name: restore built dependencies
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ env.BUILD_CACHE }}
+          key: check-build-macos26-xcode26.6-${{ hashFiles('Packages/TaellmiKit/Package.resolved', 'Packages/TaellmiKit/Package.swift', 'project.yml') }}
+          restore-keys: check-build-macos26-xcode26.6-
+
       - name: check
         run: scripts/check.sh
+
+      - name: save built dependencies
+        if: github.ref == 'refs/heads/main' && steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ env.BUILD_CACHE }}
+          key: ${{ steps.cache.outputs.cache-primary-key }}

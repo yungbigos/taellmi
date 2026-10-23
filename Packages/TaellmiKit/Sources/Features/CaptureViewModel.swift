@@ -106,7 +106,7 @@ public final class CaptureViewModel {
     public nonisolated static func preview(of entry: Entry, maxLength: Int = 80) -> String {
         let text = WordsOnlyText(entry.text).words.replacingOccurrences(of: "\n", with: " ")
             .trimmingCharacters(in: .whitespaces)
-        guard !text.isEmpty else { return "transcribing …" }
+        guard !text.isEmpty else { return ThoughtMeta.transcribing }
         guard text.count > maxLength else { return text }
         return text.prefix(maxLength).trimmingCharacters(in: .whitespaces) + "…"
     }

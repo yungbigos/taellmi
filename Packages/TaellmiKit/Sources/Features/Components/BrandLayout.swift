@@ -76,6 +76,14 @@ enum ThoughtMeta {
         }
     }
 
+    nonisolated static let transcribing = "transcribing …"
+
+    /// What a thought shows while its words aren't there yet: a spoken thought waiting for its transcript.
+    static func waitingLine(source: EntrySource, text: String) -> String? {
+        guard source == .voice, WordsOnlyText(text).words.allSatisfy(\.isWhitespace) else { return nil }
+        return transcribing
+    }
+
     /// The symbol that stands for how a thought came in.
     static func sourceSymbol(_ source: EntrySource) -> String {
         switch source {

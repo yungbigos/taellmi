@@ -55,6 +55,9 @@ struct ThoughtBlock: View {
                             shortcuts: shortcuts, focusOnAppear: true, onCancel: { EditingFocus.end() },
                             menuItems: menuItems, onEndEditing: { isEditing = false }
                         )
+                    } else if let waiting = ThoughtMeta.waitingLine(source: entry.source, text: text) {
+                        // Until its words come, like the menu bar; they replace this on their own.
+                        Text(waiting).brandFont("text.thought").brandForeground(.quiet)
                     } else {
                         ReadingTextView(text: text, highlights: highlights(text)) { isEditing = true }
                             .accessibilityAddTraits(.isButton)

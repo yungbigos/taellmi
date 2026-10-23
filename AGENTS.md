@@ -41,7 +41,7 @@ scripts/download-model.sh <id> # the one user-started network step: fetch a seed
 scripts/download-eval-data.sh  # developer step: the German and English search-evaluation controls (pinned, SHA-256)
 scripts/eval-search.sh         # measure search on eval/ and the controls with the real model (see docs/research)
 npm --prefix website run dev   # the marketing site's design study at http://localhost:4173 (see website/README.md)
-git tag v0.1.0 && git push origin v0.1.0  # release: runs the gate, builds, publishes a GitHub release (.github/workflows/release.yml)
+git tag v0.1.0 && git push origin v0.1.0  # release: runs the gate unless main already passed it, builds, publishes a GitHub release (.github/workflows/release.yml)
 ```
 
 - Run from a git worktree, `scripts/run-app.sh` launches the worktree's own copy at `build/run/taellmi.app` (`build/demo/run/taellmi-demo.app` with `--demo`) and leaves `~/Applications` alone, so parallel sessions never replace the owner's installed app. All copies share one data folder, so a run stops whichever copy of the same app is running. Tell the owner which copy you launched.

@@ -16,6 +16,8 @@ on:
 
 permissions:
   contents: write
+  # to see whether the check workflow already passed on the tagged commit
+  actions: read
 
 concurrency:
   group: release-${{ inputs.tag || github.ref_name }}
@@ -45,8 +47,24 @@ jobs:
           [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]] || { echo "✘ tag $TAG is not v<major>.<minor>.<patch>"; exit 1; }
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
-      # The same gate as every commit: format lint, build, fast tests, app build.
+      # The gate (format lint, build, fast tests, app build) already ran on main for a commit tagged there.
+      # Run it here only when this exact commit has no passing check run, e.g. a tag off main.
+      - name: checked already?
+        id: checked
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SHA=$(git rev-parse HEAD)
+          PASSED=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/check.yml/runs?head_sha=$SHA&status=success" --jq '.total_count')
+          if [[ "$PASSED" -gt 0 ]]; then
+            echo "✔ check passed on $SHA already; not running it again"
+            echo "passed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "▸ no passing check on $SHA; running it here"
+          fi
+
       - name: check
+        if: steps.checked.outputs.passed != 'true'
         run: scripts/check.sh
 
       - name: build

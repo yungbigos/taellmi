@@ -94,7 +94,7 @@ public protocol OnboardingServices: AnyObject {
     /// Imports the files you picked and says what happened; nil when there was nothing to import.
     func importNotes(from urls: [URL]) async -> String?
     func importChats(from urls: [URL]) async -> String?
-    /// Remembers that the onboarding is done and opens tällmi.
+    /// Remembers that the onboarding is done; the window then closes and the tällmi window opens.
     func finish() async
 }
 
@@ -201,6 +201,14 @@ public final class OnboardingModel {
     public var canHearYet: Bool {
         voiceModels.first { $0.role == .transcription }?.isInstalled ?? true
     }
+
+    /// tälli is listening for your first thought: the first press of the shortcut, before the thought is saved.
+    public var isListening: Bool {
+        step == .callTalli && firstThoughtID == nil && capture.isRecording
+    }
+
+    /// How loud you are while tälli listens, 0…1, for tälli in the window.
+    public var listeningLevel: Float { capture.level }
 
     /// The thought you saved since tälli was called here.
     public var firstThoughtID: String? {

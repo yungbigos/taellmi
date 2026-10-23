@@ -33,8 +33,7 @@ public final class ExploreWindowController: NSObject, NSWindowDelegate {
             await model.open(selecting: entryID)
             let window = window ?? makeWindow()
             self.window = window
-            DockPresence.windowOpened()
-            window.makeKeyAndOrderFront(nil)
+            DockPresence.show(window)
         }
     }
 

@@ -132,9 +132,7 @@ public final class AppController {
             onboarding.show()
             return
         }
-        let services = LiveOnboardingServices(environment: environment, privacy: privacy) { [weak self] in
-            self?.openExplore()
-        }
+        let services = LiveOnboardingServices(environment: environment, privacy: privacy)
         let model = OnboardingModel(
             services: services, capture: environment.captureModel, shortcut: hotkeySettings,
             finishKey: environment.companionSettings().finishKey.displayLabel,
@@ -147,9 +145,11 @@ public final class AppController {
             logger.error("Onboarding sizes are missing from config: \(String(describing: error))")
             return
         }
-        let controller = OnboardingWindowController(model: model, talli: talli, brand: brand) { [weak self] in
+        // However it closes, the tällmi window comes next; a key still waiting gets its own panel.
+        let controller = OnboardingWindowController(model: model, talli: talli, brand: brand) { [weak self] finished in
             self?.onboarding = nil
-            if environment.pendingRecoveryKey != nil { self?.showRecoveryKey() }
+            self?.openExplore()
+            if !finished, environment.pendingRecoveryKey != nil { self?.showRecoveryKey() }
         }
         onboarding = controller
         controller.show()

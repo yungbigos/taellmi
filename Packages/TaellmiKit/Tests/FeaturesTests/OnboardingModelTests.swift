@@ -230,6 +230,29 @@ struct OnboardingModelTests {
         #expect(model.step == .callTalli, "you read it first, then go on")
     }
 
+    @Test("the first press of the shortcut shows right away: tälli is listening, until the thought is saved")
+    func listeningShows() async throws {
+        let (model, _, capture, temp) = try await makeModel()
+        defer { withExtendedLifetime(temp) {} }
+        advance(model, to: .callTalli)
+        #expect(!model.isListening)
+        await capture.toggle()
+        #expect(model.isListening)
+        await capture.toggle()
+        #expect(!model.isListening)
+        #expect(model.firstThoughtID != nil)
+    }
+
+    @Test("pressing the shortcut on another step doesn't count as listening here")
+    func listeningOnlyWhenCalled() async throws {
+        let (model, _, capture, temp) = try await makeModel()
+        defer { withExtendedLifetime(temp) {} }
+        advance(model, to: .microphone)
+        await capture.toggle()
+        #expect(!model.isListening)
+        await capture.cancel()
+    }
+
     @Test("your first thought shows its text as soon as it is transcribed, without a refresh")
     func firstThoughtUpdates() async throws {
         let journal = FakeJournal()

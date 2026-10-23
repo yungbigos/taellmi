@@ -10,13 +10,11 @@ import os
 final class LiveOnboardingServices: OnboardingServices {
     private let environment: AppEnvironment
     private let privacy: PrivacyViewModel
-    private let openTaellmi: () -> Void
     private let logger = Logger(subsystem: "app.taellmi", category: "onboarding")
 
-    init(environment: AppEnvironment, privacy: PrivacyViewModel, openTaellmi: @escaping () -> Void) {
+    init(environment: AppEnvironment, privacy: PrivacyViewModel) {
         self.environment = environment
         self.privacy = privacy
-        self.openTaellmi = openTaellmi
     }
 
     func voiceSetup() async -> VoiceSetup {
@@ -105,6 +103,5 @@ final class LiveOnboardingServices: OnboardingServices {
         } catch {
             logger.error("Could not remember that the onboarding is done: \(String(describing: error))")
         }
-        openTaellmi()
     }
 }

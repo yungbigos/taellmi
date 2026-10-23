@@ -40,7 +40,8 @@ struct OnboardingView: View {
     }
 
     private var talliMood: TalliMood {
-        model.step == .callTalli && model.firstThoughtID != nil ? .saved : .idle
+        if model.isListening { return .listening(level: model.listeningLevel) }
+        return model.step == .callTalli && model.firstThoughtID != nil ? .saved : .idle
     }
 
     @ViewBuilder private var content: some View {
@@ -203,9 +204,11 @@ struct OnboardingView: View {
 
     private var callTalliContent: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("call tälli from anywhere.").brandFont("display.title")
+            Text(model.isListening ? "tälli is listening." : "call tälli from anywhere.").brandFont("display.title")
             Text(
-                "try it now: press these keys in any app and say a first thought. anything goes, even an äh. press them again, or \(model.finishKey), to save it."
+                model.isListening
+                    ? "say your first thought, the way it comes. press the keys again, or \(model.finishKey), to save it."
+                    : "try it now: press these keys in any app and say a first thought. anything goes, even an äh. press them again, or \(model.finishKey), to save it."
             )
             .brandForeground(.quiet)
             .fixedSize(horizontal: false, vertical: true)
@@ -241,7 +244,8 @@ struct OnboardingView: View {
                 }
                 Spacer()
                 if !model.keycaps.isEmpty {
-                    Text("waiting for \(model.keycaps.joined()) …").brandForeground(.quiet)
+                    Text(model.isListening ? "listening …" : "waiting for \(model.keycaps.joined()) …")
+                        .brandForeground(.quiet)
                 }
                 Button("skip") { model.next() }
             }
@@ -253,7 +257,8 @@ struct OnboardingView: View {
             Text(key)
                 .brandFont("display.title")
                 .frame(width: 72, height: 72)
-                .brandFill(.field, radius: .panel)
+                // Lit while tälli listens: the press arrived.
+                .brandFill(model.isListening ? .selection : .field, radius: .panel)
             Text(Self.keyName(key)).brandFont("text.label").brandForeground(.quiet)
         }
     }

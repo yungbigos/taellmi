@@ -94,7 +94,8 @@ jobs:
       # the licences of the code built into it. A disk image needs no Apple account; only notarization would.
       - name: package
         run: |
-          DIR="taellmi-$VERSION"; DMG="$DIR.dmg"
+          # One name for every version, so releases/latest/download/taellmi.dmg always gets the newest (the website links it).
+          DIR="taellmi-$VERSION"; DMG="taellmi.dmg"
           mkdir "$DIR"
           ditto "$APP" "$DIR/taellmi.app"
           ln -s /Applications "$DIR/Applications"

@@ -29,6 +29,10 @@ the model downloads are a step you start yourself, and each file is checked agai
 
 the plan is in [docs/plan.md](docs/plan.md), every decision in [docs/decisions/](docs/decisions/), and how code is written here in [AGENTS.md](AGENTS.md): every change starts with a failing test.
 
+## support
+
+tällmi is free and made in berlin. if it helps you think, you can [buy me a coffee](https://buymeacoffee.com/yungbigos).
+
 ## licence
 
 [MIT](LICENSE)

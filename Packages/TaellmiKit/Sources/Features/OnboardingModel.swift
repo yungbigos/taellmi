@@ -35,6 +35,31 @@ public struct VoiceModelStatus: Sendable, Equatable, Identifiable {
     }
 }
 
+/// What the voice step knows: the models to download, and the roles that run on what macOS brings.
+public struct VoiceSetup: Sendable, Equatable {
+    public var downloads: [VoiceModelStatus]
+    public var builtIn: [ModelRole]
+
+    public init(downloads: [VoiceModelStatus], builtIn: [ModelRole]) {
+        self.downloads = downloads
+        self.builtIn = builtIn
+    }
+}
+
+/// How big tälli is in the onboarding window and how much of it peeks in (from config).
+public struct OnboardingTalliSizes: Sendable, Equatable {
+    public var hello: Double
+    public var corner: Double
+    /// The part of tälli above the window's bottom edge, 0…1.
+    public var peek: Double
+
+    public init(hello: Double, corner: Double, peek: Double) {
+        self.hello = hello
+        self.corner = corner
+        self.peek = peek
+    }
+}
+
 /// Where the progress marks are: the steps after hello, counted from 0.
 public struct OnboardingProgress: Sendable, Equatable {
     public var index: Int
@@ -48,13 +73,18 @@ public struct OnboardingProgress: Sendable, Equatable {
 
 /// What the onboarding needs from the app and from macOS.
 public protocol OnboardingServices: AnyObject {
-    func voiceModels() async -> [VoiceModelStatus]
+    func voiceSetup() async -> VoiceSetup
     func microphoneAccess() async -> MicrophoneAccess
     /// Asks macOS; true when allowed.
     func requestMicrophone() async -> Bool
     func openMicrophoneSettings()
     func showModelsFolder()
     func confirmRecoveryKey(lastGroup: String, keepInKeychain: Bool) async throws -> Bool
+    /// Where the thoughts are stored, in plain words.
+    func storageLocation() async -> String
+    /// Stores the thoughts in a "tällmi" folder inside `parent`, or opens the thoughts already there; tällmi
+    /// restarts for it. Returns what to tell you.
+    func useStorage(inside parent: URL) async -> String?
     func opensAtLogin() async -> Bool
     /// Returns what macOS really did.
     func setOpensAtLogin(_ on: Bool) async -> Bool
@@ -75,6 +105,9 @@ public final class OnboardingModel {
     public private(set) var step: OnboardingStep = .hello
     public private(set) var steps: [OnboardingStep] = [.hello]
     public private(set) var voiceModels: [VoiceModelStatus] = []
+    public private(set) var builtInRoles: [ModelRole] = []
+    public private(set) var storageLocation = ""
+    public private(set) var storageMessage: String?
     public private(set) var microphone: MicrophoneAccess = .notAsked
     public private(set) var opensAtLogin = false
     public private(set) var usesContacts = false
@@ -87,7 +120,7 @@ public final class OnboardingModel {
     public let shortcut: HotkeySettingsViewModel
     /// The key that saves what you said (`companion.finish_key`), as macOS shows it.
     public let finishKey: String
-    /// The Entry saved last before tälli was called here, so only a new one counts as your first thought.
+    // The Entry saved last before tälli was called here, so only a new one counts as your first thought.
     private var savedBeforeCall: String?
 
     @ObservationIgnored private let services: any OnboardingServices
@@ -124,14 +157,28 @@ public final class OnboardingModel {
     /// The shortcut that calls tälli, one key per cap.
     public var keycaps: [String] { Self.keycaps(for: shortcut.label) }
 
+    /// "built into macOS: the live preview, summaries." for the roles config runs on what macOS brings.
+    public nonisolated static func builtInLine(for roles: [ModelRole]) -> String? {
+        let words = roles.compactMap { role -> String? in
+            switch role {
+            case .liveTranscription: "the live preview"
+            case .summary: "summaries"
+            case .entities: "people, places and topics"
+            default: nil
+            }
+        }
+        return words.isEmpty ? nil : "built into macOS: " + words.joined(separator: ", ") + "."
+    }
+
     public func load() async {
         await shortcut.load()
-        voiceModels = await services.voiceModels()
+        await loadVoice()
+        storageLocation = await services.storageLocation()
         microphone = await services.microphoneAccess()
         opensAtLogin = await services.opensAtLogin()
         usesContacts = await services.usesContacts()
         var steps: [OnboardingStep] = [.hello]
-        if !voiceModels.isEmpty { steps.append(.voice) }
+        if missingBytes > 0 { steps.append(.voice) }
         if microphone != .allowed { steps.append(.microphone) }
         steps.append(.callTalli)
         if recoveryKey != nil { steps.append(.recoveryKey) }
@@ -187,8 +234,18 @@ public final class OnboardingModel {
 
     /// Back in the window: the microphone may be allowed now, or a model added by hand.
     public func refresh() async {
-        voiceModels = await services.voiceModels()
+        await loadVoice()
         await refreshMicrophone()
+    }
+
+    private func loadVoice() async {
+        let setup = await services.voiceSetup()
+        voiceModels = setup.downloads
+        builtInRoles = setup.builtIn
+    }
+
+    public func useStorage(inside parent: URL) async {
+        storageMessage = await services.useStorage(inside: parent)
     }
 
     private func refreshMicrophone() async {

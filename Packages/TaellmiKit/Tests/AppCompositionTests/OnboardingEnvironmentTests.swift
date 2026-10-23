@@ -21,24 +21,36 @@ struct OnboardingEnvironmentTests {
     }
 
     @Test("the voice step lists every model the seeds download, with its size, until it is verified on this Mac")
-    func voiceModels() throws {
+    func voiceDownloads() throws {
         let (environment, paths, home, scratch) = try makeEnvironment()
         defer { withExtendedLifetime((home, scratch)) {} }
-        let statuses = try environment.voiceModelStatuses()
-        #expect(statuses.map(\.role) == [.transcription, .embed])
-        #expect(statuses.allSatisfy { !$0.isInstalled && $0.bytes > 100_000_000 })
+        let downloads = try environment.voiceSetup().downloads
+        #expect(downloads.map(\.role) == [.transcription, .embed])
+        #expect(downloads.allSatisfy { !$0.isInstalled && $0.bytes > 100_000_000 })
 
         let speech = try #require(try ModelResolver.assigned(.transcription, in: environment.database))
         try ModelInstallation(root: paths.models).markVerified(speech)
-        #expect(try environment.voiceModelStatuses().map(\.isInstalled) == [true, false])
+        #expect(try environment.voiceSetup().downloads.map(\.isInstalled) == [true, false])
     }
 
-    @Test("a fresh tällmi opens the onboarding; once there are thoughts it never does, and remembers that")
-    func opensOnlyWhenFresh() async throws {
+    @Test("the roles that run on what macOS brings come from config too")
+    func voiceBuiltIn() throws {
+        let (environment, _, home, scratch) = try makeEnvironment()
+        defer { withExtendedLifetime((home, scratch)) {} }
+        #expect(try environment.voiceSetup().builtIn == [.liveTranscription, .summary, .entities])
+    }
+
+    @Test("a fresh tällmi opens the onboarding")
+    func opensWhenFresh() async throws {
         let (environment, _, home, scratch) = try makeEnvironment()
         defer { withExtendedLifetime((home, scratch)) {} }
         #expect(await environment.shouldOpenOnboarding())
+    }
 
+    @Test("a tällmi with thoughts doesn't open it, and remembers that")
+    func notWithThoughts() async throws {
+        let (environment, _, home, scratch) = try makeEnvironment()
+        defer { withExtendedLifetime((home, scratch)) {} }
         _ = try await environment.journal.addTypedEntry("Erster Gedanke, getippt.")
         #expect(await !environment.shouldOpenOnboarding())
         #expect(try SettingsStore(database: environment.database).bool(SettingKeys.onboardingCompleted))

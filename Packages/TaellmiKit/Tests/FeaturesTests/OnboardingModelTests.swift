@@ -10,20 +10,25 @@ import Testing
 struct OnboardingModelTests {
     /// Answers the way macOS and the app would, from fixed values; counts what it was asked to do.
     final class FakeServices: OnboardingServices {
-        var models: [VoiceModelStatus] = [
-            VoiceModelStatus(role: .transcription, name: "Speech Model", bytes: 632_000_000, isInstalled: false),
-            VoiceModelStatus(role: .embed, name: "Meaning Model", bytes: 645_000_000, isInstalled: true),
-        ]
+        var setup = VoiceSetup(
+            downloads: [
+                VoiceModelStatus(role: .transcription, name: "Speech Model", bytes: 632_000_000, isInstalled: false),
+                VoiceModelStatus(role: .embed, name: "Meaning Model", bytes: 645_000_000, isInstalled: true),
+            ],
+            builtIn: [.liveTranscription, .summary])
         var microphone: MicrophoneAccess = .notAsked
         var grantsMicrophone = true
         var keyGroup = "V6JB"
         var loginItemWorks = true
         var importMessage: String? = "2 thoughts imported."
+        var storage = "on this mac, in your library"
+        var storageRefusal: String?
         private(set) var keyConfirmations: [(String, Bool)] = []
         private(set) var finishCount = 0
         private(set) var openedMicrophoneSettings = false
+        private(set) var storageParents: [URL] = []
 
-        func voiceModels() async -> [VoiceModelStatus] { models }
+        func voiceSetup() async -> VoiceSetup { setup }
         func microphoneAccess() async -> MicrophoneAccess { microphone }
         func requestMicrophone() async -> Bool {
             microphone = grantsMicrophone ? .allowed : .denied
@@ -34,6 +39,11 @@ struct OnboardingModelTests {
         func confirmRecoveryKey(lastGroup: String, keepInKeychain: Bool) async throws -> Bool {
             keyConfirmations.append((lastGroup, keepInKeychain))
             return lastGroup == keyGroup
+        }
+        func storageLocation() async -> String { storage }
+        func useStorage(inside parent: URL) async -> String? {
+            storageParents.append(parent)
+            return storageRefusal
         }
         func opensAtLogin() async -> Bool { false }
         func setOpensAtLogin(_ on: Bool) async -> Bool { loginItemWorks ? on : false }
@@ -46,10 +56,11 @@ struct OnboardingModelTests {
 
     private func makeModel(
         services: FakeServices = FakeServices(), recoveryKey: String? = "7KQF-M29D-XW4R-V6JB",
-        journal: FakeJournal = FakeJournal()
+        journal: FakeJournal = FakeJournal(), preview: (any LivePreviewing)? = nil, liveChunks: [AudioSamples] = []
     ) async throws -> (OnboardingModel, FakeServices, CaptureViewModel, TemporaryDirectory) {
         let temp = try TemporaryDirectory()
-        let capture = CaptureViewModel(recorder: FakeRecorder(folder: temp.url), journal: journal)
+        let capture = CaptureViewModel(
+            recorder: FakeRecorder(folder: temp.url, liveChunks: liveChunks), journal: journal, preview: preview)
         capture.startObservingEntries()
         let shortcut = HotkeySettingsViewModel(
             store: HotkeySettingsViewModelTests.FakeStore("control+option+t"),
@@ -107,7 +118,16 @@ struct OnboardingModelTests {
     @Test("the voice step is left out when every model comes with macOS")
     func noVoiceStepWithoutDownloads() async throws {
         let services = FakeServices()
-        services.models = []
+        services.setup.downloads = []
+        let (model, _, _, temp) = try await makeModel(services: services)
+        defer { withExtendedLifetime(temp) {} }
+        #expect(!model.steps.contains(.voice))
+    }
+
+    @Test("the voice step is left out when everything it would ask for is already on this Mac")
+    func noVoiceStepWhenAllHere() async throws {
+        let services = FakeServices()
+        services.setup.downloads[0].isInstalled = true
         let (model, _, _, temp) = try await makeModel(services: services)
         defer { withExtendedLifetime(temp) {} }
         #expect(!model.steps.contains(.voice))
@@ -119,7 +139,22 @@ struct OnboardingModelTests {
         defer { withExtendedLifetime(temp) {} }
         #expect(model.voiceModels.map(\.isInstalled) == [false, true])
         #expect(model.missingBytes == 632_000_000)
-        #expect(!model.canHearYet, "without the speech model, spoken thoughts wait for their text")
+        #expect(!model.canHearYet, "without speech recognition, spoken thoughts wait for their text")
+    }
+
+    @Test(
+        "what comes with macOS is named in plain words, from the roles config gives it",
+        arguments: [
+            (
+                [ModelRole.liveTranscription, .summary, .entities],
+                "built into macOS: the live preview, summaries, people, places and topics."
+            ),
+            ([ModelRole.summary], "built into macOS: summaries."),
+            ([ModelRole.mood], nil),
+            ([], nil),
+        ] as [([ModelRole], String?)])
+    func builtInLine(roles: [ModelRole], line: String?) {
+        #expect(OnboardingModel.builtInLine(for: roles) == line)
     }
 
     @Test("allowing the microphone moves on to calling tälli")
@@ -132,8 +167,8 @@ struct OnboardingModelTests {
         #expect(model.step == .callTalli)
     }
 
-    @Test("refusing the microphone stays on the step, which then points to System Settings")
-    func refusesMicrophone() async throws {
+    @Test("refusing the microphone stays on the step")
+    func refusingStays() async throws {
         let services = FakeServices()
         services.grantsMicrophone = false
         let (model, _, _, temp) = try await makeModel(services: services)
@@ -142,6 +177,14 @@ struct OnboardingModelTests {
         await model.allowMicrophone()
         #expect(model.microphone == .denied)
         #expect(model.step == .microphone)
+    }
+
+    @Test("after a refusal, the step opens System Settings at the microphone")
+    func deniedOpensSettings() async throws {
+        let services = FakeServices()
+        services.microphone = .denied
+        let (model, _, _, temp) = try await makeModel(services: services)
+        defer { withExtendedLifetime(temp) {} }
         model.openMicrophoneSettings()
         #expect(services.openedMicrophoneSettings)
     }
@@ -211,13 +254,32 @@ struct OnboardingModelTests {
         #expect(model.firstThought?.text == "Okay, äh, ein erster Gedanke.")
     }
 
-    @Test("coming back to the window re-reads the models, e.g. after adding the speech model by hand")
+    @Test("until its text comes, your first thought shows what tälli heard, and then no longer")
+    func firstThoughtPreview() async throws {
+        let journal = FakeJournal()
+        let chunk = AudioSamples(samples: [0, 0.1], sampleRate: 16_000)
+        let (model, _, capture, temp) = try await makeModel(
+            journal: journal, preview: FakeLivePreview(), liveChunks: [chunk, chunk])
+        defer { withExtendedLifetime(temp) {} }
+        advance(model, to: .callTalli)
+        await capture.toggle()
+        for _ in 0..<200 where capture.livePreviewText.isEmpty { await Task.yield() }
+        await capture.toggle()
+        for _ in 0..<100 where model.firstThought == nil { await Task.yield() }
+        #expect(model.firstThoughtPreview == "Gehört: 2 …")
+
+        await journal.complete(try #require(model.firstThoughtID), text: "Okay, äh, ein erster Gedanke.")
+        for _ in 0..<100 where model.firstThought?.text.isEmpty != false { await Task.yield() }
+        #expect(model.firstThoughtPreview == nil)
+    }
+
+    @Test("coming back to the window re-reads the models, e.g. after adding speech recognition by hand")
     func refreshesModels() async throws {
         let services = FakeServices()
         let (model, _, _, temp) = try await makeModel(services: services)
         defer { withExtendedLifetime(temp) {} }
         #expect(!model.canHearYet)
-        services.models[0].isInstalled = true
+        services.setup.downloads[0].isInstalled = true
         await model.refresh()
         #expect(model.canHearYet)
     }
@@ -243,18 +305,49 @@ struct OnboardingModelTests {
         #expect(services.keyConfirmations.last?.1 == true)
     }
 
-    @Test("the extras show what macOS really did, and an import says what came in")
-    func extras() async throws {
+    @Test("the key step says where your thoughts are stored")
+    func storageLocation() async throws {
+        let (model, _, _, temp) = try await makeModel()
+        defer { withExtendedLifetime(temp) {} }
+        #expect(model.storageLocation == "on this mac, in your library")
+    }
+
+    @Test("choosing another folder hands it to the app, which says when it can't use it")
+    func choosesStorage() async throws {
+        let services = FakeServices()
+        services.storageRefusal = "that folder already holds other thoughts."
+        let (model, _, _, temp) = try await makeModel(services: services)
+        defer { withExtendedLifetime(temp) {} }
+        let folder = URL(fileURLWithPath: "/tmp/sync")
+        await model.useStorage(inside: folder)
+        #expect(services.storageParents == [folder])
+        #expect(model.storageMessage == "that folder already holds other thoughts.")
+    }
+
+    @Test("open at login shows what macOS really did")
+    func opensAtLogin() async throws {
         let services = FakeServices()
         services.loginItemWorks = false
         let (model, _, _, temp) = try await makeModel(services: services)
         defer { withExtendedLifetime(temp) {} }
         await model.setOpensAtLogin(true)
         #expect(!model.opensAtLogin)
+    }
+
+    @Test("contacts for spellings can be switched on here")
+    func usesContacts() async throws {
+        let (model, _, _, temp) = try await makeModel()
+        defer { withExtendedLifetime(temp) {} }
         await model.setUsesContacts(true)
         #expect(model.usesContacts)
+    }
+
+    @Test("an import says what came in; with nothing picked there is nothing to say")
+    func imports() async throws {
+        let (model, _, _, temp) = try await makeModel()
+        defer { withExtendedLifetime(temp) {} }
         await model.importNotes(from: [])
-        #expect(model.importMessage == nil, "nothing picked, nothing to say")
+        #expect(model.importMessage == nil)
         await model.importNotes(from: [URL(fileURLWithPath: "/tmp/notizen")])
         #expect(model.importMessage == "2 thoughts imported.")
     }

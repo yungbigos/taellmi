@@ -2,9 +2,10 @@ import AppKit
 import Domain
 import SwiftUI
 
-/// The first launch, one step at a time (docs/brand.md: one loud thing per screen, calm words, tälli peeking).
+// The first launch, one step at a time (docs/brand.md: one loud thing per screen, calm words, tälli peeking).
 struct OnboardingView: View {
     @Bindable var model: OnboardingModel
+    var talli: OnboardingTalliSizes
     var cursor: (@MainActor () -> CGPoint?)?
     var close: () -> Void
     @Environment(\.brand) private var brand
@@ -19,11 +20,11 @@ struct OnboardingView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             if let progress = model.progress { progressMarks(progress) }
             if model.step == .hello {
-                peeking(TalliView(mood: .idle, entrance: .roll, cursor: cursor), size: 300, showing: 196)
+                peeking(TalliView(mood: .idle, entrance: .roll, cursor: cursor), size: talli.hello)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
                     .padding(.trailing, brand.space(.xxl))
             } else {
-                peeking(TalliView(mood: talliMood, entrance: .rise, cursor: cursor), size: 72, showing: 50)
+                peeking(TalliView(mood: talliMood, entrance: .rise, cursor: cursor), size: talli.corner)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
                     .padding(.leading, brand.space(.xl))
             }
@@ -32,7 +33,7 @@ struct OnboardingView: View {
         .clipped()
         .brandAnimation(\.crossfade, value: model.step)
         .onChange(of: model.isFinished) { _, finished in if finished { close() } }
-        // Back from System Settings, the microphone may be allowed now.
+        // Back from System Settings or the Finder: the microphone may be allowed now, or a model added.
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
             Task { await model.refresh() }
         }
@@ -57,7 +58,7 @@ struct OnboardingView: View {
 
     private var hello: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("tällmi").brandFont("display.heading")
+            Wordmark(size: brand.map { $0.nsFont("display.title").pointSize } ?? 0)
             Spacer().frame(height: brand.space(.xxl))
             Text("think\nout loud.").brandFont("display.moment")
             Text("äh included.").brandFont("display.heading").padding(.top, brand.space(.l))
@@ -69,22 +70,33 @@ struct OnboardingView: View {
             .frame(maxWidth: 300, alignment: .leading)
             .fixedSize(horizontal: false, vertical: true)
             .padding(.top, brand.space(.l))
-            Button("start") { model.next() }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
-                .keyboardShortcut(.defaultAction)
-                .padding(.top, brand.space(.xl))
+            HStack(spacing: brand.space(.l)) {
+                Button("start") { model.next() }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+                    .keyboardShortcut(.defaultAction)
+                Button("open thoughts from another mac …") {
+                    if let folder = FolderPicker.choose(
+                        prompt: "open",
+                        message: "pick the folder that holds your tällmi folder, for example in iCloud Drive.")
+                    {
+                        Task { await model.useStorage(inside: folder) }
+                    }
+                }
+                .buttonStyle(.link)
+            }
+            .padding(.top, brand.space(.xl))
+            if let message = model.storageMessage {
+                Text(message).brandFont("text.label").brandForeground(.quiet).padding(.top, brand.space(.s))
+            }
         }
     }
 
     private var voice: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(model.missingBytes > 0 ? "what tällmi needs to understand you." : "tällmi can understand you.")
-                .brandFont("display.title")
+            Text("what tällmi needs to understand you.").brandFont("display.title")
             Text(
-                model.missingBytes > 0
-                    ? "these models run only on this mac, and nothing you say leaves it. a download right here comes in a later version; for now, get them with scripts/download-model.sh from the tällmi repository. until then, spoken thoughts wait for their text."
-                    : "the models are on this mac. tällmi works without the internet."
+                "these run only on this mac, and nothing you say leaves it. getting them right here comes in a later version; the tällmi page on GitHub shows how to add them by hand. until then, spoken thoughts wait for their text."
             )
             .brandForeground(.quiet)
             .fixedSize(horizontal: false, vertical: true)
@@ -97,9 +109,12 @@ struct OnboardingView: View {
             }
             .brandFill(.field)
             .padding(.top, brand.space(.l))
+            if let line = OnboardingModel.builtInLine(for: model.builtInRoles) {
+                Text(line).brandFont("text.label").brandForeground(.quiet).padding(.top, brand.space(.m))
+            }
             Spacer()
             footer {
-                Button("show the models folder") { model.showModelsFolder() }.buttonStyle(.link)
+                Button("show where they go") { model.showModelsFolder() }.buttonStyle(.link)
                 Spacer()
                 Button("continue") { model.next() }
                     .buttonStyle(.borderedProminent)
@@ -112,7 +127,7 @@ struct OnboardingView: View {
         HStack(alignment: .firstTextBaseline, spacing: brand.space(.m)) {
             VStack(alignment: .leading, spacing: brand.space(.xxs)) {
                 HStack(alignment: .firstTextBaseline, spacing: brand.space(.s)) {
-                    Text(Self.roleWord(status.role)).fontWeight(.semibold)
+                    if let word = Self.roleWord(status.role) { Text(word) }
                     Text(status.name).brandFont("text.label").brandForeground(.quiet).lineLimit(1)
                 }
                 if let purpose = Self.purpose(status.role) { Text(purpose).brandForeground(.quiet) }
@@ -152,7 +167,7 @@ struct OnboardingView: View {
                     .padding(.all, brand.space(.s))
                     .frame(maxWidth: 260, alignment: .leading)
                     .brandSurface(.bubble, radius: .bubble)
-                    .padding(.leading, 60)
+                    .padding(.leading, brand.space(.xxxl))
                     .padding(.bottom, brand.space(.s))
             }
             footer {
@@ -175,7 +190,7 @@ struct OnboardingView: View {
         HStack(spacing: brand.space(.m)) {
             Image(nsImage: MenuBarDots.image(listening: listening, tokens: brand))
                 .accessibilityHidden(true)
-            Text(title).fontWeight(.semibold).frame(width: 110, alignment: .leading)
+            Text(title).frame(width: 110, alignment: .leading)
             Text(text).brandForeground(.quiet).fixedSize(horizontal: false, vertical: true)
         }
         .padding(.horizontal, brand.space(.l))
@@ -196,8 +211,9 @@ struct OnboardingView: View {
             .fixedSize(horizontal: false, vertical: true)
             .padding(.top, brand.space(.m))
             if model.keycaps.isEmpty {
-                Text("there is no shortcut yet. set one in settings, under tälli.")
-                    .brandForeground(.quiet)
+                HotkeyRecorder(model: model.shortcut, title: "set a shortcut …")
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
                     .padding(.top, brand.space(.xxl))
             } else {
                 HStack(alignment: .top, spacing: brand.space(.m)) {
@@ -220,7 +236,9 @@ struct OnboardingView: View {
                 .padding(.top, brand.space(.xl))
             Spacer()
             footer {
-                HotkeyRecorder(model: model.shortcut, title: "change the shortcut").buttonStyle(.link)
+                if !model.keycaps.isEmpty {
+                    HotkeyRecorder(model: model.shortcut, title: "change the shortcut …").buttonStyle(.link)
+                }
                 Spacer()
                 if !model.keycaps.isEmpty {
                     Text("waiting for \(model.keycaps.joined()) …").brandForeground(.quiet)
@@ -258,7 +276,7 @@ struct OnboardingView: View {
                         // The live preview, until the real text replaces it; never shown as your words.
                         Text(heard).brandForeground(.quiet)
                     } else {
-                        Text(model.firstThought.map { CaptureViewModel.preview(of: $0, maxLength: 400) } ?? "saved.")
+                        Text(model.firstThought.map { CaptureViewModel.preview(of: $0, maxLength: .max) } ?? "saved.")
                     }
                 }
                 .brandFont("text.thought")
@@ -290,14 +308,15 @@ struct OnboardingView: View {
         }
     }
 
-    /// Says why the first thought shows no text yet, and what is shown instead.
+    // Says why the first thought shows no text yet, and what is shown instead.
     private var firstThoughtNote: String? {
         let waiting = model.firstThought?.source == .voice && model.firstThought?.text.isEmpty != false
         switch (model.firstThoughtPreview != nil, model.canHearYet) {
         case (true, true): return "what tälli heard. the exact text follows in a moment."
-        case (true, false): return "what tälli heard. the exact text comes once the speech model is on this mac."
+        case (true, false):
+            return "what tälli heard. the exact text comes once speech recognition is set up on this mac."
         case (false, false) where waiting:
-            return "its text comes once the speech model is on this mac. the recording is kept until then."
+            return "its text comes once speech recognition is set up on this mac. the recording is kept until then."
         default: return nil
         }
     }
@@ -308,10 +327,20 @@ struct OnboardingView: View {
                 Text("your recovery key.").brandFont("display.title")
                 RecoveryKeyFields(model: key) { await model.confirmRecoveryKey() }
                     .padding(.top, brand.space(.m))
-                Text("where your thoughts are stored can be changed in settings, under privacy.")
-                    .brandFont("text.label")
-                    .brandForeground(.quiet)
-                    .padding(.top, brand.space(.l))
+                HStack(spacing: brand.space(.s)) {
+                    Text("your thoughts are stored \(model.storageLocation).").brandForeground(.quiet)
+                    Button("choose a folder …") {
+                        if let folder = FolderPicker.choose(prompt: "store here") {
+                            Task { await model.useStorage(inside: folder) }
+                        }
+                    }
+                    .buttonStyle(.link)
+                }
+                .brandFont("text.label")
+                .padding(.top, brand.space(.l))
+                if let message = model.storageMessage {
+                    Text(message).brandFont("text.label").brandForeground(.quiet).padding(.top, brand.space(.xs))
+                }
             }
         }
     }
@@ -333,7 +362,7 @@ struct OnboardingView: View {
                 Divider().padding(.horizontal, brand.space(.l))
                 VStack(alignment: .leading, spacing: brand.space(.s)) {
                     VStack(alignment: .leading, spacing: brand.space(.xxs)) {
-                        Text("bring in your notes").fontWeight(.semibold)
+                        Text("bring in your notes")
                         Text("each note or message becomes a thought, dated when you wrote it.")
                             .brandForeground(.quiet)
                     }
@@ -357,7 +386,7 @@ struct OnboardingView: View {
             }
             .brandFill(.field)
             .padding(.top, brand.space(.xl))
-            Text("you can change all of this later.")
+            Text("you can change all of this later in settings.")
                 .brandFont("text.label")
                 .brandForeground(.quiet)
                 .padding(.top, brand.space(.m))
@@ -374,7 +403,7 @@ struct OnboardingView: View {
     private func extraRow(title: String, text: String, isOn: Binding<Bool>) -> some View {
         Toggle(isOn: isOn) {
             VStack(alignment: .leading, spacing: brand.space(.xxs)) {
-                Text(title).fontWeight(.semibold)
+                Text(title)
                 Text(text).brandForeground(.quiet).fixedSize(horizontal: false, vertical: true)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -386,21 +415,21 @@ struct OnboardingView: View {
 
     // MARK: Parts
 
-    /// tälli rising from the window's bottom edge: only its top `showing` points are in the window.
-    private func peeking(_ talli: TalliView, size: CGFloat, showing: CGFloat) -> some View {
-        talli
+    // tälli rising from the window's bottom edge: only its top part (`talli.peek`) is in the window.
+    private func peeking(_ view: TalliView, size: Double) -> some View {
+        view
             .frame(width: size, height: size)
-            .frame(width: size, height: showing, alignment: .top)
+            .frame(width: size, height: size * talli.peek, alignment: .top)
             .clipped()
             .accessibilityHidden(true)
     }
 
-    /// The buttons along the bottom, clear of tälli peeking in the corner.
+    // The buttons along the bottom, clear of tälli peeking in the corner, reaching out to the window's edge.
     private func footer(@ViewBuilder _ content: () -> some View) -> some View {
         HStack(spacing: brand.space(.s)) { content() }
             .controlSize(.large)
-            .padding(.leading, 56)
-            .padding(.trailing, -(brand.space(.xl) ?? 24))
+            .padding(.leading, brand.space(.xxxl))
+            .padding(.trailing, brand.space(.xl).map { -$0 })
             .frame(height: 72)
     }
 
@@ -419,14 +448,12 @@ struct OnboardingView: View {
         .accessibilityLabel("step \(progress.index + 1) of \(progress.count)")
     }
 
-    static func roleWord(_ role: ModelRole) -> String {
+    // The word users see for a role; roles have no UI word of their own (brand.md §10), so others show none.
+    static func roleWord(_ role: ModelRole) -> String? {
         switch role {
         case .transcription: "speech"
-        case .liveTranscription: "live preview"
         case .embed: "meaning"
-        case .summary: "summaries"
-        case .entities: "people, places, topics"
-        default: role.rawValue
+        default: nil
         }
     }
 

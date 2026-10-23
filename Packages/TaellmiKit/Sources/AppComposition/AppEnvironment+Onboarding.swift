@@ -4,28 +4,40 @@ import Features
 import Foundation
 import os
 
-/// What the first-launch onboarding asks of the assembled app.
+// What the first-launch onboarding asks of the assembled app.
 extension AppEnvironment {
-    /// The models the assigned roles download, in role order, with their size and whether they are verified here.
-    /// Models that come with macOS have no files and are left out.
-    func voiceModelStatuses() throws -> [VoiceModelStatus] {
+    // The models the assigned roles download (once each, in role order, with their size and whether they are
+    // verified here), and the roles whose model comes with macOS.
+    func voiceSetup() throws -> VoiceSetup {
         let installation = ModelInstallation(root: paths.models)
         var seen: Set<String> = []
-        var statuses: [VoiceModelStatus] = []
+        var downloads: [VoiceModelStatus] = []
+        var builtIn: [ModelRole] = []
         for role in ModelRole.allCases {
-            guard let model = try ModelResolver.assigned(role, in: database), !model.files.isEmpty,
-                seen.insert(model.id).inserted
-            else { continue }
-            statuses.append(
+            guard let model = try ModelResolver.assigned(role, in: database) else { continue }
+            guard !model.files.isEmpty else {
+                builtIn.append(role)
+                continue
+            }
+            guard seen.insert(model.id).inserted else { continue }
+            downloads.append(
                 VoiceModelStatus(
                     role: role, name: model.name, bytes: Int64(model.files.reduce(0) { $0 + $1.bytes }),
                     isInstalled: installation.isInstalled(model)))
         }
-        return statuses
+        return VoiceSetup(downloads: downloads, builtIn: builtIn)
     }
 
-    /// Only a fresh tällmi opens the onboarding. An Archive that already has thoughts never will: that is
-    /// remembered, so emptying it later doesn't bring the onboarding back.
+    // Where the onboarding's tälli sizes come from.
+    func onboardingTalliSizes() throws -> OnboardingTalliSizes {
+        OnboardingTalliSizes(
+            hello: try settings.number(SettingKeys.onboardingTalliHello),
+            corner: try settings.number(SettingKeys.onboardingTalliCorner),
+            peek: try settings.number(SettingKeys.onboardingTalliPeek))
+    }
+
+    // Only a fresh tällmi opens the onboarding. An Archive that already has thoughts never will: that is
+    // remembered, so emptying it later doesn't bring the onboarding back.
     func shouldOpenOnboarding() async -> Bool {
         let completed = (try? settings.bool(SettingKeys.onboardingCompleted)) ?? true
         guard !completed else { return false }

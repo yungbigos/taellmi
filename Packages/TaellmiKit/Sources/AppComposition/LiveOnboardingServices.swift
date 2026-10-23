@@ -6,19 +6,36 @@ import Foundation
 import SystemServices
 import os
 
-/// The onboarding's view of the running app and of macOS.
+// The onboarding's view of the running app and of macOS.
 final class LiveOnboardingServices: OnboardingServices {
     private let environment: AppEnvironment
+    private let privacy: PrivacyViewModel
     private let openTaellmi: () -> Void
     private let logger = Logger(subsystem: "app.taellmi", category: "onboarding")
 
-    init(environment: AppEnvironment, openTaellmi: @escaping () -> Void) {
+    init(environment: AppEnvironment, privacy: PrivacyViewModel, openTaellmi: @escaping () -> Void) {
         self.environment = environment
+        self.privacy = privacy
         self.openTaellmi = openTaellmi
     }
 
-    func voiceModels() async -> [VoiceModelStatus] {
-        (try? environment.voiceModelStatuses()) ?? []
+    func voiceSetup() async -> VoiceSetup {
+        (try? environment.voiceSetup()) ?? VoiceSetup(downloads: [], builtIn: [])
+    }
+
+    func storageLocation() async -> String {
+        guard environment.archiveRoot.standardizedFileURL != environment.paths.archive.standardizedFileURL else {
+            return "on this mac, in your library"
+        }
+        let home = FileManager.default.homeDirectoryForCurrentUser.path
+        return "in " + environment.archiveRoot.path.replacingOccurrences(of: home, with: "~")
+    }
+
+    // The same move as in privacy settings: a folder that already holds tällmi thoughts is opened, and the
+    // Recovery Key unlocks it after the restart.
+    func useStorage(inside parent: URL) async -> String? {
+        await privacy.moveArchive(toParent: parent)
+        return privacy.message
     }
 
     func microphoneAccess() async -> MicrophoneAccess {
@@ -76,7 +93,7 @@ final class LiveOnboardingServices: OnboardingServices {
         return takeImportMessage()
     }
 
-    /// The onboarding shows what the import did; the tällmi window shouldn't show it again later.
+    // The onboarding shows what the import did; the tällmi window shouldn't show it again later.
     private func takeImportMessage() -> String? {
         defer { environment.exploreModel.importMessage = nil }
         return environment.exploreModel.importMessage

@@ -36,7 +36,8 @@ struct TaellmiApp: App {
                 SettingsView(
                     hotkey: hotkey, exploreHotkey: exploreHotkey, appearance: environment.appearanceModel,
                     vocabulary: environment.vocabularyModel, commandShortcuts: controller.commandShortcutSettings,
-                    privacy: privacy, showRecoveryKey: { controller.showRecoveryKey() }
+                    privacy: privacy, openAtLogin: controller.openAtLogin,
+                    showRecoveryKey: { controller.showRecoveryKey() }
                 )
                 .brandStyle(controller.brand)
             } else {

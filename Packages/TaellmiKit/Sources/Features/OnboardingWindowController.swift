@@ -6,12 +6,17 @@ import SwiftUI
 /// told, so a recovery key that still waits is not lost.
 public final class OnboardingWindowController: NSObject, NSWindowDelegate {
     private let model: OnboardingModel
+    private let talli: OnboardingTalliSizes
     private let brand: BrandTokens?
     private let onClosedEarly: () -> Void
     private var window: NSWindow?
 
-    public init(model: OnboardingModel, brand: BrandTokens?, onClosedEarly: @escaping () -> Void) {
+    public init(
+        model: OnboardingModel, talli: OnboardingTalliSizes, brand: BrandTokens?,
+        onClosedEarly: @escaping () -> Void
+    ) {
         self.model = model
+        self.talli = talli
         self.brand = brand
         self.onClosedEarly = onClosedEarly
     }
@@ -52,7 +57,7 @@ public final class OnboardingWindowController: NSObject, NSWindowDelegate {
             return CGPoint(x: point.x, y: content.bounds.height - point.y)
         }
         window.contentView = NSHostingView(
-            rootView: OnboardingView(model: model, cursor: cursor) { [weak self] in self?.close() }
+            rootView: OnboardingView(model: model, talli: talli, cursor: cursor) { [weak self] in self?.close() }
                 .background { BrandSurfaceBackground(kind: .panel, radius: nil).ignoresSafeArea() }
                 .brandStyle(brand))
         window.center()

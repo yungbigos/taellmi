@@ -26,6 +26,7 @@ public final class AppController {
     /// One shortcut editor per command, in catalogue order.
     public private(set) var commandShortcutSettings: [(Command, HotkeySettingsViewModel)] = []
     public private(set) var privacy: PrivacyViewModel?
+    public let openAtLogin = OpenAtLoginModel(isOn: { LoginItem.isOn }, set: { LoginItem.set($0) })
     @ObservationIgnored private var panel: NSWindow?
     @ObservationIgnored private var explore: ExploreWindowController?
     @ObservationIgnored private var onboarding: OnboardingWindowController?
@@ -126,18 +127,27 @@ public final class AppController {
 
     /// The first-launch onboarding (also from ⌘K "show onboarding"). Closing it early still shows a waiting key.
     public func showOnboarding() async {
-        guard let environment, let hotkeySettings else { return }
+        guard let environment, let hotkeySettings, let privacy else { return }
         if let onboarding, onboarding.isVisible {
             onboarding.show()
             return
         }
-        let services = LiveOnboardingServices(environment: environment) { [weak self] in self?.openExplore() }
+        let services = LiveOnboardingServices(environment: environment, privacy: privacy) { [weak self] in
+            self?.openExplore()
+        }
         let model = OnboardingModel(
             services: services, capture: environment.captureModel, shortcut: hotkeySettings,
             finishKey: environment.companionSettings().finishKey.displayLabel,
             recoveryKey: environment.pendingRecoveryKey?.formatted)
         await model.load()
-        let controller = OnboardingWindowController(model: model, brand: brand) { [weak self] in
+        let talli: OnboardingTalliSizes
+        do {
+            talli = try environment.onboardingTalliSizes()
+        } catch {
+            logger.error("Onboarding sizes are missing from config: \(String(describing: error))")
+            return
+        }
+        let controller = OnboardingWindowController(model: model, talli: talli, brand: brand) { [weak self] in
             self?.onboarding = nil
             if environment.pendingRecoveryKey != nil { self?.showRecoveryKey() }
         }

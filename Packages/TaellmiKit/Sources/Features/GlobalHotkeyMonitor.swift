@@ -8,7 +8,7 @@ import os
 public final class GlobalHotkeyMonitor {
     private var hotKeys: [UInt32: EventHotKeyRef] = [:]
     private var actions: [UInt32: @MainActor () -> Void] = [:]
-    /// Every hotkey asked for, so they can come back after a pause.
+    // Every hotkey asked for, so they can come back after a pause.
     private var wanted: [UInt32: Hotkey] = [:]
     private var isPaused = false
     private var handlerRef: EventHandlerRef?

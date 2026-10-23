@@ -68,6 +68,11 @@ public enum SettingKeys {
     ]
     /// True once the first-launch onboarding was finished (or skipped, because the Archive already had thoughts).
     public static let onboardingCompleted = "onboarding.completed"
+    /// tälli in the onboarding window, in points: big on hello, small in the corner of the other steps.
+    public static let onboardingTalliHello = "onboarding.talli_hello_pt"
+    public static let onboardingTalliCorner = "onboarding.talli_corner_pt"
+    /// The part of tälli above the window's bottom edge, 0…1.
+    public static let onboardingTalliPeek = "onboarding.talli_peek"
     /// Colours, type, tälli's look and motion (docs/brand/tokens.json), shipped as `Seeds/brand.json`.
     public static let brandTokens = "brand.tokens"
 
@@ -84,7 +89,8 @@ public enum SettingKeys {
             exploreAutosaveDelaySeconds, exploreStartView, exploreViews, importNoteExtensions,
             companionCursorOffset,
             companionSavedDisplaySeconds, companionTalliSize, companionFinishKey, companionCancelKey, companionPosition,
-            companionPreviewCharacters, onboardingCompleted,
+            companionPreviewCharacters, onboardingCompleted, onboardingTalliHello, onboardingTalliCorner,
+            onboardingTalliPeek,
             brandTokens,
         ] + meaning + Commands.all.map(\.settingKey)
 }

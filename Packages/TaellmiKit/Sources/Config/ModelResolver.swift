@@ -81,6 +81,26 @@ public struct ModelResolver: Sendable {
         throw ResolutionError(role: role, rejected: rejected)
     }
 
+    /// The model a role is assigned to first, whether or not it can run yet (its files may still be missing).
+    /// First launch uses it to say which downloads tällmi needs.
+    public static func assigned(_ role: ModelRole, in database: AppDatabase) throws -> ModelConfig? {
+        let row = try database.reader.read { db in
+            try GRDB.Row.fetchOne(
+                db,
+                sql: """
+                    SELECT m.*
+                    FROM assignment a
+                    JOIN model m ON m.id = a.model_id
+                    JOIN provider p ON p.id = m.provider_id
+                    WHERE a.role = ? AND a.enabled AND m.enabled AND p.enabled
+                    ORDER BY a.priority, a.id
+                    LIMIT 1
+                    """,
+                arguments: [role.rawValue])
+        }
+        return try row.map(model(from:))
+    }
+
     private func rejection(of model: ModelConfig, row: GRDB.Row, role: ModelRole, now: RuntimeConditions) -> String? {
         guard registeredEngines.contains(model.engine) else { return "engine \(model.engine) is not available" }
         guard model.capabilities.contains(role.rawValue) else { return "cannot do \(role.rawValue)" }

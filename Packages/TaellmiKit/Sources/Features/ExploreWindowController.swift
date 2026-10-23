@@ -33,15 +33,13 @@ public final class ExploreWindowController: NSObject, NSWindowDelegate {
             await model.open(selecting: entryID)
             let window = window ?? makeWindow()
             self.window = window
-            NSApplication.shared.setActivationPolicy(.regular)
-            NSApplication.shared.activate()
-            window.makeKeyAndOrderFront(nil)
+            DockPresence.show(window)
         }
     }
 
     public func windowWillClose(_ notification: Notification) {
         Task { await model.saveIfNeeded() }
-        NSApplication.shared.setActivationPolicy(.accessory)
+        DockPresence.windowWillClose(notification.object as? NSWindow)
     }
 
     private func makeWindow() -> NSWindow {

@@ -53,4 +53,16 @@ struct HotkeySettingsViewModelTests {
         #expect(await store.saved == "option+command+space")
         #expect(model.pendingConflict == nil)
     }
+
+    @Test("while a new shortcut is being recorded, tällmi's own shortcuts pause, so the keys reach the recorder")
+    func pausesWhileRecording() async throws {
+        let model = HotkeySettingsViewModel(store: FakeStore("control+option+t"), checker: FakeChecker(taken: []))
+        var paused: [Bool] = []
+        model.onRecordingChange = { paused.append($0) }
+        await model.load()
+        model.isRecording = true
+        await model.record(Hotkey(key: .letter("k"), modifiers: [.control, .option]))
+        #expect(paused == [true, false])
+        #expect(!model.isRecording)
+    }
 }

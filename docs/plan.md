@@ -176,6 +176,18 @@ Decisions are locked (see section 3); we fix model choices later if real use sho
 - **Search and meaning read only the words.** Each list item is its own passage.
 - **Build order:** editor and words-only view (built) → paragraphs from pauses → German test clips through Parakeet → spoken lists (#46).
 
+### First launch (requested 2026-10-22, built 2026-10-23, #52)
+- **A fresh tällmi walks you in** instead of starting silently in the menu bar:
+  - hello
+  - the voice models (which are on this Mac)
+  - the microphone
+  - calling tälli with the real shortcut, and your first thought
+  - the recovery key (moved here from its own pop-up)
+  - a few extras: open at login, contacts for spellings, imports
+- **Steps with nothing to ask are left out:** no download needed, the microphone already allowed, no new key.
+- **Only a fresh tällmi sees it** (no thoughts, setting `onboarding.completed`). ⌘K "show onboarding" replays it.
+- **Still open:** downloading the models from inside the app (#53). tällmi has no network access, so this needs an ADR first. Until then the voice step points to `scripts/download-model.sh`.
+
 ### Phase 1 — Capture and archive (MVP you can use daily)
 - Menu-bar app with a global hotkey: press → record → press again → done. Optional push-to-talk.
 - Live transcript preview while you talk (SpeechTranscriber, set to de-DE, so English words may look odd in the preview only); the final transcript from Parakeet v3 (automatic language detection, handles German with English mixed in) replaces it in the background.

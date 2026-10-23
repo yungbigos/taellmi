@@ -21,6 +21,8 @@ public final class CaptureViewModel {
     public private(set) var lastDiscardedAt: Date?
     /// The Entry saved last, so tälli's confirmation can open it.
     public private(set) var lastSavedEntryID: String?
+    /// What the live preview heard for the Entry saved last: shown, marked as such, until its real text comes.
+    public private(set) var lastSavedPreview = ""
     /// Text typed into tälli instead of talking.
     public var typedText = ""
 
@@ -81,6 +83,7 @@ public final class CaptureViewModel {
         defer { isBusy = false }
         do {
             lastSavedEntryID = try await journal.addTypedEntry(text).id
+            lastSavedPreview = ""
             typedText = ""
             lastSavedAt = Date()
         } catch {
@@ -103,7 +106,7 @@ public final class CaptureViewModel {
     public nonisolated static func preview(of entry: Entry, maxLength: Int = 80) -> String {
         let text = WordsOnlyText(entry.text).words.replacingOccurrences(of: "\n", with: " ")
             .trimmingCharacters(in: .whitespaces)
-        guard !text.isEmpty else { return "transcribing …" }
+        guard !text.isEmpty else { return ThoughtMeta.transcribing }
         guard text.count > maxLength else { return text }
         return text.prefix(maxLength).trimmingCharacters(in: .whitespaces) + "…"
     }
@@ -162,6 +165,7 @@ public final class CaptureViewModel {
             let recording = try await recorder.stop()
             isRecording = false
             recordingStartedAt = nil
+            let heard = livePreviewText
             stopPreview()
             guard recording.durationSeconds >= minimumDuration else {
                 try? FileManager.default.removeItem(at: recording.file)
@@ -169,6 +173,7 @@ public final class CaptureViewModel {
                 return
             }
             lastSavedEntryID = try await journal.addVoiceEntry(recording).id
+            lastSavedPreview = heard
             lastSavedAt = Date()
         } catch {
             isRecording = false

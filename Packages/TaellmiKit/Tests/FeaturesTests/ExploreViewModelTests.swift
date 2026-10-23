@@ -124,4 +124,12 @@ struct ExploreViewModelTests {
 
         #expect(model.entries.map(\.id) == ["b"])
     }
+
+    @Test("an empty tällmi says how to make the first thought, with tälli's shortcut when there is one")
+    func firstThoughtHint() {
+        let model = ExploreViewModel(library: FakeLibrary(entries: []), autosaveDelay: .zero)
+        #expect(model.firstThoughtHint == "write one here, or set a shortcut for tälli in settings.")
+        model.captureHotkeyLabel = "⌃⌥T"
+        #expect(model.firstThoughtHint == "press ⌃⌥T in any app and say what's on your mind, or write one here.")
+    }
 }

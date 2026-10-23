@@ -40,7 +40,14 @@ struct FlowView: View {
         .onScrollTargetVisibilityChange(idType: String.self, threshold: 0.2) { ids in model.flowVisible(ids) }
         .overlay {
             if model.flowEntries.isEmpty {
-                ContentUnavailableView("no thoughts yet.", systemImage: "text.alignleft")
+                ContentUnavailableView {
+                    Label("no thoughts yet.", systemImage: "text.alignleft")
+                } description: {
+                    Text(model.firstThoughtHint)
+                } actions: {
+                    Button("new thought") { Task { await model.perform(.newThought) } }
+                        .buttonStyle(.borderedProminent)
+                }
             }
         }
         .onAppear {

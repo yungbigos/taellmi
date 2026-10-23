@@ -26,8 +26,10 @@ public final class AppController {
     /// One shortcut editor per command, in catalogue order.
     public private(set) var commandShortcutSettings: [(Command, HotkeySettingsViewModel)] = []
     public private(set) var privacy: PrivacyViewModel?
+    public let openAtLogin = OpenAtLoginModel(isOn: { LoginItem.isOn }, set: { LoginItem.set($0) })
     @ObservationIgnored private var panel: NSWindow?
     @ObservationIgnored private var explore: ExploreWindowController?
+    @ObservationIgnored private var onboarding: OnboardingWindowController?
     @ObservationIgnored private var captureWarning: String?
     @ObservationIgnored private var exploreWarning: String?
     private static let captureHotkeyID: UInt32 = 1
@@ -45,12 +47,15 @@ public final class AppController {
 
     private func start() async {
         let environment: AppEnvironment
+        // A fresh tällmi opens the onboarding, which also shows the new Recovery Key; otherwise its own panel does.
+        var opensOnboarding = false
         do {
             await Self.waitForOtherInstances()
             environment = try await AppEnvironment.live()
             self.environment = environment
-            defer { if environment.pendingRecoveryKey != nil { showRecoveryKey() } }
+            defer { if !opensOnboarding, environment.pendingRecoveryKey != nil { showRecoveryKey() } }
             try await environment.start()
+            opensOnboarding = await environment.shouldOpenOnboarding()
         } catch let locked as ArchiveLockedError {
             askForRecoveryKey(locked.vault)
             return
@@ -107,8 +112,47 @@ public final class AppController {
             }
             return (command, model)
         }
+        // While any shortcut is being recorded, the global ones pause so the keys reach the recorder.
+        let pause: (Bool) -> Void = { [weak self] recording in
+            recording ? self?.hotkeys.pause() : self?.hotkeys.resume()
+        }
+        for model in [hotkeySettings, exploreHotkeySettings].compactMap({ $0 }) + commandShortcutSettings.map(\.1) {
+            model.onRecordingChange = pause
+        }
         if let hotkey = environment.hotkey { registerCaptureHotkey(hotkey) }
         if let hotkey = environment.exploreHotkey { registerExploreHotkey(hotkey) }
+        environment.exploreModel.onShowOnboarding = { [weak self] in Task { await self?.showOnboarding() } }
+        if opensOnboarding { await showOnboarding() }
+    }
+
+    /// The first-launch onboarding (also from ⌘K "show onboarding"). Closing it early still shows a waiting key.
+    public func showOnboarding() async {
+        guard let environment, let hotkeySettings, let privacy else { return }
+        if let onboarding, onboarding.isVisible {
+            onboarding.show()
+            return
+        }
+        let services = LiveOnboardingServices(environment: environment, privacy: privacy)
+        let model = OnboardingModel(
+            services: services, capture: environment.captureModel, shortcut: hotkeySettings,
+            finishKey: environment.companionSettings().finishKey.displayLabel,
+            recoveryKey: environment.pendingRecoveryKey?.formatted)
+        await model.load()
+        let talli: OnboardingTalliSizes
+        do {
+            talli = try environment.onboardingTalliSizes()
+        } catch {
+            logger.error("Onboarding sizes are missing from config: \(String(describing: error))")
+            return
+        }
+        // However it closes, the tällmi window comes next; a key still waiting gets its own panel.
+        let controller = OnboardingWindowController(model: model, talli: talli, brand: brand) { [weak self] finished in
+            self?.onboarding = nil
+            self?.openExplore()
+            if !finished, environment.pendingRecoveryKey != nil { self?.showRecoveryKey() }
+        }
+        onboarding = controller
+        controller.show()
     }
 
     /// Shows the new Recovery Key until you confirm you saved it.
@@ -186,6 +230,7 @@ public final class AppController {
     /// (Re-)registers the hotkey that calls tälli, and notes a clash with macOS shortcuts.
     private func registerCaptureHotkey(_ hotkey: Hotkey) {
         hotkeyLabel = hotkey.displayLabel
+        environment?.exploreModel.captureHotkeyLabel = hotkey.displayLabel
         captureWarning = checker.conflict(for: hotkey).map(HotkeySettingsViewModel.conflictText)
         updateWarning()
         guard let companion else { return }

@@ -57,6 +57,7 @@ struct CaptureViewModelTests {
         try await waitUntil { model.livePreviewText == "Gehört: 2 …" }
         await model.toggle()
         #expect(model.livePreviewText.isEmpty)
+        #expect(model.lastSavedPreview == "Gehört: 2 …", "what was heard stays until the real text comes")
     }
 
     @Test("a live preview that fails does not stop the recording")

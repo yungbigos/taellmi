@@ -120,4 +120,12 @@ struct ModelResolverTests {
         }
         #expect(try resolver(database, models).resolve(.transcription).id == "fallback")
     }
+
+    @Test(
+        "the model meant for a role is known before its files are on this Mac, so first launch can say what's missing")
+    func assignedBeforeInstall() throws {
+        let (database, _) = try setUp()
+        #expect(try ModelResolver.assigned(.transcription, in: database)?.id == "primary")
+        #expect(try ModelResolver.assigned(.embed, in: database) == nil)
+    }
 }

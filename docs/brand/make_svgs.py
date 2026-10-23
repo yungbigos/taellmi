@@ -41,7 +41,7 @@ def wordmark_shapes(ink, pink, size):
             b = bounds('a'); a_box = (x + b[0]*s, base - b[3]*s, x + b[2]*s, base - b[1]*s)
         x += adv(ch) * s
     W = x + pad; dots = T['wordmark']['dots']
-    cx = (a_box[0] + a_box[2]) / 2 - 0.02*size; r = dots['radius']*size; gap = dots['gap']*size
+    cx = (a_box[0] + a_box[2]) / 2 + dots['offset_x']*size; r = dots['radius']*size; gap = dots['gap']*size
     cy = a_box[1] - dots['lift']*size - soft/2 - r
     H = base + size*0.06 + pad; top = min(0, cy - r - pad)
     d = ' '.join(parts)

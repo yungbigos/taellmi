@@ -10,14 +10,16 @@ public struct SettingsView: View {
     var vocabulary: VocabularyViewModel
     var commandShortcuts: [(Command, HotkeySettingsViewModel)]
     var privacy: PrivacyViewModel
+    var openAtLogin: OpenAtLoginModel
     var showRecoveryKey: () -> Void
 
     public init(
         hotkey: HotkeySettingsViewModel, exploreHotkey: HotkeySettingsViewModel, appearance: AppearanceViewModel,
         vocabulary: VocabularyViewModel, commandShortcuts: [(Command, HotkeySettingsViewModel)],
-        privacy: PrivacyViewModel, showRecoveryKey: @escaping () -> Void
+        privacy: PrivacyViewModel, openAtLogin: OpenAtLoginModel, showRecoveryKey: @escaping () -> Void
     ) {
         self.privacy = privacy
+        self.openAtLogin = openAtLogin
         self.showRecoveryKey = showRecoveryKey
         self.commandShortcuts = commandShortcuts
         self.hotkey = hotkey
@@ -28,8 +30,10 @@ public struct SettingsView: View {
 
     public var body: some View {
         TabView {
-            GeneralSettingsView(hotkey: hotkey, exploreHotkey: exploreHotkey, appearance: appearance)
-                .tabItem { Label("general", systemImage: "gearshape") }
+            GeneralSettingsView(
+                hotkey: hotkey, exploreHotkey: exploreHotkey, appearance: appearance, openAtLogin: openAtLogin
+            )
+            .tabItem { Label("general", systemImage: "gearshape") }
             VocabularySettingsView(model: vocabulary)
                 .tabItem { Label("spellings", systemImage: "character.book.closed") }
             ShortcutSettingsView(rows: commandShortcuts)
@@ -46,6 +50,7 @@ struct GeneralSettingsView: View {
     @Bindable var hotkey: HotkeySettingsViewModel
     @Bindable var exploreHotkey: HotkeySettingsViewModel
     var appearance: AppearanceViewModel
+    var openAtLogin: OpenAtLoginModel
 
     var body: some View {
         Form {
@@ -71,6 +76,11 @@ struct GeneralSettingsView: View {
                         .brandStatus(.warning)
                 }
             }
+            Section {
+                Toggle(
+                    "open tällmi at login",
+                    isOn: Binding(get: { openAtLogin.isOn }, set: { openAtLogin.set($0) }))
+            }
             Section("appearance") {
                 Picker(
                     "show your thoughts",
@@ -90,61 +100,9 @@ struct GeneralSettingsView: View {
         .task {
             await hotkey.load()
             await exploreHotkey.load()
+            openAtLogin.load()
         }
-        .alert(
-            "this shortcut is taken",
-            isPresented: Binding(
-                get: { hotkey.pendingConflict != nil }, set: { if !$0 { hotkey.discardPending() } })
-        ) {
-            Button("use it anyway") { Task { await hotkey.confirmPending() } }
-            Button("cancel", role: .cancel) { hotkey.discardPending() }
-        } message: {
-            if let pending = hotkey.pendingConflict {
-                Text(HotkeySettingsViewModel.conflictText(pending.owner))
-            }
-        }
-    }
-}
-
-/// Click, then press the new combination. Esc stops recording.
-struct HotkeyRecorder: View {
-    @Bindable var model: HotkeySettingsViewModel
-    @State private var monitor: Any?
-
-    var body: some View {
-        Button {
-            model.isRecording.toggle()
-        } label: {
-            Text(model.isRecording ? "press keys …" : model.label)
-                .monospacedDigit()
-                .frame(minWidth: 140)
-        }
-        .onChange(of: model.isRecording) { _, recording in
-            recording ? startMonitoring() : stopMonitoring()
-        }
-        .onDisappear { stopMonitoring() }
-    }
-
-    private func startMonitoring() {
-        monitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-            if event.keyCode == 53 {
-                model.isRecording = false
-                return nil
-            }
-            let flags = event.modifierFlags
-            if let hotkey = Hotkey(
-                keyCode: Int(event.keyCode), command: flags.contains(.command), option: flags.contains(.option),
-                control: flags.contains(.control), shift: flags.contains(.shift))
-            {
-                Task { await model.record(hotkey) }
-            }
-            return nil
-        }
-    }
-
-    private func stopMonitoring() {
-        if let monitor { NSEvent.removeMonitor(monitor) }
-        monitor = nil
+        .shortcutConflictAlert(hotkey)
     }
 }
 
@@ -184,16 +142,6 @@ private struct ShortcutRow: View {
             }
         }
         .task { await model.load() }
-        .alert(
-            "this shortcut is taken",
-            isPresented: Binding(get: { model.pendingConflict != nil }, set: { if !$0 { model.discardPending() } })
-        ) {
-            Button("use it anyway") { Task { await model.confirmPending() } }
-            Button("cancel", role: .cancel) { model.discardPending() }
-        } message: {
-            if let pending = model.pendingConflict {
-                Text(HotkeySettingsViewModel.conflictText(pending.owner))
-            }
-        }
+        .shortcutConflictAlert(model)
     }
 }

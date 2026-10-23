@@ -15,7 +15,12 @@ public final class HotkeySettingsViewModel {
     public private(set) var warning: String?
     /// A taken combination waiting for "use it anyway".
     public private(set) var pendingConflict: (hotkey: Hotkey, owner: String)?
-    public var isRecording = false
+    public var isRecording = false {
+        didSet { if isRecording != oldValue { onRecordingChange?(isRecording) } }
+    }
+    /// Told when recording starts and stops, so the app can pause its own shortcuts meanwhile: a registered
+    /// shortcut would otherwise take the keys before the recorder sees them.
+    @ObservationIgnored public var onRecordingChange: ((Bool) -> Void)?
 
     @ObservationIgnored private let store: any HotkeyStore
     @ObservationIgnored private let checker: any HotkeyConflictChecking

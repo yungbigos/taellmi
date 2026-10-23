@@ -66,45 +66,11 @@ public struct RecoveryKeyView: View {
     public var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("your recovery key").brandFont("display.heading")
-            Text(
-                "your thoughts are encrypted. with this key you can open them on another mac, or if this mac's keychain is lost. keep it somewhere safe, for example in your password manager or on paper."
-            )
-            .brandForeground(.quiet)
-            Text(model.recoveryKey)
-                // Monospaced on purpose: every character of the key must be told apart (0 and O, 1 and l).
-                .font(.title3.monospaced())
-                .textSelection(.enabled)
-                .padding(12)
-                .frame(maxWidth: .infinity)
-                .brandFill(.field)
-            HStack {
-                Button("copy") {
-                    NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString(model.recoveryKey, forType: .string)
-                }
-                Button("print") { print(model.recoveryKey) }
-                Spacer()
-            }
-            Toggle("also keep it in the keychain on this mac", isOn: $model.keepInKeychain)
-            HStack {
-                TextField("type the last group to confirm", text: $model.typedGroup)
-                    .textFieldStyle(.roundedBorder)
-                    .onSubmit { Task { await model.confirm() } }
-                Button("done") { Task { await model.confirm() } }
-                    .keyboardShortcut(.defaultAction)
-            }
-            if let message = model.message { Text(message).brandStatus(.warning) }
+            RecoveryKeyFields(model: model) { await model.confirm() }
         }
         .padding(24)
         .frame(width: 520)
         .onChange(of: model.isDone) { _, done in if done { onDone() } }
-    }
-
-    private func print(_ key: String) {
-        let text = NSTextView(frame: CGRect(x: 0, y: 0, width: 480, height: 200))
-        text.string = "tällmi recovery key\n\n\(key)\n\nkeep this somewhere safe."
-        text.font = .monospacedSystemFont(ofSize: 14, weight: .regular)
-        NSPrintOperation(view: text).run()
     }
 }
 

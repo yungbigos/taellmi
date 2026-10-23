@@ -9,6 +9,8 @@ public struct BrandTokens: Sendable, Equatable, Codable {
     public var type: TypeTokens
     public var motion: Motion
     public var menuBar: MenuBar
+    /// The soft-eyes wordmark: the word in Funnel Display, softened, with two pink dots for the ä.
+    public var wordmark: Wordmark
     /// Named curves and springs, e.g. `soft`, `enter`, `spring.appear`.
     public var easing: [String: Easing]
     /// How see-through each window and panel is, and what it turns into for accessibility.
@@ -395,5 +397,25 @@ public struct BrandTokens: Sendable, Equatable, Codable {
     public struct MenuBar: Sendable, Equatable, Codable {
         public var sizePt: Double
         public var em: Double
+    }
+
+    /// Sizes are fractions of the font size.
+    public struct Wordmark: Sendable, Equatable, Codable {
+        public var text: String
+        public var font: String
+        public var weight: Double
+        public var softenStroke: Double
+        public var dots: Dots
+        public var color: String
+
+        public struct Dots: Sendable, Equatable, Codable {
+            public var radius: Double
+            public var gap: Double
+            /// Space between the top of the a (with its softening) and the dots.
+            public var lift: Double
+            /// How far the pair sits from the a's centre.
+            public var offsetX: Double
+            public var color: String
+        }
     }
 }

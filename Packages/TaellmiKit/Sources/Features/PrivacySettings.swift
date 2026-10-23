@@ -95,7 +95,7 @@ struct PrivacySettingsView: View {
                     Text(model.location).lineLimit(1).truncationMode(.middle).brandForeground(.quiet)
                 }
                 Button("change …") {
-                    if let folder = Self.chooseFolder(prompt: "store here") {
+                    if let folder = FolderPicker.choose(prompt: "store here") {
                         Task { await model.moveArchive(toParent: folder) }
                     }
                 }
@@ -118,7 +118,9 @@ struct PrivacySettingsView: View {
             }
             Section {
                 Button("export as plain files …") {
-                    if let folder = Self.chooseFolder(prompt: "export here") { Task { await model.export(to: folder) } }
+                    if let folder = FolderPicker.choose(prompt: "export here") {
+                        Task { await model.export(to: folder) }
+                    }
                 }
             } footer: {
                 Text("writes every thought as readable files, for example for obsidian. they are not encrypted there.")
@@ -145,14 +147,5 @@ struct PrivacySettingsView: View {
         .scrollContentBackground(.hidden)
         .frame(width: 460, height: 420)
         .task { await model.load() }
-    }
-
-    private static func chooseFolder(prompt: String) -> URL? {
-        let panel = NSOpenPanel()
-        panel.canChooseDirectories = true
-        panel.canChooseFiles = false
-        panel.canCreateDirectories = true
-        panel.prompt = prompt
-        return panel.runModal() == .OK ? panel.url : nil
     }
 }

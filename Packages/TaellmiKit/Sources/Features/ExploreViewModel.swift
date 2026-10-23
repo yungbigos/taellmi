@@ -179,6 +179,16 @@ public final class ExploreViewModel {
     public private(set) var chatImportRequest = 0
     /// What the last import did, until you dismiss it.
     public var importMessage: String?
+    /// The shortcut that calls tälli, as macOS shows it ("⌃⌥T"); empty when there is none.
+    public var captureHotkeyLabel = ""
+    /// What an empty tällmi says under "no thoughts yet.".
+    public var firstThoughtHint: String {
+        captureHotkeyLabel.isEmpty
+            ? "write one here, or set a shortcut for tälli in settings."
+            : "press \(captureHotkeyLabel) in any app and say what's on your mind, or write one here."
+    }
+    /// Opens the first-launch onboarding again (⌘K "show onboarding"); the app sets it.
+    @ObservationIgnored public var onShowOnboarding: (() -> Void)?
     /// What is being imported right now, as the window shows it.
     public private(set) var importProgress: String?
     /// Writing a new thought in the full-window composer.
@@ -302,6 +312,7 @@ public final class ExploreViewModel {
         case .playRecording: playbackRequest += 1
         case .importNotes: noteImportRequest += 1
         case .importWhatsApp: chatImportRequest += 1
+        case .showOnboarding: onShowOnboarding?()
         case .formatBold, .formatItalic, .formatUnderline, .formatStrikethrough, .formatBulletList,
             .formatNumberedList, .indentListItem, .outdentListItem:
             if let action = command.formattingAction { formatting.applyFromPalette(action) }

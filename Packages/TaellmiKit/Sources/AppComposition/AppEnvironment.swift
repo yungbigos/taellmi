@@ -44,7 +44,7 @@ public final class AppEnvironment {
     /// The configured global hotkey; read once at start.
     public private(set) var hotkey: Hotkey?
 
-    private let paths: AppPaths
+    let paths: AppPaths
     /// Where the Archive is (Library by default, or the folder you chose).
     public let archiveRoot: URL
     /// Set after a fresh setup until you confirm you saved it (ADR 0010).

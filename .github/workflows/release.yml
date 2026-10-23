@@ -97,7 +97,8 @@ jobs:
           # One name for every version, so releases/latest/download/taellmi.dmg always gets the newest (the website links it).
           DIR="taellmi-$VERSION"; DMG="taellmi.dmg"
           mkdir "$DIR"
-          ditto "$APP" "$DIR/taellmi.app"
+          # Finder shows the file name, so the app is "tällmi" there; taellmi stays in the bundle id and paths.
+          ditto "$APP" "$DIR/tällmi.app"
           ln -s /Applications "$DIR/Applications"
           cp LICENSE "$DIR/LICENSE.txt"
           {
@@ -134,7 +135,7 @@ jobs:
 
           **install**
 
-          1. download \`$DMG\` and open it. drag \`taellmi.app\` onto the Applications folder beside it.
+          1. download \`$DMG\` and open it. drag **tällmi** onto the Applications folder beside it.
           2. this build is not notarized by Apple, so macOS stops it the first time. open it once, then choose **Open Anyway** in System Settings → Privacy & Security.
 
           **models**

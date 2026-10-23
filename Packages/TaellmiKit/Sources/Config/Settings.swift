@@ -66,6 +66,8 @@ public enum SettingKeys {
         searchMinSimilarity, searchRelativeSimilarityWindow, relatedThoughtsCount, exploreChangeDebounceMs,
         conceptSuggestMinCode, conceptSuggestMaxDistance,
     ]
+    /// True once the first-launch onboarding was finished (or skipped, because the Archive already had thoughts).
+    public static let onboardingCompleted = "onboarding.completed"
     /// Colours, type, tälli's look and motion (docs/brand/tokens.json), shipped as `Seeds/brand.json`.
     public static let brandTokens = "brand.tokens"
 
@@ -82,7 +84,7 @@ public enum SettingKeys {
             exploreAutosaveDelaySeconds, exploreStartView, exploreViews, importNoteExtensions,
             companionCursorOffset,
             companionSavedDisplaySeconds, companionTalliSize, companionFinishKey, companionCancelKey, companionPosition,
-            companionPreviewCharacters,
+            companionPreviewCharacters, onboardingCompleted,
             brandTokens,
         ] + meaning + Commands.all.map(\.settingKey)
 }

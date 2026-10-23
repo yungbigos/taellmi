@@ -66,10 +66,27 @@ public struct RecoveryKeyView: View {
     public var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("your recovery key").brandFont("display.heading")
+            RecoveryKeyFields(model: model) { await model.confirm() }
+        }
+        .padding(24)
+        .frame(width: 520)
+        .onChange(of: model.isDone) { _, done in if done { onDone() } }
+    }
+}
+
+/// The new Recovery Key and what you do with it: copy, print, keep in the keychain, confirm the last group.
+/// Shown in its own panel and in the onboarding.
+struct RecoveryKeyFields: View {
+    @Bindable var model: RecoveryKeyViewModel
+    var confirm: () async -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
             Text(
                 "your thoughts are encrypted. with this key you can open them on another mac, or if this mac's keychain is lost. keep it somewhere safe, for example in your password manager or on paper."
             )
             .brandForeground(.quiet)
+            .fixedSize(horizontal: false, vertical: true)
             Text(model.recoveryKey)
                 // Monospaced on purpose: every character of the key must be told apart (0 and O, 1 and l).
                 .font(.title3.monospaced())
@@ -89,15 +106,12 @@ public struct RecoveryKeyView: View {
             HStack {
                 TextField("type the last group to confirm", text: $model.typedGroup)
                     .textFieldStyle(.roundedBorder)
-                    .onSubmit { Task { await model.confirm() } }
-                Button("done") { Task { await model.confirm() } }
+                    .onSubmit { Task { await confirm() } }
+                Button("done") { Task { await confirm() } }
                     .keyboardShortcut(.defaultAction)
             }
             if let message = model.message { Text(message).brandStatus(.warning) }
         }
-        .padding(24)
-        .frame(width: 520)
-        .onChange(of: model.isDone) { _, done in if done { onDone() } }
     }
 
     private func print(_ key: String) {

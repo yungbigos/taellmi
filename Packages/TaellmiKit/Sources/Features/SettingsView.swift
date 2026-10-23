@@ -91,15 +91,21 @@ struct GeneralSettingsView: View {
             await hotkey.load()
             await exploreHotkey.load()
         }
-        .alert(
+        .shortcutConflictAlert(hotkey)
+    }
+}
+
+extension View {
+    /// Asks before taking a combination macOS or another command already uses.
+    func shortcutConflictAlert(_ model: HotkeySettingsViewModel) -> some View {
+        alert(
             "this shortcut is taken",
-            isPresented: Binding(
-                get: { hotkey.pendingConflict != nil }, set: { if !$0 { hotkey.discardPending() } })
+            isPresented: Binding(get: { model.pendingConflict != nil }, set: { if !$0 { model.discardPending() } })
         ) {
-            Button("use it anyway") { Task { await hotkey.confirmPending() } }
-            Button("cancel", role: .cancel) { hotkey.discardPending() }
+            Button("use it anyway") { Task { await model.confirmPending() } }
+            Button("cancel", role: .cancel) { model.discardPending() }
         } message: {
-            if let pending = hotkey.pendingConflict {
+            if let pending = model.pendingConflict {
                 Text(HotkeySettingsViewModel.conflictText(pending.owner))
             }
         }
@@ -109,13 +115,15 @@ struct GeneralSettingsView: View {
 /// Click, then press the new combination. Esc stops recording.
 struct HotkeyRecorder: View {
     @Bindable var model: HotkeySettingsViewModel
+    /// What the button says when not recording; the current shortcut if nil.
+    var title: String?
     @State private var monitor: Any?
 
     var body: some View {
         Button {
             model.isRecording.toggle()
         } label: {
-            Text(model.isRecording ? "press keys …" : model.label)
+            Text(model.isRecording ? "press keys …" : title ?? model.label)
                 .monospacedDigit()
                 .frame(minWidth: 140)
         }
@@ -184,16 +192,6 @@ private struct ShortcutRow: View {
             }
         }
         .task { await model.load() }
-        .alert(
-            "this shortcut is taken",
-            isPresented: Binding(get: { model.pendingConflict != nil }, set: { if !$0 { model.discardPending() } })
-        ) {
-            Button("use it anyway") { Task { await model.confirmPending() } }
-            Button("cancel", role: .cancel) { model.discardPending() }
-        } message: {
-            if let pending = model.pendingConflict {
-                Text(HotkeySettingsViewModel.conflictText(pending.owner))
-            }
-        }
+        .shortcutConflictAlert(model)
     }
 }

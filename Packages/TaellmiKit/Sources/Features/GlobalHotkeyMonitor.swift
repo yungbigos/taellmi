@@ -8,6 +8,9 @@ import os
 public final class GlobalHotkeyMonitor {
     private var hotKeys: [UInt32: EventHotKeyRef] = [:]
     private var actions: [UInt32: @MainActor () -> Void] = [:]
+    /// Every hotkey asked for, so they can come back after a pause.
+    private var wanted: [UInt32: Hotkey] = [:]
+    private var isPaused = false
     private var handlerRef: EventHandlerRef?
     private let logger = Logger(subsystem: "app.taellmi", category: "hotkey")
 
@@ -18,6 +21,25 @@ public final class GlobalHotkeyMonitor {
         installHandlerIfNeeded()
         unregister(id: id)
         actions[id] = action
+        wanted[id] = hotkey
+        if !isPaused { activate(hotkey, id: id) }
+    }
+
+    /// Lets every combination through to the app, e.g. while you record a new shortcut.
+    public func pause() {
+        guard !isPaused else { return }
+        isPaused = true
+        for ref in hotKeys.values { UnregisterEventHotKey(ref) }
+        hotKeys = [:]
+    }
+
+    public func resume() {
+        guard isPaused else { return }
+        isPaused = false
+        for (id, hotkey) in wanted { activate(hotkey, id: id) }
+    }
+
+    private func activate(_ hotkey: Hotkey, id: UInt32) {
         var ref: EventHotKeyRef?
         let hotKeyID = EventHotKeyID(signature: OSType(0x544C_4D45), id: id)  // "TLME"
         let status = RegisterEventHotKey(
@@ -32,6 +54,7 @@ public final class GlobalHotkeyMonitor {
     public func unregister(id: UInt32) {
         if let ref = hotKeys.removeValue(forKey: id) { UnregisterEventHotKey(ref) }
         actions[id] = nil
+        wanted[id] = nil
     }
 
     private func installHandlerIfNeeded() {

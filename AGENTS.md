@@ -36,6 +36,9 @@ scripts/test-integration.sh    # real models on audio fixtures (slow, needs down
 scripts/run-app.sh             # build and launch; from the main checkout it installs to ~/Applications/taellmi.app (--build: build only)
 scripts/run-app.sh --demo      # same, as a separate "taellmi-demo" app with its own data and Keychain entry
 scripts/run-app.sh --install   # from a worktree: install to ~/Applications anyway (replaces the owner's copy)
+scripts/run-app.sh --fresh     # a brand-new tällmi as a new user gets it (new data, Keychain entry, permissions); stops other copies
+scripts/run-app.sh --fresh --finder  # the same, selected in Finder: double-click it as a new user would
+scripts/run-app.sh --clean-fresh  # remove every --fresh copy's data and Keychain entries
 scripts/make-demo-archive.sh <dir> <thoughts.jsonl>...  # encrypted demo Archive of test thoughts for the demo app
 scripts/download-model.sh <id> # the one user-started network step: fetch a seed model, verify SHA-256
 scripts/download-eval-data.sh  # developer step: the German and English search-evaluation controls (pinned, SHA-256)

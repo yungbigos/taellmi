@@ -21,6 +21,10 @@ final class LiveOnboardingServices: OnboardingServices {
         (try? environment.voiceSetup()) ?? VoiceSetup(downloads: [], builtIn: [])
     }
 
+    func downloadVoiceModels() -> AsyncStream<VoiceSetup> {
+        environment.downloadVoiceModels()
+    }
+
     func storageLocation() async -> String {
         guard environment.archiveRoot.standardizedFileURL != environment.paths.archive.standardizedFileURL else {
             return "on this mac, in your library"

@@ -6,6 +6,7 @@
 <repo>/
 ├── project.yml                 XcodeGen spec for the thin app shell (the .xcodeproj is generated and gitignored)
 ├── App/                        @main, Info.plist, entitlements, assets — nothing else
+│   └── Downloader/             taellmi-downloader.xpc: the only part allowed online (ADR 0016), a thin shell
 ├── Packages/TaellmiKit/
 │   ├── Package.swift
 │   ├── Sources/
@@ -17,6 +18,8 @@
 │   │   ├── Pipeline/           durable job queue + steps (transcribe, enrich, chunk, embed), against Domain only
 │   │   ├── Search/             hybrid keyword + vector search, RRF, reranking
 │   │   ├── Audio/              AVAudioEngine capture, file writing, level metering
+│   │   ├── Downloader/         the downloader's code: fetches pinned model files into a file tällmi opened;
+│   │   │                       Foundation only, linked into taellmi-downloader.xpc and nowhere else online
 │   │   ├── Engines/            one target per engine; the only targets that import heavy ML SDKs
 │   │   │   ├── FluidAudioEngine/        Parakeet etc. (Core ML, Neural Engine)
 │   │   │   ├── SpeechAnalyzerEngine/    Apple live transcription

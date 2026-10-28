@@ -20,7 +20,8 @@
 ```
 provider          id, kind, name, base_url, enabled
                   kind ∈ huggingface | local_folder | apple_system | openai_compatible_local
-                  (huggingface is the only kind that ever touches the network, and only during a user-started download)
+                  (huggingface is the only kind that ever touches the network: only during a user-started download,
+                   and only through the downloader, taellmi-downloader.xpc, ADR 0016)
 
 model             id, name, engine, provider_id, source_ref, revision,
                   files_json [{path, sha256, bytes}], params_json,

@@ -19,6 +19,8 @@ let package = Package(
     products: [
         .library(name: "AppComposition", targets: ["AppComposition"]),
         .library(name: "Features", targets: ["Features"]),
+        /// The downloader's code, built into `taellmi-downloader.xpc` (ADR 0016).
+        .library(name: "Downloader", targets: ["Downloader"]),
     ],
     dependencies: [
         .package(url: "https://github.com/groue/GRDB.swift", from: "7.11.1"),
@@ -67,6 +69,10 @@ let package = Package(
         /// Apple system frameworks used as data sources (NaturalLanguage, Contacts).
         .target(name: "SystemServices", dependencies: ["Domain", "Persistence"], swiftSettings: strict),
 
+        /// The only code that may go online (ADR 0016): fetches pinned model files into a file tällmi opened.
+        /// Foundation only, no third-party packages, so it can be read in one sitting.
+        .target(name: "Downloader", swiftSettings: strict),
+
         /// Developer tool: builds an encrypted demo Archive from test thoughts (scripts/make-demo-archive.sh).
         .executableTarget(name: "DemoArchiveTool", dependencies: ["Persistence"], swiftSettings: strict),
 
@@ -103,7 +109,7 @@ let package = Package(
             name: "AppComposition",
             dependencies: [
                 "Domain", "Persistence", "Config", "Pipeline", "Search", "Audio", "Features", "SystemServices",
-                "FluidAudioEngine", "SpeechAnalyzerEngine", "MLXEmbedderEngine",
+                "Downloader", "FluidAudioEngine", "SpeechAnalyzerEngine", "MLXEmbedderEngine",
                 "FoundationModelsEngine",
             ],
             swiftSettings: ui
@@ -157,6 +163,7 @@ let package = Package(
             swiftSettings: ui),
         .testTarget(
             name: "SpeechAnalyzerEngineTests", dependencies: ["SpeechAnalyzerEngine", "Domain"], swiftSettings: strict),
+        .testTarget(name: "DownloaderTests", dependencies: ["Downloader"], swiftSettings: strict),
         .testTarget(
             name: "SystemServicesTests", dependencies: ["SystemServices", "Domain"], swiftSettings: strict),
         .testTarget(

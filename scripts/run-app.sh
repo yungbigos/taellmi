@@ -62,13 +62,13 @@ if $DEMO; then
   NAME="taellmi-demo"
   BUILD="build/demo"
   # Only the bundle id differs (PRODUCT_NAME would also rename the package's resource bundles).
-  IDENTITY=(PRODUCT_BUNDLE_IDENTIFIER=app.taellmi.demo)
+  IDENTITY=(TAELLMI_APP_ID=app.taellmi.demo)
 elif $FRESH; then
   NAME="taellmi-fresh"
   BUILD="build/fresh"
   # A new identity each run: a new sandbox container, Keychain entry and set of permissions.
   FRESH_ID="app.taellmi.fresh.t$(date +%Y%m%d%H%M%S)"
-  IDENTITY=(PRODUCT_BUNDLE_IDENTIFIER="$FRESH_ID")
+  IDENTITY=(TAELLMI_APP_ID="$FRESH_ID")
 fi
 LOG="$BUILD/xcodebuild.log"
 SIGNING=()

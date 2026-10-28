@@ -1,5 +1,6 @@
 [
   {"key": "app.maintenance_interval_s", "type": "number", "value": 30, "seed_version": 1},
+  {"key": "models.download_progress_s", "type": "number", "value": 0.25, "seed_version": 1},
   {"key": "appearance.text_case", "type": "string", "value": "normal", "seed_version": 1},
   {"key": "summary.min_words", "type": "number", "value": 40, "seed_version": 1},
   {"key": "summary.stem_length", "type": "number", "value": 5, "seed_version": 1},

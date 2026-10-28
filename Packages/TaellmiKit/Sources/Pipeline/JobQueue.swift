@@ -122,6 +122,15 @@ public struct JobQueue: Sendable {
         }
     }
 
+    /// Something steps waited for (e.g. a model) just arrived: every pending step may run now.
+    public func retryNow(now: Date = Date()) throws {
+        try database.writer.write { db in
+            try db.execute(
+                sql: "UPDATE job SET not_before = ?, updated_at = ? WHERE state = 'pending' AND not_before > ?",
+                arguments: [now, now, now])
+        }
+    }
+
     /// Jobs left `running` by a crash or quit become pending again, unless they already used every
     /// attempt (a job that crashes the app must not be retried forever).
     public func recoverInterrupted(maxAttempts: Int) throws {

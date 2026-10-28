@@ -15,6 +15,8 @@ public enum SettingKeys {
     public static let retryBackoffSeconds = "pipeline.retry_backoff_s"
     public static let waitForModelSeconds = "pipeline.wait_for_model_s"
     public static let maintenanceIntervalSeconds = "app.maintenance_interval_s"
+    /// How often the voice step's progress bars move while a model downloads.
+    public static let downloadProgressSeconds = "models.download_progress_s"
     public static let vocabularyMinSimilarityNames = "vocabulary.min_similarity_names"
     public static let vocabularyMinSimilarityOther = "vocabulary.min_similarity_other"
     public static let vocabularyUseContacts = "vocabulary.use_contacts"
@@ -81,7 +83,8 @@ public enum SettingKeys {
         [
             hotkey, sampleRate, minimumRecordingSeconds, discardSilentRecordings, idleUnloadSeconds, maxJobAttempts,
             segmentMaxPauseSeconds, retryBackoffSeconds,
-            waitForModelSeconds, maintenanceIntervalSeconds, vocabularyMinSimilarityNames, vocabularyMinSimilarityOther,
+            waitForModelSeconds, maintenanceIntervalSeconds, downloadProgressSeconds, vocabularyMinSimilarityNames,
+            vocabularyMinSimilarityOther,
             vocabularyUseContacts, textCase, summaryMinWords, summaryStemLength, archiveLocationBookmark,
             archivePendingMoveBookmark,
             lockWindow,

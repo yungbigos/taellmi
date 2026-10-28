@@ -6,6 +6,11 @@ options:
   deploymentTarget:
     macOS: "26.0"
   createIntermediateGroups: true
+settings:
+  base:
+    # The app's identity; the downloader's is this plus ".downloader". scripts/run-app.sh sets it for the demo and
+    # fresh copies (PRODUCT_BUNDLE_IDENTIFIER on the command line would rename the downloader too).
+    TAELLMI_APP_ID: app.taellmi
 packages:
   TaellmiKit:
     path: Packages/TaellmiKit
@@ -15,15 +20,18 @@ targets:
     platform: macOS
     sources:
       - path: App
+        excludes: ["Downloader/**"]
     dependencies:
       - package: TaellmiKit
         products: [AppComposition, Features]
+      # Embedded in Contents/XPCServices.
+      - target: TaellmiDownloader
     configFiles:
       Debug: Config/Signing.xcconfig
       Release: Config/Signing.xcconfig
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: app.taellmi
+        PRODUCT_BUNDLE_IDENTIFIER: $(TAELLMI_APP_ID)
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         PRODUCT_NAME: taellmi
         INFOPLIST_FILE: App/Info.plist
@@ -34,5 +42,32 @@ targets:
         SWIFT_STRICT_CONCURRENCY: complete
         SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
         SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+  # The only part of tällmi that may go online (ADR 0016): fetches pinned model files when you press download.
+  # Its entitlements are exactly app-sandbox + network.client; scripts/check-network.sh checks the built app.
+  TaellmiDownloader:
+    type: xpc-service
+    platform: macOS
+    sources:
+      - path: App/Downloader
+    dependencies:
+      # Linked statically: the hardened runtime refuses ad hoc signed libraries.
+      - package: TaellmiKit
+        products: [Downloader]
+    configFiles:
+      Debug: Config/Signing.xcconfig
+      Release: Config/Signing.xcconfig
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(TAELLMI_APP_ID).downloader
+        PRODUCT_NAME: taellmi-downloader
+        INFOPLIST_FILE: App/Downloader/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        CODE_SIGN_ENTITLEMENTS: App/Downloader/Downloader.entitlements
+        ENABLE_HARDENED_RUNTIME: YES
+        SWIFT_VERSION: "6.0"
+        SWIFT_STRICT_CONCURRENCY: complete
+        SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
         MARKETING_VERSION: "0.1.0"
         CURRENT_PROJECT_VERSION: "1"

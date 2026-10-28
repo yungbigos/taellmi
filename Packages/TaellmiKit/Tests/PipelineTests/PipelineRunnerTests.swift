@@ -288,4 +288,31 @@ struct JobQueueTests {
         #expect(next.entryID == "new")
         #expect(next.step == "transcribe")
     }
+
+    @Test("when a model arrives, steps waiting for one can run at once instead of after the wait")
+    func retryNow() throws {
+        let database = try makeDatabase()
+        try database.writer.write { db in
+            for id in ["waiting", "done"] {
+                try db.execute(
+                    sql:
+                        "INSERT INTO entry (id, created_at, source, folder) VALUES (?, '2026-10-19 18:34:12', 'voice', ?)",
+                    arguments: [id, id])
+            }
+        }
+        let jobs = JobQueue(database: database)
+        try jobs.enqueue(entryID: "waiting", steps: ["transcribe"], now: sampleDate)
+        try jobs.enqueue(entryID: "done", steps: ["transcribe"], now: sampleDate)
+        let finished = try #require(try jobs.claimNext(now: sampleDate))
+        try jobs.markDone(finished, now: sampleDate)
+        let waiting = try #require(try jobs.claimNext(now: sampleDate))
+        try jobs.markWaiting(waiting, reason: "no model for transcription", retryAfter: 300, now: sampleDate)
+        #expect(try jobs.claimNext(now: sampleDate) == nil)
+
+        try jobs.retryNow(now: sampleDate)
+
+        let next = try #require(try jobs.claimNext(now: sampleDate))
+        #expect(next.entryID == waiting.entryID)
+        #expect(try jobs.claimNext(now: sampleDate) == nil)
+    }
 }

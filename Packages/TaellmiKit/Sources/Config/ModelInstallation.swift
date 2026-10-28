@@ -31,6 +31,13 @@ public struct ModelInstallation: Sendable {
             to: folder.appendingPathComponent(Self.markerName), atomically: true, encoding: .utf8)
     }
 
+    /// Forgets that the model was verified, before its files change.
+    public func removeMark(_ model: ModelConfig) throws {
+        let marker = directory(for: model).appendingPathComponent(Self.markerName)
+        guard FileManager.default.fileExists(atPath: marker.path) else { return }
+        try FileManager.default.removeItem(at: marker)
+    }
+
     private static func markerContent(for model: ModelConfig) -> String {
         model.revision ?? "unversioned"
     }

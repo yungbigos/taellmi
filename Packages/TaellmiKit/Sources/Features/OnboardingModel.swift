@@ -19,19 +19,39 @@ public enum MicrophoneAccess: Sendable, Equatable {
     case denied
 }
 
+/// How far a model's files are on their way to this Mac.
+public enum VoiceModelState: Sendable, Equatable {
+    case missing
+    /// Next in line while another one downloads.
+    case waiting
+    case downloading(received: Int64)
+    case installed
+    /// The last download stopped before every file arrived and matched.
+    case failed
+}
+
 /// A model tällmi needs files for, and whether they are on this Mac.
 public struct VoiceModelStatus: Sendable, Equatable, Identifiable {
     public var role: ModelRole
     public var name: String
     public var bytes: Int64
-    public var isInstalled: Bool
+    public var state: VoiceModelState
     public var id: String { role.rawValue }
 
-    public init(role: ModelRole, name: String, bytes: Int64, isInstalled: Bool) {
+    public var isInstalled: Bool {
+        get { state == .installed }
+        set { state = newValue ? .installed : .missing }
+    }
+
+    public init(role: ModelRole, name: String, bytes: Int64, state: VoiceModelState) {
         self.role = role
         self.name = name
         self.bytes = bytes
-        self.isInstalled = isInstalled
+        self.state = state
+    }
+
+    public init(role: ModelRole, name: String, bytes: Int64, isInstalled: Bool) {
+        self.init(role: role, name: name, bytes: bytes, state: isInstalled ? .installed : .missing)
     }
 }
 
@@ -74,6 +94,9 @@ public struct OnboardingProgress: Sendable, Equatable {
 /// What the onboarding needs from the app and from macOS.
 public protocol OnboardingServices: AnyObject {
     func voiceSetup() async -> VoiceSetup
+    /// Starts downloading what is missing, or follows the download already running: the voice setup each time
+    /// it changes, until the download ends. The download goes on when nobody follows it.
+    func downloadVoiceModels() -> AsyncStream<VoiceSetup>
     func microphoneAccess() async -> MicrophoneAccess
     /// Asks macOS; true when allowed.
     func requestMicrophone() async -> Bool
@@ -114,6 +137,7 @@ public final class OnboardingModel {
     public private(set) var importMessage: String?
     public private(set) var isImporting = false
     public private(set) var isFinished = false
+    @ObservationIgnored private var isFollowingDownload = false
     /// The new Recovery Key to save and confirm, if the Archive was just created.
     public let recoveryKey: RecoveryKeyViewModel?
     /// The shortcut that calls tälli; changing it here saves it and calls tälli with it at once.
@@ -250,6 +274,63 @@ public final class OnboardingModel {
         let setup = await services.voiceSetup()
         voiceModels = setup.downloads
         builtInRoles = setup.builtIn
+    }
+
+    /// A model is downloading or waiting its turn.
+    public var isDownloading: Bool {
+        voiceModels.contains {
+            switch $0.state {
+            case .waiting, .downloading: true
+            case .missing, .installed, .failed: false
+            }
+        }
+    }
+
+    public var downloadFailed: Bool { voiceModels.contains { $0.state == .failed } }
+
+    /// tälli thinks ("ähmm") on the voice step while the download runs.
+    public var talliIsThinking: Bool { step == .voice && isDownloading }
+
+    /// Downloads what is missing and follows it until it ends, also after you went on to the next steps.
+    /// Pressing again while it runs changes nothing.
+    public func download() async {
+        guard !isFollowingDownload else { return }
+        isFollowingDownload = true
+        defer { isFollowingDownload = false }
+        for await setup in services.downloadVoiceModels() {
+            voiceModels = setup.downloads
+            builtInRoles = setup.builtIn
+        }
+    }
+
+    /// "632 MB", "1.3 GB": megabytes whole, gigabytes to one decimal, as the design shows them.
+    public nonisolated static func size(_ bytes: Int64, locale: Locale = .current) -> String {
+        let measurement = Measurement(value: Double(bytes), unit: UnitInformationStorage.bytes)
+        let gigabytes = measurement.converted(to: .gigabytes)
+        let (value, digits) = gigabytes.value >= 1 ? (gigabytes, 1) : (measurement.converted(to: .megabytes), 0)
+        return value.formatted(
+            .measurement(
+                width: .abbreviated, usage: .asProvided, numberFormatStyle: .number.precision(.fractionLength(digits))
+            )
+            .locale(locale))
+    }
+
+    public nonisolated static func downloadTitle(missing: Int64, locale: Locale = .current) -> String {
+        "download " + size(missing, locale: locale)
+    }
+
+    /// What a row says on the right: its size, how far it is, or that it is here.
+    public nonisolated static func sizeLine(for status: VoiceModelStatus, locale: Locale = .current) -> String {
+        switch status.state {
+        case .missing: size(status.bytes, locale: locale)
+        case .waiting: "next · " + size(status.bytes, locale: locale)
+        case .downloading(let received):
+            Measurement(value: Double(received), unit: UnitInformationStorage.bytes).converted(to: .megabytes)
+                .value.formatted(.number.precision(.fractionLength(0)).locale(locale))
+                + " of " + size(status.bytes, locale: locale)
+        case .installed: "on this mac"
+        case .failed: "didn't finish"
+        }
     }
 
     public func useStorage(inside parent: URL) async {

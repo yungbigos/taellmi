@@ -42,6 +42,7 @@ struct OnboardingView: View {
 
     private var talliMood: TalliMood {
         if model.isListening { return .listening(level: model.listeningLevel) }
+        if model.talliIsThinking { return .thinking }
         return model.step == .callTalli && model.firstThoughtID != nil ? .saved : .idle
     }
 
@@ -96,9 +97,9 @@ struct OnboardingView: View {
 
     private var voice: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("what tällmi needs to understand you.").brandFont("display.title")
+            Text("one download, then offline.").brandFont("display.title")
             Text(
-                "these run only on this mac, and nothing you say leaves it. getting them right here comes in a later version; the tällmi page on GitHub shows how to add them by hand. until then, spoken thoughts wait for their text."
+                "to understand you, tällmi needs what's below from huggingface.co. it's downloaded once and checked against known fingerprints before use. after that, tällmi works without the internet."
             )
             .brandForeground(.quiet)
             .fixedSize(horizontal: false, vertical: true)
@@ -115,36 +116,90 @@ struct OnboardingView: View {
                 Text(line).brandFont("text.label").brandForeground(.quiet).padding(.top, brand.space(.m))
             }
             Spacer()
-            footer {
+            footer { voiceButtons }
+        }
+        // Back on this step while a download runs (e.g. the onboarding opened again): follow it.
+        .onAppear { if model.isDownloading { Task { await model.download() } } }
+    }
+
+    @ViewBuilder private var voiceButtons: some View {
+        if model.isDownloading {
+            Spacer()
+            Text("you can go on while it downloads.").brandFont("text.label").brandForeground(.quiet)
+            Button("continue") { model.next() }
+                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.defaultAction)
+        } else if model.missingBytes == 0 {
+            Spacer()
+            Button("continue") { model.next() }
+                .buttonStyle(.borderedProminent)
+                .keyboardShortcut(.defaultAction)
+        } else {
+            if model.downloadFailed {
+                Text("the download stopped. check the connection, then try again.")
+                    .brandFont("text.label")
+                    .brandForeground(.quiet)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
                 Button("show where they go") { model.showModelsFolder() }.buttonStyle(.link)
-                Spacer()
-                Button("continue") { model.next() }
-                    .buttonStyle(.borderedProminent)
-                    .keyboardShortcut(.defaultAction)
             }
+            Spacer()
+            Button("not now") { model.next() }
+            // The download goes on by itself; following it here keeps the rows moving.
+            Button(
+                model.downloadFailed
+                    ? "try again" : OnboardingModel.downloadTitle(missing: model.missingBytes)
+            ) { Task { await model.download() } }
+            .buttonStyle(.borderedProminent)
+            .keyboardShortcut(.defaultAction)
         }
     }
 
     private func voiceRow(_ status: VoiceModelStatus) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: brand.space(.m)) {
-            VStack(alignment: .leading, spacing: brand.space(.xxs)) {
-                HStack(alignment: .firstTextBaseline, spacing: brand.space(.s)) {
-                    if let word = Self.roleWord(status.role) { Text(word) }
-                    Text(status.name).brandFont("text.label").brandForeground(.quiet).lineLimit(1)
+        VStack(alignment: .leading, spacing: brand.space(.s)) {
+            HStack(alignment: .firstTextBaseline, spacing: brand.space(.m)) {
+                VStack(alignment: .leading, spacing: brand.space(.xxs)) {
+                    HStack(alignment: .firstTextBaseline, spacing: brand.space(.s)) {
+                        if let word = Self.roleWord(status.role) { Text(word) }
+                        Text(status.name).brandFont("text.label").brandForeground(.quiet).lineLimit(1)
+                    }
+                    if let purpose = Self.purpose(status.role) { Text(purpose).brandForeground(.quiet) }
                 }
-                if let purpose = Self.purpose(status.role) { Text(purpose).brandForeground(.quiet) }
+                Spacer(minLength: brand.space(.s))
+                Text(OnboardingModel.sizeLine(for: status))
+                    .brandFont("text.label")
+                    .brandForeground(.quiet)
+                    .monospacedDigit()
             }
-            Spacer(minLength: brand.space(.s))
-            Text(
-                status.isInstalled
-                    ? "on this mac" : ByteCountFormatter.string(fromByteCount: status.bytes, countStyle: .file)
-            )
-            .brandFont("text.label")
-            .brandForeground(.quiet)
-            .monospacedDigit()
+            if let fraction = Self.fraction(status) {
+                progressBar(fraction)
+                    .accessibilityElement()
+                    .accessibilityLabel(
+                        "\(Self.roleWord(status.role) ?? status.name): \(OnboardingModel.sizeLine(for: status))")
+            }
         }
         .padding(.horizontal, brand.space(.l))
         .padding(.vertical, brand.space(.m))
+    }
+
+    // How much of a row's bar is filled, or nil when it shows none.
+    private static func fraction(_ status: VoiceModelStatus) -> Double? {
+        switch status.state {
+        case .downloading(let received): status.bytes > 0 ? min(1, Double(received) / Double(status.bytes)) : 0
+        case .waiting: 0
+        case .missing, .installed, .failed: nil
+        }
+    }
+
+    private func progressBar(_ fraction: Double) -> some View {
+        Capsule()
+            .brandForeground(.mist)
+            .overlay(alignment: .leading) {
+                GeometryReader { space in
+                    Capsule().brandForeground(.blue).frame(width: space.size.width * fraction)
+                }
+            }
+            .frame(height: 4)
     }
 
     private var microphone: some View {

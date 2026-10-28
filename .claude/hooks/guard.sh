@@ -8,6 +8,8 @@ case "$FILE" in
   *.pbxproj)
     echo "Blocked: the Xcode project is generated. Edit project.yml (XcodeGen) or Package.swift instead." >&2
     exit 2 ;;
+  # The downloader alone may go online (ADR 0016); scripts/check-network.sh pins its two entitlements.
+  */App/Downloader/Downloader.entitlements) ;;
   *.entitlements)
     if grep -q 'com.apple.security.network.client' <<<"$NEW"; then
       echo "Blocked: outgoing network breaks the local-only principle (AGENTS.md rule 1). Ask the owner first." >&2

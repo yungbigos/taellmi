@@ -18,7 +18,11 @@ tällmi is a local-only, privacy-first macOS voice journal. You talk into it in 
 
 ## Non-negotiables
 
-1. **No outgoing network.** The app has no network-client entitlement. The only exception is the opt-in local MCP server, which accepts connections on 127.0.0.1 ([ADR 0007](docs/decisions/0007-local-mcp-server.md)). Never add analytics, crash reporting or any SDK that phones home. Model downloads happen only in a user-started download step and are checked against SHA-256 hashes.
+1. **No outgoing network.** The app has no network-client entitlement. There are two exceptions:
+   - the opt-in local MCP server, which accepts connections on 127.0.0.1 ([ADR 0007](docs/decisions/0007-local-mcp-server.md));
+   - the downloader `taellmi-downloader.xpc` inside the app ([ADR 0016](docs/decisions/0016-downloading-models-in-the-app.md)). It alone may go online, only when the user presses download, only for pinned model files from Hugging Face. It has no other entitlement and no third-party code. The app checks every file against its SHA-256 before use.
+
+   Never add analytics, crash reporting or any SDK that phones home. `scripts/check-network.sh` (in the gate and the release) fails on any other network entitlement.
 2. **Config first.** Never hard-code a model name, model path, prompt text or tunable number in Swift. Add or change a row in the seed JSON (`Packages/TaellmiKit/Sources/Config/Resources/Seeds/`) and read it through the config layer. Code knows engines, never specific models.
 3. **Test first.** Every behaviour change starts with a failing test (Swift Testing). Bugs get a reproducing test before the fix. Never delete or weaken a test to make the build green; fix the code or ask.
 4. **The user's Text is sacred.** Only the user changes an Entry's Text after it is first written. Transcripts and Recordings are disposable under the Retention policy ([ADR 0004](docs/decisions/0004-entries-as-files.md)). Derived data records the `model_id` and `prompt_id@version` that produced it.
@@ -40,7 +44,8 @@ scripts/run-app.sh --fresh     # a brand-new tällmi as a new user gets it (new 
 scripts/run-app.sh --fresh --finder  # the same, selected in Finder: double-click it as a new user would
 scripts/run-app.sh --clean-fresh  # remove every --fresh copy's data and Keychain entries
 scripts/make-demo-archive.sh <dir> <thoughts.jsonl>...  # encrypted demo Archive of test thoughts for the demo app
-scripts/download-model.sh <id> # the one user-started network step: fetch a seed model, verify SHA-256
+scripts/download-model.sh <id> # fetch a seed model from the terminal, verify SHA-256 (the app's download button does the same)
+scripts/check-network.sh       # only the downloader may go online (in the gate; --app <.app> checks a built app)
 scripts/download-eval-data.sh  # developer step: the German and English search-evaluation controls (pinned, SHA-256)
 scripts/eval-search.sh         # measure search on eval/ and the controls with the real model (see docs/research)
 npm --prefix website run dev   # the marketing site's design study at http://localhost:4173 (see website/README.md)

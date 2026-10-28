@@ -77,17 +77,14 @@ jobs:
             build > build/xcodebuild-release.log 2>&1 \
             || { grep -E "error:" build/xcodebuild-release.log | head -40; exit 1; }
 
-      # Rule 1 of AGENTS.md: no outgoing network. Refuse to ship an app that could open connections.
+      # Rule 1 of AGENTS.md and ADR 0016: tällmi never goes online. Refuse to ship an app in which anything but
+      # the downloader could open connections, or whose downloader has more than its two entitlements and hosts.
       - name: verify
         run: |
           APP=build/release/Build/Products/Release/taellmi.app
           codesign --verify --deep --strict "$APP"
           [[ "$(lipo -archs "$APP/Contents/MacOS/taellmi")" == "arm64" ]] || { echo "✘ the app is not Apple silicon only"; exit 1; }
-          ENTITLEMENTS=$(codesign -d --entitlements - --xml "$APP" 2>/dev/null)
-          if grep -q "com.apple.security.network.client" <<<"$ENTITLEMENTS"; then
-            echo "✘ the app has the network-client entitlement"; exit 1
-          fi
-          grep -q "com.apple.security.app-sandbox" <<<"$ENTITLEMENTS" || { echo "✘ the app is not sandboxed"; exit 1; }
+          scripts/check-network.sh --app "$APP"
           echo "APP=$APP" >> "$GITHUB_ENV"
 
       # The disk image opens on the app beside a link to Applications to drag it onto, with tällmi's licence and
@@ -140,16 +137,7 @@ jobs:
 
           **models**
 
-          speech and search by meaning run on models you download once, in a step you start yourself:
-
-          \`\`\`bash
-          brew install jq
-          git clone --depth 1 --branch $TAG https://github.com/$GITHUB_REPOSITORY.git taellmi && cd taellmi
-          scripts/download-model.sh parakeet-tdt-0.6b-v3       # speech
-          scripts/download-model.sh qwen3-embedding-0.6b-8bit  # search by meaning
-          \`\`\`
-
-          each file is checked against a fixed SHA-256. the app itself never goes online.
+          speech and search by meaning need one download (1.3 GB). on first launch, press **download** in the voice step. a small downloader inside tällmi fetches the files from huggingface.co. it's the only part of tällmi that may go online, and only when you press download. each file is checked against a fixed SHA-256 before use. tällmi itself never goes online.
           EOF
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "$DMG" "$DMG.sha256" --clobber

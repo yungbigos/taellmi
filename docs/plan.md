@@ -10,7 +10,7 @@ Target machine: M4 Pro, 24 GB RAM, macOS 26.5.
 
 ## 1. Principles (rules we check every choice against)
 
-1. **Local-only by default.** The app makes no network calls except one: an explicit, user-started download of model weights. That step can be skipped entirely by importing model files by hand. No telemetry, no crash reporting, no cloud sync.
+1. **Local-only by default.** The app makes no network calls. The one exception is an explicit, user-started download of model weights, done by a separate downloader inside the app that alone may go online (ADR 0016). That step can be skipped by adding the model files by hand. No telemetry, no crash reporting, no cloud sync.
 2. **You own the data, as plain files.** Each entry is a folder holding the audio and a Markdown file. The database is an index that can be rebuilt from those files at any time. If the app is deleted, the archive can still be read in any text editor or in Obsidian.
 3. **Raw input is never lost.** The original audio and the verbatim transcript are always kept. LLM cleanup, summaries and tags are separate layers on top and can be regenerated.
 4. **German first, mixed language expected.** Every component (speech-to-text, embeddings, LLM, full-text tokenizer) has to handle German, German–English code-switching, and German compound nouns.
@@ -179,14 +179,14 @@ Decisions are locked (see section 3); we fix model choices later if real use sho
 ### First launch (requested 2026-10-22, built 2026-10-23, #52)
 - **A fresh tällmi walks you in** instead of starting silently in the menu bar:
   - hello
-  - the voice models (which are on this Mac)
+  - the voice models: which are on this Mac, and one download for what's missing (ADR 0016)
   - the microphone
   - calling tälli with the real shortcut, and your first thought
   - the recovery key (moved here from its own pop-up)
   - a few extras: open at login, contacts for spellings, imports
 - **Steps with nothing to ask are left out:** no download needed, the microphone already allowed, no new key.
 - **Only a fresh tällmi sees it** (no thoughts, setting `onboarding.completed`). ⌘K "show onboarding" replays it.
-- **Still open:** downloading the models from inside the app (#53). tällmi has no network access, so this needs an ADR first. Until then the voice step points to `scripts/download-model.sh`.
+- **Downloading the models** (#53, [ADR 0016](decisions/0016-downloading-models-in-the-app.md)): "download 1.3 GB" starts `taellmi-downloader.xpc`, the only part of tällmi that may go online. Progress per model, you can go on while it downloads, tälli thinks meanwhile, and thoughts waiting for speech get their text as soon as it arrives. Still open: resuming a file after an interruption, download controls in the voice tab, "add files by hand …".
 
 ### Phase 1 — Capture and archive (MVP you can use daily)
 - Menu-bar app with a global hotkey: press → record → press again → done. Optional push-to-talk.
@@ -247,7 +247,7 @@ The data layer (entries, chunks, embeddings, entities, links) is designed so any
 
 ## 6. Privacy checklist (part of the definition of done)
 
-- Sandbox entitlements: microphone, user-selected files; **no** outgoing network except in a separate model-download step the user starts.
+- Sandbox entitlements: microphone, user-selected files; **no** outgoing network. Only the downloader (`taellmi-downloader.xpc`, ADR 0016) has it, for the model download the user starts; `scripts/check-network.sh` enforces this in the gate and the release.
 - A visible "offline" indicator. Optionally verify with Little Snitch / LuLu during development.
 - No analytics or crash-reporting SDKs. No third-party SDK that phones home.
 - Model downloads checked against pinned SHA-256 hashes.

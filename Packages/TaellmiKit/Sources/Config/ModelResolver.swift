@@ -12,6 +12,18 @@ public struct RuntimeConditions: Sendable, Equatable {
     }
 }
 
+/// Where a model's files come from.
+public struct ModelProvider: Sendable, Equatable {
+    /// `huggingface`, `local_folder`, `apple_system`, … Only `huggingface` is ever downloaded (ADR 0016).
+    public var kind: String
+    public var baseURL: URL?
+
+    public init(kind: String, baseURL: URL?) {
+        self.kind = kind
+        self.baseURL = baseURL
+    }
+}
+
 public struct ResolutionError: Error, Equatable, CustomStringConvertible {
     public var role: ModelRole
     /// Why each candidate model was skipped, by model id.
@@ -99,6 +111,17 @@ public struct ModelResolver: Sendable {
                 arguments: [role.rawValue])
         }
         return try row.map(model(from:))
+    }
+
+    /// Where a model's files come from: its provider's kind and base URL (`huggingface`, https://huggingface.co).
+    public static func provider(of model: ModelConfig, in database: AppDatabase) throws -> ModelProvider? {
+        try database.reader.read { db in
+            try GRDB.Row.fetchOne(
+                db, sql: "SELECT kind, base_url FROM provider WHERE id = ? AND enabled", arguments: [model.providerID])
+        }
+        .map { row in
+            ModelProvider(kind: row["kind"], baseURL: (row["base_url"] as String?).flatMap(URL.init(string:)))
+        }
     }
 
     private func rejection(of model: ModelConfig, row: GRDB.Row, role: ModelRole, now: RuntimeConditions) -> String? {

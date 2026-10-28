@@ -65,6 +65,8 @@ public final class AppEnvironment {
     private let engines: EngineCache<ContinuousClock>
     private let pipelineKick: PipelineKick
     private let library: LiveExploreLibrary
+    /// The voice models' download, started from the onboarding's voice step (ADR 0016).
+    let voiceDownloads: VoiceDownloads
     private let logger = Logger(subsystem: "app.taellmi", category: "app")
     private var maintenanceTask: Task<Void, Never>?
     private var memoryPressure: (any DispatchSourceMemoryPressure)?
@@ -72,7 +74,7 @@ public final class AppEnvironment {
     /// Builds the real app: opens the database, finds the Archive, and opens its key (ADR 0010).
     /// Throws `ArchiveLockedError` when this Mac needs the Recovery Key first.
     public static func live() async throws -> AppEnvironment {
-        let (paths, database, sampleRate, root) = try await Task.detached(priority: .userInitiated) {
+        let (paths, database, sampleRate, root, progressSeconds) = try await Task.detached(priority: .userInitiated) {
             let paths = try AppPaths.live()
             let database = try AppDatabase.open(at: paths.database)
             _ = try Seeder(database: database).apply(SeedBundle.bundled())
@@ -82,7 +84,8 @@ public final class AppEnvironment {
             try? ArchiveLocation.applyPendingMove(settings: settings, editor: editor, default: paths.archive)
             return (
                 paths, database, try settings.number(SettingKeys.sampleRate),
-                try ArchiveLocation.resolve(settings: settings, editor: editor, default: paths.archive)
+                try ArchiveLocation.resolve(settings: settings, editor: editor, default: paths.archive),
+                try settings.number(SettingKeys.downloadProgressSeconds)
             )
         }.value
         let vault = ArchiveVault(root: root, keyStore: KeychainKeyStore())
@@ -94,7 +97,10 @@ public final class AppEnvironment {
             paths: paths, archiveRoot: root, storage: storage, archiveKey: key, vault: vault, database: database,
             engines: liveEngines, embedders: liveEmbedders, livePreviews: livePreviewEngines,
             languageModels: liveLanguageModels,
-            recorder: MicrophoneRecorder(scratchFolder: paths.scratch, sampleRate: sampleRate))
+            recorder: MicrophoneRecorder(scratchFolder: paths.scratch, sampleRate: sampleRate),
+            fetcher: DownloaderConnection(
+                serviceName: (Bundle.main.bundleIdentifier ?? "") + ".downloader",
+                progressInterval: .seconds(progressSeconds)))
         environment.pendingRecoveryKey = newRecoveryKey
         return environment
     }
@@ -111,13 +117,14 @@ public final class AppEnvironment {
     public convenience init(
         paths: AppPaths, engines: [String: TranscriberFactory], embedders: [String: EmbedderFactory] = [:],
         livePreviews: [String: LivePreviewFactory] = [:], languageModels: [String: LanguageModelFactory] = [:],
-        recorder: any AudioRecording
+        recorder: any AudioRecording, fetcher: (any ModelFileFetching)? = nil
     ) throws {
         try self.init(
             paths: paths, archiveRoot: paths.archive, storage: PlainFolderStorage(root: paths.archive), archiveKey: nil,
             vault: nil,
             database: AppDatabase.open(at: paths.database), engines: engines, embedders: embedders,
-            livePreviews: livePreviews, languageModels: languageModels, recorder: recorder)
+            livePreviews: livePreviews, languageModels: languageModels, recorder: recorder,
+            fetcher: fetcher ?? NoDownloader())
     }
 
     init(
@@ -125,7 +132,7 @@ public final class AppEnvironment {
         database: AppDatabase,
         engines factories: [String: TranscriberFactory], embedders: [String: EmbedderFactory],
         livePreviews: [String: LivePreviewFactory], languageModels: [String: LanguageModelFactory],
-        recorder: any AudioRecording
+        recorder: any AudioRecording, fetcher: any ModelFileFetching
     ) throws {
         self.paths = paths
         self.archiveRoot = archiveRoot
@@ -175,6 +182,13 @@ public final class AppEnvironment {
                 ))
         let kick = PipelineKick(runner: runner)
         pipelineKick = kick
+        // A model just arrived: thoughts waiting for one are tried now, not after `pipeline.wait_for_model_s`.
+        voiceDownloads = VoiceDownloads(
+            downloader: ModelDownloader(installation: installation, fetcher: fetcher),
+            onInstalled: { [database] in
+                try? JobQueue(database: database).retryNow()
+                kick.kick()
+            })
         journal = LiveJournal(
             files: files, index: index, runner: runner, archiveFolder: archiveRoot,
             kickPipeline: { kick.kick() })

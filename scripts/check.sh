@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The single quality gate: format lint → build → fast tests.
+# The single quality gate: format lint → network entitlements → build → fast tests.
 # Used by the git pre-commit hook, the Claude Code Stop hook, GitHub Actions (check, release), and by hand.
 #   scripts/check.sh         check only
 #   scripts/check.sh --fix   auto-format first, then check
@@ -18,6 +18,9 @@ if [[ ${#SRC_DIRS[@]} -gt 0 ]]; then
   echo "▸ format lint"
   swift format lint --strict --recursive --parallel "${SRC_DIRS[@]}"
 fi
+
+echo "▸ network"
+scripts/check-network.sh
 
 if [[ -f "$PKG/Package.swift" ]]; then
   echo "▸ build"

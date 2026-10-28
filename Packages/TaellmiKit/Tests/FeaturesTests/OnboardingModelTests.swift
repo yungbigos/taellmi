@@ -27,8 +27,21 @@ struct OnboardingModelTests {
         private(set) var finishCount = 0
         private(set) var openedMicrophoneSettings = false
         private(set) var storageParents: [URL] = []
+        /// What the download reports, in order.
+        var downloadUpdates: [VoiceSetup] = []
+        /// Keeps the download running until the test finishes `download`.
+        var holdsDownload = false
+        private(set) var download: AsyncStream<VoiceSetup>.Continuation?
+        private(set) var downloadStarts = 0
 
         func voiceSetup() async -> VoiceSetup { setup }
+        func downloadVoiceModels() -> AsyncStream<VoiceSetup> {
+            downloadStarts += 1
+            let (stream, continuation) = AsyncStream<VoiceSetup>.makeStream()
+            for update in downloadUpdates { continuation.yield(update) }
+            if holdsDownload { download = continuation } else { continuation.finish() }
+            return stream
+        }
         func microphoneAccess() async -> MicrophoneAccess { microphone }
         func requestMicrophone() async -> Bool {
             microphone = grantsMicrophone ? .allowed : .denied
@@ -54,7 +67,7 @@ struct OnboardingModelTests {
         func finish() async { finishCount += 1 }
     }
 
-    private func makeModel(
+    func makeModel(
         services: FakeServices = FakeServices(), recoveryKey: String? = "7KQF-M29D-XW4R-V6JB",
         journal: FakeJournal = FakeJournal(), preview: (any LivePreviewing)? = nil, liveChunks: [AudioSamples] = []
     ) async throws -> (OnboardingModel, FakeServices, CaptureViewModel, TemporaryDirectory) {
@@ -72,7 +85,7 @@ struct OnboardingModelTests {
     }
 
     /// Walks forward until `step` (or gives up after every step).
-    private func advance(_ model: OnboardingModel, to step: OnboardingStep) {
+    func advance(_ model: OnboardingModel, to step: OnboardingStep) {
         for _ in 0..<10 where model.step != step { model.next() }
     }
 

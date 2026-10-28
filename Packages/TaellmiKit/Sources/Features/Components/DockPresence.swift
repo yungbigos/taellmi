@@ -8,6 +8,9 @@ enum DockPresence {
         NSApplication.shared.setActivationPolicy(.regular)
         NSApplication.shared.activate()
         window.makeKeyAndOrderFront(nil)
+        // In front of other apps' windows even when macOS keeps the focus elsewhere (e.g. tällmi was started in
+        // the background): it is seen, and one click takes the focus.
+        window.orderFrontRegardless()
         DispatchQueue.main.async {
             NSApplication.shared.activate()
             window.makeKeyAndOrderFront(nil)

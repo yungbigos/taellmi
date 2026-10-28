@@ -29,7 +29,8 @@ struct OnboardingView: View {
                     .padding(.leading, brand.space(.xl))
             }
         }
-        .frame(width: Self.size.width, height: Self.size.height)
+        // Fills the window, which has the onboarding's size; a fixed size here made the window grow by the title bar.
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .clipped()
         .brandAnimation(\.crossfade, value: model.step)
         .onChange(of: model.isFinished) { _, finished in if finished { close() } }

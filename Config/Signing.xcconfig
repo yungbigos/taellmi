@@ -3,6 +3,8 @@
 //
 //   CODE_SIGN_IDENTITY = Apple Development
 //   DEVELOPMENT_TEAM = <your team id>
+//
+// Releases are signed with Developer ID on GitHub, after the build (ADR 0016).
 CODE_SIGN_STYLE = Manual
 CODE_SIGN_IDENTITY = -
 #include? "Signing.local.xcconfig"

@@ -2,7 +2,8 @@
 #   git tag v0.1.0 && git push origin v0.1.0
 # A tag with a hyphen (v0.2.0-beta.1) becomes a pre-release. To rebuild an existing tag, run the workflow
 # by hand with that tag; it replaces the release's files.
-# The app is signed ad hoc, not notarized, so macOS asks once before opening it (the release notes say how).
+# The app is signed with Developer ID and notarized by Apple, so it opens without a warning (ADR 0016).
+# It needs the secrets listed in docs/decisions/0016-signed-and-notarized.md.
 name: release
 
 on:
@@ -30,6 +31,8 @@ jobs:
     timeout-minutes: 90
     env:
       TAG: ${{ inputs.tag || github.ref_name }}
+      # FormuFix GmbH; public anyway, it is in every app the team signs.
+      TEAM_ID: 284CCFBH2H
     steps:
       - uses: actions/checkout@v5
         with:
@@ -67,6 +70,7 @@ jobs:
         if: steps.checked.outputs.passed != 'true'
         run: scripts/check.sh
 
+      # Built without the signing key: the build runs third-party package code, so the key arrives only afterwards.
       - name: build
         run: |
           xcodegen generate --quiet
@@ -77,11 +81,50 @@ jobs:
             build > build/xcodebuild-release.log 2>&1 \
             || { grep -E "error:" build/xcodebuild-release.log | head -40; exit 1; }
 
+      # The Developer ID certificate goes into a keychain of its own, which the last step deletes.
+      - name: signing keychain
+        env:
+          CERT_P12: ${{ secrets.DEVELOPER_ID_CERT_P12 }}
+          CERT_PASSWORD: ${{ secrets.DEVELOPER_ID_CERT_PASSWORD }}
+        run: |
+          [[ -n "$CERT_P12" && -n "$CERT_PASSWORD" ]] \
+            || { echo "✘ secrets DEVELOPER_ID_CERT_P12 and DEVELOPER_ID_CERT_PASSWORD are missing (ADR 0016)"; exit 1; }
+          KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
+          KEYCHAIN_PASSWORD=$(openssl rand -hex 24)
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          security set-keychain-settings -lut 3600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN"
+          base64 --decode <<<"$CERT_P12" > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" -P "$CERT_PASSWORD" -T /usr/bin/codesign
+          rm "$RUNNER_TEMP/cert.p12"
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN" >/dev/null
+          security list-keychains -d user -s "$KEYCHAIN" login.keychain-db
+          IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN" \
+            | awk -v team="($TEAM_ID)" '/"Developer ID Application: / && index($0, team) {print $2; exit}')
+          [[ -n "$IDENTITY" ]] || { echo "✘ no Developer ID Application certificate for team $TEAM_ID in the secret"; exit 1; }
+          echo "KEYCHAIN=$KEYCHAIN" >> "$GITHUB_ENV"
+          echo "IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
+
+      # Inside out: nested code first, the app last. Hardened runtime and a secure timestamp, as notarization requires.
+      - name: sign
+        run: |
+          APP=build/release/Build/Products/Release/taellmi.app
+          SIGN=(codesign --force --timestamp --options runtime --keychain "$KEYCHAIN" --sign "$IDENTITY")
+          while IFS= read -r -d '' item; do
+            "${SIGN[@]}" "$item"
+          done < <(find "$APP/Contents" -depth \( -name "*.framework" -o -name "*.dylib" -o -name "*.xpc" \
+            -o -name "*.appex" -o -name "*.app" \) -print0)
+          "${SIGN[@]}" --entitlements App/taellmi.entitlements "$APP"
+
       # Rule 1 of AGENTS.md: no outgoing network. Refuse to ship an app that could open connections.
       - name: verify
         run: |
           APP=build/release/Build/Products/Release/taellmi.app
           codesign --verify --deep --strict "$APP"
+          SIGNATURE=$(codesign -dvv "$APP" 2>&1)
+          grep -q "^TeamIdentifier=$TEAM_ID$" <<<"$SIGNATURE" || { echo "✘ the app is not signed by team $TEAM_ID"; exit 1; }
+          grep -q "^Authority=Developer ID Application: " <<<"$SIGNATURE" || { echo "✘ the app is not signed with Developer ID"; exit 1; }
+          grep -Eq "flags=.*\(runtime\)" <<<"$SIGNATURE" || { echo "✘ the app lacks the hardened runtime"; exit 1; }
           [[ "$(lipo -archs "$APP/Contents/MacOS/taellmi")" == "arm64" ]] || { echo "✘ the app is not Apple silicon only"; exit 1; }
           ENTITLEMENTS=$(codesign -d --entitlements - --xml "$APP" 2>/dev/null)
           if grep -q "com.apple.security.network.client" <<<"$ENTITLEMENTS"; then
@@ -91,7 +134,7 @@ jobs:
           echo "APP=$APP" >> "$GITHUB_ENV"
 
       # The disk image opens on the app beside a link to Applications to drag it onto, with tällmi's licence and
-      # the licences of the code built into it. A disk image needs no Apple account; only notarization would.
+      # the licences of the code built into it.
       - name: package
         run: |
           # One name for every version, so releases/latest/download/taellmi.dmg always gets the newest (the website links it).
@@ -122,9 +165,37 @@ jobs:
             sleep 10
           done
           hdiutil verify "$DMG"
+          codesign --force --timestamp --keychain "$KEYCHAIN" --sign "$IDENTITY" "$DMG"
+          echo "DMG=$DMG" >> "$GITHUB_ENV"
+
+      # Apple checks the disk image and the app in it; the ticket is stapled on so it also opens offline.
+      # This uploads the disk image to Apple from the runner; the app itself never goes online.
+      - name: notarize
+        env:
+          NOTARY_KEY: ${{ secrets.NOTARY_KEY }}
+          NOTARY_KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
+          NOTARY_ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
+        run: |
+          [[ -n "$NOTARY_KEY" && -n "$NOTARY_KEY_ID" && -n "$NOTARY_ISSUER_ID" ]] \
+            || { echo "✘ secrets NOTARY_KEY, NOTARY_KEY_ID and NOTARY_ISSUER_ID are missing (ADR 0016)"; exit 1; }
+          KEY="$RUNNER_TEMP/notary.p8"
+          printf '%s\n' "$NOTARY_KEY" > "$KEY"
+          AUTH=(--key "$KEY" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER_ID")
+          RESULT=$(xcrun notarytool submit "$DMG" "${AUTH[@]}" --wait --timeout 45m --output-format json) || true
+          echo "$RESULT"
+          if [[ "$(jq -r '.status // empty' <<<"$RESULT")" != "Accepted" ]]; then
+            ID=$(jq -r '.id // empty' <<<"$RESULT")
+            [[ -n "$ID" ]] && xcrun notarytool log "$ID" "${AUTH[@]}"
+            rm "$KEY"
+            echo "✘ Apple did not accept the disk image"; exit 1
+          fi
+          rm "$KEY"
+          xcrun stapler staple "$DMG"
+          xcrun stapler validate "$DMG"
+          spctl --assess --type open --context context:primary-signature -v "$DMG"
+          # the checksum of the file people download, ticket included
           shasum -a 256 "$DMG" > "$DMG.sha256"
           cat "$DMG.sha256"
-          echo "DMG=$DMG" >> "$GITHUB_ENV"
 
       - name: publish
         env:
@@ -135,8 +206,7 @@ jobs:
 
           **install**
 
-          1. download \`$DMG\` and open it. drag **tällmi** onto the Applications folder beside it.
-          2. this build is not notarized by Apple, so macOS stops it the first time. open it once, then choose **Open Anyway** in System Settings → Privacy & Security.
+          download \`$DMG\` and open it. drag **tällmi** onto the Applications folder beside it. it is signed and notarized by Apple, so it opens like any other app.
 
           **models**
 
@@ -161,3 +231,8 @@ jobs:
             gh release create "$TAG" "$DMG" "$DMG.sha256" --verify-tag --title "tällmi $VERSION" \
               --notes-file notes.md --generate-notes ${PRERELEASE[@]+"${PRERELEASE[@]}"}
           fi
+
+      - name: remove signing keychain
+        if: always()
+        run: |
+          [[ -n "${KEYCHAIN:-}" ]] && security delete-keychain "$KEYCHAIN" || true

@@ -276,7 +276,7 @@ The data layer (entries, chunks, embeddings, entities, links) is designed so any
 3. **iPhone capture**: needed soon, or Mac-only for now?
 4. **Typing vs. talking**: should typed entries be first-class, or is this voice-only?
 5. **Spotlight**: should entries show up in macOS Spotlight search, or stay invisible to the rest of the system?
-6. **Distribution**: just for you (run from Xcode / unsigned), or eventually signed and notarized for others?
+6. ~~**Distribution**~~ — answered: releases are signed with Developer ID and notarized, as a disk image on GitHub (ADR 0016).
 
 ## 9. Proposed first step
 

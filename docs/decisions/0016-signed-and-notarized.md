@@ -31,4 +31,4 @@ The owner now has a paid Apple Developer Program membership, team **FormuFix Gmb
 
 - The release notes no longer explain "Open Anyway".
 - A release takes a few minutes longer while Apple notarizes.
-- The certificate expires after five years, the API key when revoked; either makes the release fail loudly until it is replaced.
+- The certificate expires on 20 December 2027, the API key when revoked; either makes the release fail loudly until it is replaced. The certificate and its key are in the owner's login keychain; the .p12 password is the Keychain item "taellmi Developer ID p12 password".
